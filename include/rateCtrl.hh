@@ -40,20 +40,20 @@ public:
   void recvAck(uint32_t seqNum, uint32_t remoteAckTimeUs,
                uint32_t localRecvAckTimeUs);
 
-  uint32_t rttEstUs() const; // in microseconds
+  [[nodiscard]] uint32_t rttEstUs() const; // in microseconds
 
-  uint64_t bwUpEst() const;   // in bits per second
-  uint64_t bwDownEst() const; // in bits per second
+  [[nodiscard]] uint64_t bwUpEst() const;   // in bits per second
+  [[nodiscard]] uint64_t bwDownEst() const; // in bits per second
 
-  uint32_t getPhase() const { return phase; }
-  uint64_t bwUpTarget() const;   // in bits per second
-  uint64_t bwDownTarget() const; // in bits per second
+  [[nodiscard]] uint32_t getPhase() const { return phase; }
+  [[nodiscard]] uint64_t bwUpTarget() const;   // in bits per second
+  [[nodiscard]] uint64_t bwDownTarget() const; // in bits per second
 
 private:
-  uint32_t upHistorytSeqOffset;
+  uint32_t upHistorySeqOffset;
   std::vector<PacketUpstreamStatus> upstreamHistory;
 
-  uint32_t downHistorytSeqOffset;
+  uint32_t downHistorySeqOffset;
   std::vector<PacketDownstreamStatus> downstreamHistory;
 
   void updatePhase();
@@ -68,11 +68,13 @@ private:
   std::chrono::steady_clock::time_point cycleStartTime;
   uint32_t cycleCount;
 
-  void updateRTT(uint32_t valUs);
+  void updateRTT(uint32_t valUs, int32_t remoteTimeOffsetUs );
   uint32_t minCycleRTTUs;
   uint32_t maxCycleAckTimeUs;
   uint32_t estRTTUs;
   uint32_t estAckTimeUs;
+  int32_t cycleRelayTimeOffsetUs;
+  int32_t estRelayTimeOffsetUs;
 
   void estUpstreamBw();
   float upstreamPacketLossRate; // probability between 0 and 1

@@ -14,13 +14,23 @@ using namespace MediaNet;
 #endif
 
 RateCtrl::RateCtrl()
-    : upHistorytSeqOffset(0), phase(0), bitsSentThisPhase(0), cycleCount(0),
+    : upHistorySeqOffset(0), downHistorySeqOffset(0), phase(0), bitsSentThisPhase(0), cycleCount(0),
       minCycleRTTUs(std::numeric_limits<uint32_t>::max()), maxCycleAckTimeUs(0),
-      estRTTUs(100 * 1000), estAckTimeUs(100 * 1000), upstreamPacketLossRate(0),
-      upstreamCycleMaxBw(0), upstreamBwEst(1000 * 1000) {
-  upstreamHistory.clear();
-  upstreamHistory.reserve(100); // TODO limit length of history
-  startNewCycle();
+      estRTTUs(100 * 1000), estAckTimeUs(100 * 1000), estRelayTimeOffsetUs(0),
+      upstreamPacketLossRate(0),
+      upstreamCycleMaxBw(0), upstreamBwEst(1000 * 1000) ,
+      downstreamPacketLossRate(0.0),
+      downstreamCycleMaxBw(0),
+      downstreamBwEst(1000 * 1000)
+
+      {
+          upstreamHistory.clear();
+          upstreamHistory.reserve(100); // TODO limit length of history
+
+          downstreamHistory.clear();
+          downstreamHistory.reserve(100); // TODO limit length of history
+
+          startNewCycle();
   cycleCount = 0;
 }
 
@@ -30,15 +40,15 @@ void RateCtrl::sendPacket(uint32_t seqNum, uint32_t sendTimeUs,
 
   assert(sizeBits > 0);
 
-  if (seqNum < upHistorytSeqOffset) {
+  if (seqNum < upHistorySeqOffset) {
     return;
   }
-  if (seqNum - upHistorytSeqOffset >= upstreamHistory.size()) {
-    assert(seqNum - upHistorytSeqOffset - upstreamHistory.size() < 10000);
+  if (seqNum - upHistorySeqOffset >= upstreamHistory.size()) {
+    assert(seqNum - upHistorySeqOffset - upstreamHistory.size() < 10000);
 
-    upstreamHistory.resize(seqNum - upHistorytSeqOffset + 1);
+    upstreamHistory.resize(seqNum - upHistorySeqOffset + 1);
   }
-  PacketUpstreamStatus &rec = upstreamHistory.at(seqNum - upHistorytSeqOffset);
+  PacketUpstreamStatus &rec = upstreamHistory.at(seqNum - upHistorySeqOffset);
 
   rec.seqNum = seqNum;
   rec.sendTimeUs = sendTimeUs;
@@ -51,17 +61,17 @@ void RateCtrl::sendPacket(uint32_t seqNum, uint32_t sendTimeUs,
 
 void RateCtrl::recvAck(uint32_t seqNum, uint32_t remoteAckTimeUs,
                        uint32_t localRecvAckTimeUs) {
-  if (seqNum < upHistorytSeqOffset) {
+  if (seqNum < upHistorySeqOffset) {
     return;
   }
 
-  if (seqNum - upHistorytSeqOffset >= upstreamHistory.size()) {
-    return; // this happens when you old buffer fron previos session
+  if (seqNum - upHistorySeqOffset >= upstreamHistory.size()) {
+    return; // this happens when you old buffer from previous session
   }
 
-  PacketUpstreamStatus &rec = upstreamHistory.at(seqNum - upHistorytSeqOffset);
+  PacketUpstreamStatus &rec = upstreamHistory.at(seqNum - upHistorySeqOffset);
 
-  if (rec.notLost == true) {
+  if (rec.notLost) {
     return;
   }
 
@@ -71,22 +81,26 @@ void RateCtrl::recvAck(uint32_t seqNum, uint32_t remoteAckTimeUs,
   }
   rec.notLost = true;
   assert(rec.seqNum == seqNum);
+
   rec.remoteAckTimeUs = remoteAckTimeUs;
   rec.localRecvAckTimeUs = localRecvAckTimeUs;
 
-  updateRTT(rec.localRecvAckTimeUs - rec.sendTimeUs);
 
-  if (seqNum - upHistorytSeqOffset < 1) {
+  uint32_t rtt = rec.localRecvAckTimeUs - rec.sendTimeUs;
+  int32_t  timeOffset = (rec.localRecvAckTimeUs + rec.sendTimeUs)/2 - rec.remoteAckTimeUs;
+    updateRTT(rtt,timeOffset );
+
+  if (seqNum - upHistorySeqOffset < 1) {
     return;
   }
 
   PacketUpstreamStatus &prev =
-      upstreamHistory.at(seqNum - upHistorytSeqOffset - 1);
+      upstreamHistory.at(seqNum - upHistorySeqOffset - 1);
   if (!prev.notLost) {
     return;
   }
 
-  if (false) {
+#if 0
     std::cout << " seq:" << rec.seqNum;
     std::cout << " dtx:" << float(rec.sendTimeUs - prev.sendTimeUs) / 1000.0;
     std::cout << " drx:"
@@ -96,7 +110,7 @@ void RateCtrl::recvAck(uint32_t seqNum, uint32_t remoteAckTimeUs,
                 << float(rec.localRecvAckTimeUs - rec.sendTimeUs) / 1000.0;
     }
     std::cout << std::endl;
-  }
+#endif
 }
 
 uint32_t RateCtrl::rttEstUs() const { return estRTTUs; }
@@ -104,6 +118,11 @@ uint32_t RateCtrl::rttEstUs() const { return estRTTUs; }
 uint64_t RateCtrl::bwUpEst() const // in bits per second
 {
   return upstreamBwEst;
+}
+
+uint64_t RateCtrl::bwDownEst() const // in bits per second
+{
+    return downstreamBwEst;
 }
 
 uint64_t RateCtrl::bwUpTarget() const // in bits per second
@@ -145,12 +164,12 @@ uint64_t RateCtrl::bwDownTarget() const // in bits per second
 
 void RateCtrl::updatePhase() {
   auto timePointNow = std::chrono::steady_clock::now();
-  uint32_t cyleTimeUs =
+  uint32_t cycleTimeUs =
       (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(
           timePointNow - cycleStartTime)
           .count();
 
-  uint32_t newPhase = cyleTimeUs / phaseTimeUs;
+  uint32_t newPhase = cycleTimeUs / phaseTimeUs;
   if (newPhase >= numPhasePerCycle) {
     startNewPhase();
     startNewCycle();
@@ -176,8 +195,9 @@ void RateCtrl::startNewCycle() {
     estAckTimeUs = maxCycleAckTimeUs; // TODO - filter
   }
 
-  minCycleRTTUs = std::numeric_limits<uint32_t>::max();
-  maxCycleAckTimeUs = 0;
+  if ( cycleRelayTimeOffsetUs > 0 ) {
+      estRelayTimeOffsetUs = cycleRelayTimeOffsetUs;
+  }
 
   if (upstreamCycleMaxBw > 0.0) {
     upstreamBwEst = upstreamCycleMaxBw; // TODO - filter
@@ -187,22 +207,30 @@ void RateCtrl::startNewCycle() {
   if (cycleCount > 0) {
     std::clog << "Cycle"
               << " cycle:" << cycleCount
-              << " estRtt:" << float(estRTTUs) / 1000.0
-              << " maxAck:" << float(estAckTimeUs) / 1000.0
-              << " upstreamBwEst:" << float(upstreamBwEst) / 1e6
-              << " downstreamBwEst:" << float(downstreamBwEst) / 1e6
+              << " estRtt(ms):" << float(estRTTUs) / 1e3
+              << " maxAck(ms):" << float(estAckTimeUs) / 1e3
+              << " upstreamBwEst(mbps):" << float(upstreamBwEst) / 1e6
+              << " downstreamBwEst(mbps):" << float(downstreamBwEst) / 1e6
+              << " relayTimeOffset(ms):" << float(estRelayTimeOffsetUs) / 1e3
               << std::endl;
   }
 #endif
 
+    minCycleRTTUs = std::numeric_limits<uint32_t>::max();
+    maxCycleAckTimeUs = 0;
+
+    cycleRelayTimeOffsetUs = 0;
   upstreamCycleMaxBw = 0;
+  downstreamCycleMaxBw = 0;
+
   cycleStartTime = std::chrono::steady_clock::now();
   cycleCount++;
 }
 
-void RateCtrl::updateRTT(uint32_t valUs) {
+void RateCtrl::updateRTT(uint32_t valUs,  int32_t newRemoteTimeOffsetUs ) {
   if (valUs < minCycleRTTUs) {
     minCycleRTTUs = valUs;
+      cycleRelayTimeOffsetUs = newRemoteTimeOffsetUs;
   }
   if (valUs > maxCycleAckTimeUs) {
     maxCycleAckTimeUs = valUs;
@@ -275,7 +303,7 @@ void RateCtrl::estUpstreamBw() {
         lastTime -
         firstTime; // TODO - do anything special if too stop together ????
     bps =
-        float(bitsReceived) * float(1e6 /*converto seconds*/) / float(dTimeUs);
+        float(bitsReceived) * float(1e6 /*convert to seconds*/) / float(dTimeUs);
   }
 
 #if 0
@@ -295,18 +323,6 @@ void RateCtrl::estUpstreamBw() {
   updateUpstreamBwFilter(bps, upstreamPacketLossRate, 0.0 /*TODO*/);
 }
 
-void RateCtrl::updateUpstreamBwFilter(float bps, float /*lossRate*/,
-                                      float /* delayMs */) {
-  // TODO filter
-  if (bps > upstreamBwEst) {
-    upstreamBwEst = bps;
-  }
-
-  if (bps > upstreamCycleMaxBw) {
-    upstreamCycleMaxBw = bps;
-  }
-}
-
 void RateCtrl::recvPacket(uint32_t relaySeqNum, uint32_t remoteSendTimeMs,
                           uint32_t localRecvTimeUs, uint16_t sizeBits) {
   updatePhase();
@@ -319,13 +335,13 @@ void RateCtrl::recvPacket(uint32_t relaySeqNum, uint32_t remoteSendTimeMs,
             << std::endl;
 #endif
 
-  uint32_t absSeqDiff = (relaySeqNum > downHistorytSeqOffset)
-                            ? (relaySeqNum - downHistorytSeqOffset)
-                            : (downHistorytSeqOffset - relaySeqNum);
+  uint32_t absSeqDiff = (relaySeqNum > downHistorySeqOffset)
+                            ? (relaySeqNum - downHistorySeqOffset)
+                            : (downHistorySeqOffset - relaySeqNum);
 
   if (absSeqDiff > 5000) {
     // std::clog << "reset relay seq number history" << std::endl;
-    downHistorytSeqOffset = relaySeqNum;
+    downHistorySeqOffset = relaySeqNum;
     downstreamHistory.clear();
     downstreamHistory.reserve(10000);
   }
@@ -335,17 +351,17 @@ void RateCtrl::recvPacket(uint32_t relaySeqNum, uint32_t remoteSendTimeMs,
   // TODO - update info in upstream history
   assert(sizeBits > 0);
 
-  if (relaySeqNum < downHistorytSeqOffset) {
+  if (relaySeqNum < downHistorySeqOffset) {
     return;
   }
-  if (relaySeqNum - downHistorytSeqOffset >= downstreamHistory.size()) {
-    assert(relaySeqNum - downHistorytSeqOffset - downstreamHistory.size() <
+  if (relaySeqNum - downHistorySeqOffset >= downstreamHistory.size()) {
+    assert(relaySeqNum - downHistorySeqOffset - downstreamHistory.size() <
            10000);
 
-    downstreamHistory.resize(relaySeqNum - downHistorytSeqOffset + 1);
+    downstreamHistory.resize(relaySeqNum - downHistorySeqOffset + 1);
   }
   PacketDownstreamStatus &rec =
-      downstreamHistory.at(relaySeqNum - downHistorytSeqOffset);
+      downstreamHistory.at(relaySeqNum - downHistorySeqOffset);
 
   rec.relaySeqNum = relaySeqNum;
   rec.receiveTimeUs = localRecvTimeUs;
@@ -385,7 +401,7 @@ void RateCtrl::estDownstreamBw() {
   while (i != downstreamHistory.begin()) {
     i--;
 
-    if (i->notLost == true) {
+    if (i->notLost) {
       // ignore lost stuff as sendPhaseCount is not filled
 
       if (i->sendPhaseCount < prevPhaseCount) {
@@ -407,7 +423,7 @@ void RateCtrl::estDownstreamBw() {
       continue;
     }
 
-    if (i->notLost == false) {
+    if (!i->notLost) {
       // std::clog << "Lost  seq=" << i->relaySeqNum
       //          << " sph=" << i->sendPhaseCount << std::endl;
 
@@ -457,8 +473,15 @@ void RateCtrl::estDownstreamBw() {
   updateDownstreamBwFilter(bps, downstreamPacketLossRate, 0.0 /*TODO*/);
 }
 
-void RateCtrl::updateDownstreamBwFilter(float bps, float /*lossRate*/,
+void RateCtrl::updateDownstreamBwFilter(float bps, float lossRate,
                                         float /* delayMs */) {
+
+    if ( lossRate > 0.5F ) {
+        if ( downstreamBwEst * 0.5F  > bps ) {
+            downstreamBwEst = downstreamBwEst * 0.5F;
+        }
+    }
+
   // TODO filter
   if (bps > downstreamBwEst) {
     downstreamBwEst = bps;
@@ -468,3 +491,25 @@ void RateCtrl::updateDownstreamBwFilter(float bps, float /*lossRate*/,
     downstreamCycleMaxBw = bps;
   }
 }
+
+
+void RateCtrl::updateUpstreamBwFilter(float bps, float lossRate,
+                                      float /* delayMs */) {
+
+    if ( lossRate > 0.5F ) {
+        if ( upstreamBwEst * 0.5F  > bps ) {
+            upstreamBwEst = upstreamBwEst * 0.5F;
+        }
+    }
+
+    // TODO filter
+    if (bps > upstreamBwEst) {
+        upstreamBwEst = bps;
+    }
+
+    if (bps > upstreamCycleMaxBw) {
+        upstreamCycleMaxBw = bps;
+    }
+}
+
+
