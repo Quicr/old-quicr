@@ -18,7 +18,7 @@
 using namespace MediaNet;
 
 QuicRClient::QuicRClient()
-    : udpPipe(), crazyBitPipe(&udpPipe), connectionPipe(&crazyBitPipe),
+    : udpPipe(), fakeLossPipe(&udpPipe), crazyBitPipe(&fakeLossPipe), connectionPipe(&crazyBitPipe),
       pacerPipe(&connectionPipe), priorityPipe(&pacerPipe),
       retransmitPipe(&priorityPipe), fecPipe(&retransmitPipe),
       subscribePipe(&fecPipe), fragmentPipe(&subscribePipe),

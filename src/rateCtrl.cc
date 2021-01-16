@@ -16,13 +16,14 @@ using namespace MediaNet;
 RateCtrl::RateCtrl()
     : upHistorySeqOffset(0), downHistorySeqOffset(0), phase(0), bitsSentThisPhase(0), cycleCount(0),
       minCycleRTTUs(std::numeric_limits<uint32_t>::max()), maxCycleAckTimeUs(0),
-      estRTTUs(100 * 1000), estAckTimeUs(100 * 1000), estRelayTimeOffsetUs(0),
+      estRTTUs(100 * 1000), estAckTimeUs(100 * 1000),
+      cycleRelayTimeOffsetUs(0),
+      estRelayTimeOffsetUs(0),
       upstreamPacketLossRate(0),
       upstreamCycleMaxBw(0), upstreamBwEst(1000 * 1000) ,
       downstreamPacketLossRate(0.0),
       downstreamCycleMaxBw(0),
       downstreamBwEst(1000 * 1000)
-
       {
           upstreamHistory.clear();
           upstreamHistory.reserve(100); // TODO limit length of history

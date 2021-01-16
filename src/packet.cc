@@ -46,6 +46,12 @@ void Packet::copy(const Packet &p) {
   useFEC = p.useFEC;
 }
 
+std::unique_ptr<Packet> Packet::clone() const {
+    std::unique_ptr<Packet> p = std::make_unique<Packet>();;
+    p->copy( *this );
+    return p;
+}
+
 bool IpAddr::operator<(const IpAddr &rhs) const {
   assert(this->addr.sin_family == AF_INET);
   assert(rhs.addr.sin_family == AF_INET);
@@ -63,6 +69,7 @@ bool IpAddr::operator<(const IpAddr &rhs) const {
   }
   return false;
 }
+
 std::string IpAddr::toString(const IpAddr &ipAddr) {
   char str[INET_ADDRSTRLEN];
   inet_ntop(AF_INET, &(ipAddr.addr.sin_addr), str, sizeof(str));
@@ -73,3 +80,4 @@ std::string IpAddr::toString(const IpAddr &ipAddr) {
 
   return ret;
 }
+

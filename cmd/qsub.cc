@@ -36,13 +36,13 @@ int main(int argc, char *argv[]) {
   do {
     auto packet = qClient.recv();
     if (!packet) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      std::this_thread::sleep_for(std::chrono::milliseconds(5));
       continue;
     }
 
     // std::clog << "bufSz=" << packet->buffer.size() << std::endl;
     numRecv++;
-  } while (numRecv < 100000);
+  } while (numRecv < 100 * 1000);
 
   return 0;
 }

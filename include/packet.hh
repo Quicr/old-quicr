@@ -16,6 +16,7 @@
 namespace MediaNet {
 
 class UdpPipe;
+class FecPipe;
 class QRelay;
 class QuicRClient;
 
@@ -29,6 +30,7 @@ struct IpAddr {
 
 class Packet {
   friend UdpPipe;
+  friend FecPipe;
   friend QRelay;
   friend QuicRClient;
 
@@ -61,6 +63,8 @@ public:
   void setSrc(const IpAddr &src);
   const IpAddr &getDst() const;
   void setDst(const IpAddr &dst);
+
+  [[nodiscard]] std::unique_ptr<Packet> clone() const;
 
 private:
   MediaNet::Packet::ShortName name;

@@ -17,6 +17,7 @@
 #include "retransmitPipe.hh"
 #include "subscribePipe.hh"
 #include "udpPipe.hh"
+#include "fakeLossPipe.hh"
 
 namespace MediaNet {
 
@@ -54,6 +55,7 @@ public:
 
 private:
   UdpPipe udpPipe;
+  FakeLossPipe fakeLossPipe;
   CrazyBitPipe crazyBitPipe;
   ConnectionPipe connectionPipe;
   PacerPipe pacerPipe;
