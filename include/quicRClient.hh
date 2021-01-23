@@ -8,6 +8,7 @@
 #include "connectionPipe.hh"
 #include "crazyBitPipe.hh"
 #include "encryptPipe.hh"
+#include "fakeLossPipe.hh"
 #include "fecPipe.hh"
 #include "fragmentPipe.hh"
 #include "pacerPipe.hh"
@@ -17,7 +18,6 @@
 #include "retransmitPipe.hh"
 #include "subscribePipe.hh"
 #include "udpPipe.hh"
-#include "fakeLossPipe.hh"
 
 namespace MediaNet {
 

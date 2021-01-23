@@ -30,8 +30,7 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
 
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetSeqNumTag &msg) {
   if (nextTag(p) != PacketTag::clientSeqNum) {
-    std::cerr << "Did not find expected PacketTag::clientSeqNum"
-              << std::endl;
+    std::cerr << "Did not find expected PacketTag::clientSeqNum" << std::endl;
     return false;
   }
 

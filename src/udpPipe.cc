@@ -127,11 +127,11 @@ std::unique_ptr<Packet> UdpPipe::recv() {
       // timeout on read
       return std::unique_ptr<Packet>(nullptr);
     } else {
-        if (fd!=0) {
-            std::cerr << "reading from UDP socket got error: " << strerror(e)
-                      << std::endl;
-        }
-      //assert(0); // TODO
+      if (fd != 0) {
+        std::cerr << "reading from UDP socket got error: " << strerror(e)
+                  << std::endl;
+      }
+      // assert(0); // TODO
       return std::unique_ptr<Packet>(nullptr);
     }
 #endif
