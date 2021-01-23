@@ -10,3 +10,24 @@
 using namespace MediaNet;
 
 SubscribePipe::SubscribePipe(PipeInterface *t) : PipeInterface(t) {}
+
+bool SubscribePipe::subscribe(Packet::ShortName name) {
+
+    subscribeList.push_back( name );
+
+    // send subscribe packet
+    auto packet = std::make_unique<Packet>();
+    packet->buffer.reserve(100 ); // TODO tune
+    packet << PacketTag::headerMagicData;
+    packet << name;
+    packet << PacketTag::shortName;
+
+    packet->enableFEC(true);
+    packet->setReliable( true);
+
+    downStream->send(move(packet));
+
+    // TODO thread to re-send subscribe list every second
+
+    return true;
+}

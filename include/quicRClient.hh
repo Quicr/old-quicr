@@ -33,14 +33,18 @@ public:
   virtual bool ready() const;
   virtual void close();
 
-  void setEncryptionKey(std::vector<uint8_t> salt, std::vector<uint8_t> key,
+  /*
+   * void setEncryptionKey(std::vector<uint8_t> salt, std::vector<uint8_t> key,
                         int authTagLen);
   void setDecryptionKey(uint32_t clientID, std::vector<uint8_t> salt,
                         std::vector<uint8_t> key);
+  */
 
   virtual std::unique_ptr<Packet> createPacket(const Packet::ShortName &name,
                                                int reservedPayloadSize = 1200);
   virtual bool publish(std::unique_ptr<Packet>);
+
+  bool subscribe( Packet::ShortName );
 
   /// non blocking, return nullptr if no buffer
   virtual std::unique_ptr<Packet> recv();

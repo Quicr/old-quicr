@@ -85,6 +85,7 @@ int main(int argc, char *argv[]) {
 
     assert(bytesPerPacket - headerBytes > 1);
     packet->resize(bytesPerPacket - headerBytes);
+    //packet->resize( 1 );
     uint8_t *buffer = &(packet->data());
     *buffer++ = 1;
 

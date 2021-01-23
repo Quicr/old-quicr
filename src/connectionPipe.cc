@@ -29,7 +29,7 @@ bool ConnectionPipe::start(const uint16_t port, const std::string server,
   // packet << PacketTag::extraMagicVer1;
   // packet << PacketTag::extraMagicVer2;
 
-  NetSynReq synReq;
+  NetSyncReq synReq;
   synReq.clientTimeMs = 0; // TODO
   synReq.senderId = senderID;
   synReq.versionVec = 1;

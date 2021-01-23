@@ -74,3 +74,7 @@ QuicRClient::createPacket(const Packet::ShortName &shortName,
 
   return packet;
 }
+
+bool QuicRClient::subscribe(Packet::ShortName name) {
+    return subscribePipe.subscribe( name );
+}

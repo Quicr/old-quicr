@@ -20,15 +20,38 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   return p;
 }
 
+bool operator>>(std::unique_ptr<Packet> &p, Packet::ShortName  &msg)
+{
+    if (nextTag(p) != PacketTag::shortName) {
+        std::cerr << "Did not find expected PacketTag::shortName" << std::endl;
+        return false;
+    }
+
+    PacketTag tag = PacketTag::none;
+    bool ok = true;
+    ok &= p >> tag;
+    ok &= p >> msg.fragmentID;
+    ok &= p >> msg.mediaTime;
+    ok &= p >> msg.sourceID;
+    ok &= p >> msg.senderID;
+    ok &= p >> msg.resourceID;
+
+    if (!ok) {
+        std::cerr << "problem parsing shortName" << std::endl;
+    }
+
+    return ok;
+}
+
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const NetSeqNumTag &msg) {
-  p << msg.netSeqNum;
+                                              const NetClientSeqNum &msg) {
+  p << msg.clientSeqNum;
   p << PacketTag::clientSeqNum;
 
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetSeqNumTag &msg) {
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetClientSeqNum &msg) {
   if (nextTag(p) != PacketTag::clientSeqNum) {
     std::cerr << "Did not find expected PacketTag::clientSeqNum" << std::endl;
     return false;
@@ -37,10 +60,10 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetSeqNumTag &msg) {
   PacketTag tag = PacketTag::none;
   bool ok = true;
   ok &= p >> tag;
-  ok &= p >> msg.netSeqNum;
+  ok &= p >> msg.clientSeqNum;
 
   if (!ok) {
-    std::cerr << "problem parsing NetSeqNumTag" << std::endl;
+    std::cerr << "problem parsing NetClientSeqNum" << std::endl;
   }
 
   return ok;
@@ -82,7 +105,7 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRelaySeqNum &msg) {
 /********* ACK TAG ***************/
 
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const NetAckTag &msg) {
+                                              const NetAck &msg) {
   p << msg.netAckSeqNum;
   p << msg.netRecvTimeUs;
   p << PacketTag::ack;
@@ -90,7 +113,7 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetAckTag &msg) {
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetAck &msg) {
   if (nextTag(p) != PacketTag::ack) {
     // std::cerr << "Did not find expected PacketTag::ack" << std::endl;
     return false;
@@ -103,7 +126,7 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetAckTag &msg) {
   ok &= p >> msg.netAckSeqNum;
 
   if (!ok) {
-    std::cerr << "problem parsing NetAckTag" << std::endl;
+    std::cerr << "problem parsing NetAck" << std::endl;
   }
 
   return ok;
@@ -302,7 +325,7 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, uint8_t &val) {
 }
 
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const NetSynReq &msg) {
+                                              const NetSyncReq &msg) {
   p << msg.senderId;
   p << msg.clientTimeMs;
   p << msg.versionVec;

@@ -100,7 +100,7 @@ void PacerPipe::runNetSend() {
       // packet << PacketTag::extraMagicVer2;
 
       NetRateReq rateReq;
-      rateReq.bitrateKbps = rateCtrl.bwDownTarget() / 1000; // TODO
+      rateReq.bitrateKbps = toVarInt( rateCtrl.bwDownTarget() / 1000); // TODO
       packet << rateReq;
 
       // std::clog << "Send Rate Req" << std::endl;
@@ -122,9 +122,9 @@ void PacerPipe::runNetSend() {
       sendQ.pop();
     }
 
-    NetSeqNumTag seqTag;
+    NetClientSeqNum seqTag;
     static uint32_t nextSeqNum = 0; // TODO - add mutex etc
-    seqTag.netSeqNum = toVarInt(nextSeqNum++);
+    seqTag.clientSeqNum = (nextSeqNum++);
     packet << seqTag;
 
     std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
@@ -139,7 +139,7 @@ void PacerPipe::runNetSend() {
 
     downStream->send(move(packet));
 
-    rateCtrl.sendPacket( fromVarInt(seqTag.netSeqNum) , nowUs, bits);
+    rateCtrl.sendPacket((seqTag.clientSeqNum) , nowUs, bits);
 
     // std::clog << ">";
   }
@@ -163,7 +163,7 @@ void PacerPipe::runNetRecv() {
 
     while (nextTag(packet) ==
            PacketTag::ack) { // TODO - move to if and allow only one
-      NetAckTag ackTag{};
+      NetAck ackTag{};
       packet >> ackTag;
       rateCtrl.recvAck(ackTag.netAckSeqNum, ackTag.netRecvTimeUs, nowUs);
       nowUs = 0; // trash receive time for lost ACKs (all but first)
