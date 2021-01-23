@@ -124,7 +124,7 @@ void PacerPipe::runNetSend() {
 
     NetSeqNumTag seqTag;
     static uint32_t nextSeqNum = 0; // TODO - add mutex etc
-    seqTag.netSeqNum = nextSeqNum++;
+    seqTag.netSeqNum = toVarInt(nextSeqNum++);
     packet << seqTag;
 
     std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
@@ -139,7 +139,7 @@ void PacerPipe::runNetSend() {
 
     downStream->send(move(packet));
 
-    rateCtrl.sendPacket(seqTag.netSeqNum, nowUs, bits);
+    rateCtrl.sendPacket( fromVarInt(seqTag.netSeqNum) , nowUs, bits);
 
     // std::clog << ">";
   }

@@ -339,3 +339,110 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRateReq &msg) {
 
   return ok;
 }
+
+
+std::unique_ptr<Packet>& MediaNet::operator<<(std::unique_ptr<Packet> &p, uintVar_t v)
+{
+    uint64_t val = fromVarInt(v);
+
+    assert( val < ( (uint64_t)1<<61) );
+
+    if ( val <= ((uint64_t)1<<7) ) {
+        p->buffer.push_back(uint8_t( ((val >> 0) & 0x7F)) | 0x00 );
+        return p;
+    }
+
+    if ( val <= ((uint64_t)1<<14) ) {
+        p->buffer.push_back(uint8_t((val >> 0) & 0xFF));
+        p->buffer.push_back(uint8_t( ((val >> 8) & 0x3F) | 0x80 ) );
+        return p;
+    }
+
+    if ( val <= ((uint64_t)1<<29) ) {
+        p->buffer.push_back(uint8_t((val >> 0) & 0xFF));
+        p->buffer.push_back(uint8_t((val >> 8) & 0xFF));
+        p->buffer.push_back(uint8_t((val >> 16) & 0xFF));
+        p->buffer.push_back(uint8_t( ((val >> 24) & 0x1F) | 0x80 | 0x40 ) );
+        return p;
+    }
+
+    p->buffer.push_back(uint8_t((val >> 0) & 0xFF));
+    p->buffer.push_back(uint8_t((val >> 8) & 0xFF));
+    p->buffer.push_back(uint8_t((val >> 16) & 0xFF));
+    p->buffer.push_back(uint8_t((val >> 24) & 0xFF));
+    p->buffer.push_back(uint8_t((val >> 32) & 0xFF));
+    p->buffer.push_back(uint8_t((val >> 40) & 0xFF));
+    p->buffer.push_back(uint8_t((val >> 48) & 0xFF));
+    p->buffer.push_back(uint8_t( ((val >> 56) & 0x0F) | 0x80 | 0x40 | 0x20 ) );
+
+    return p;
+}
+
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p, uintVar_t &v) {
+    uint8_t byte[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    bool ok = true;
+
+    if (p->buffer.empty()) {
+        return false;
+    }
+    uint8_t first = p->buffer.back();
+
+    if ((first & (0x80)) == 0 ) {
+        ok &= p >> byte[0];
+        uint8_t val = ( (byte[0]& 0x7F) << 0);
+        v = toVarInt(val);
+        return ok;
+    }
+
+    if ((first & (0x80 | 0x40)) == 0x80) {
+        ok &= p >> byte[1];
+        ok &= p >> byte[0];
+        uint16_t val = ( ( (uint16_t)byte[1] & 0x3F) << 8)
+                        + ( (uint16_t)byte[0] << 0);
+        v = toVarInt(val);
+        return ok;
+    }
+
+    if ((first & (0x80 | 0x40 | 0x20) ) == (0x80|0x40) ) {
+        ok &= p >> byte[3];
+        ok &= p >> byte[2];
+        ok &= p >> byte[1];
+        ok &= p >> byte[0];
+        uint32_t val = ( (uint32_t)(byte[3] & 0x1F) << 24)
+                + ( (uint32_t)byte[2] << 16)
+                + ( (uint32_t)byte[1] << 8)
+                + ( (uint32_t)byte[0] << 0);
+        v = toVarInt(val);
+        return ok;
+    }
+
+    ok &= p >> byte[7];
+    ok &= p >> byte[6];
+    ok &= p >> byte[5];
+    ok &= p >> byte[4];
+    ok &= p >> byte[3];
+    ok &= p >> byte[2];
+    ok &= p >> byte[1];
+    ok &= p >> byte[0];
+    uint64_t val = ( (uint64_t)(byte[3] & 0x0F) << 56)
+            + ((uint64_t)(byte[2]) << 48)
+            + ((uint64_t)(byte[1]) << 40)
+            + ((uint64_t)(byte[0]) << 32)
+            + ((uint64_t)(byte[2]) << 24)
+            + ((uint64_t)(byte[2]) << 16)
+            + ((uint64_t)(byte[1]) << 8)
+            + ( (uint64_t)(byte[0]) << 0);
+    v = toVarInt(val);
+    return ok;
+}
+
+uintVar_t MediaNet::toVarInt( uint64_t v)
+{
+    assert( v < ( (uint64_t)0x1 <<61 ));
+    return static_cast<uintVar_t>(v);
+}
+
+uint64_t MediaNet::fromVarInt(  uintVar_t v )
+{
+    return static_cast<uint64_t >(v);
+}

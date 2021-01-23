@@ -19,7 +19,11 @@ bool operator>>(std::unique_ptr<Packet> &p, uint32_t &val);
 bool operator>>(std::unique_ptr<Packet> &p, uint16_t &val);
 bool operator>>(std::unique_ptr<Packet> &p, uint8_t &val);
 
-// enum class uintVar_t : uint64_t {};
+enum class uintVar_t : uint64_t {};
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uintVar_t val);
+bool operator>>(std::unique_ptr<Packet> &p, uintVar_t &val);
+uintVar_t toVarInt( uint64_t );
+uint64_t fromVarInt(  uintVar_t );
 
 enum struct PacketTag : uint32_t;
 
@@ -130,7 +134,7 @@ struct NetRedirect4RResp {
 */
 
 struct NetSeqNumTag {
-  uint32_t netSeqNum; // TODO - fix name
+  uintVar_t netSeqNum; // TODO - fix name
 };
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const NetSeqNumTag &msg);
