@@ -16,7 +16,7 @@ bool FakeLossPipe::send(std::unique_ptr<Packet> packet) {
 
   upstreamCount++;
   if (upstreamCount % 11 == 5) {
-    return true;
+    //return true;
   }
 
   return downStream->send(move(packet));
@@ -30,7 +30,7 @@ std::unique_ptr<Packet> FakeLossPipe::recv() {
   if (packet) {
     downStreamCount++;
     if (downStreamCount % 13 == 7) {
-      return std::unique_ptr<Packet>(nullptr);
+      //return std::unique_ptr<Packet>(nullptr);
     }
   }
 
