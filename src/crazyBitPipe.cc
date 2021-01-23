@@ -19,15 +19,15 @@ bool CrazyBitPipe::send(std::unique_ptr<Packet> packet) {
 }
 
 std::unique_ptr<Packet> CrazyBitPipe::recv() {
-    assert(downStream);
-    std::unique_ptr<Packet> packet = downStream->recv();
-    if ( !packet ) {
-        return packet;
-    }
-
-    // clear the spin bit in first byte of incoming packet
-    assert( packet->buffer.size() >= 1 );
-    packet->buffer[0] &= 0xFE;
-
+  assert(downStream);
+  std::unique_ptr<Packet> packet = downStream->recv();
+  if (!packet) {
     return packet;
+  }
+
+  // clear the spin bit in first byte of incoming packet
+  assert(packet->buffer.size() >= 1);
+  packet->buffer[0] &= 0xFE;
+
+  return packet;
 }

@@ -18,8 +18,8 @@ public:
   virtual std::unique_ptr<Packet> recv();
 
 private:
-     int upstreamCount;
-     int downStreamCount;
+  int upstreamCount;
+  int downStreamCount;
 };
 
 } // namespace MediaNet

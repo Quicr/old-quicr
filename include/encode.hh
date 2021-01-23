@@ -9,11 +9,27 @@ using namespace MediaNet;
 
 namespace MediaNet {
 
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint64_t val);
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint32_t val);
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint16_t val);
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint8_t val);
+
+bool operator>>(std::unique_ptr<Packet> &p, uint64_t &val);
+bool operator>>(std::unique_ptr<Packet> &p, uint32_t &val);
+bool operator>>(std::unique_ptr<Packet> &p, uint16_t &val);
+bool operator>>(std::unique_ptr<Packet> &p, uint8_t &val);
+
+enum class uintVar_t : uint64_t {};
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uintVar_t val);
+bool operator>>(std::unique_ptr<Packet> &p, uintVar_t &val);
+uintVar_t toVarInt( uint64_t );
+uint64_t fromVarInt(  uintVar_t );
+
 enum struct PacketTag : uint32_t;
 
 constexpr unsigned int packetTagGen(unsigned int val, unsigned int len,
-                                    bool mti) {
-  (void)mti;
+                                    bool mandToUnderstand) {
+  (void)mandToUnderstand;
   return (val << 8) + len;
 }
 constexpr uint16_t packetTagTruc(MediaNet::PacketTag tag) {
@@ -22,20 +38,22 @@ constexpr uint16_t packetTagTruc(MediaNet::PacketTag tag) {
   return (uint16_t)t;
 }
 
-/*
- * If you add a tag, remember to to update MediaNet::nextTag decoder
- * A length of 255 in packerTagGen means variable length data
- * */
 enum struct PacketTag : uint32_t {
+  /*
+   * If you add a tag, remember to to update MediaNet::nextTag decoder
+   * A length of 255 in packerTagGen means variable length data
+   * */
+
   none = packetTagGen(0, 0, true), // must be smallest tag
 
   appData = packetTagGen(1, 255, true),
-  transportSeqNum = packetTagGen(2, 4, true), // make part of appData ???
+  clientSeqNum = packetTagGen(2, 4, true), // make part of appData ???
   ack = packetTagGen(3, 255, true),
-  syn = packetTagGen(4, 255, true),
+  sync = packetTagGen(4, 255, true),
   shortName = packetTagGen(5, 4, true),
   relaySeqNum = packetTagGen(7, 4, true),
   relayRateReq = packetTagGen(6, 4, true),
+  subscribeReq = packetTagGen(8, 0, true),
 
   // TODO - Could add nextReservedCodePoints of various lengths and MTI
 
@@ -48,38 +66,44 @@ enum struct PacketTag : uint32_t {
   headerMagicRstCrazy = packetTagGen(23, 0, true),
 
   extraMagicVer1 = packetTagGen(12538, 0, false),
-  extraMagicVer2 = packetTagGen(8723, 0, false),
 
-  badTag = packetTagGen(10000, 1,
+  badTag = packetTagGen(16383, 0,
                         true), // must not have any tag values greater than this
 };
 
-/*
- * The on the wire starts with Req or Responce (based on client /
- * server direction) or a NetMediaHeader.  After a NetMediaHeader that
- * can be any number of Payload types.  After that there can be any
- * number of Tags. When client starts, it does the Nonce Req,Resp,
- * Auth Req, Respone dance to elimiate reflection attacks.
- */
+PacketTag nextTag(std::unique_ptr<Packet> &p);
+bool operator>>(std::unique_ptr<Packet> &p, PacketTag &tag);
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, PacketTag tag);
+
+
+/* ShortName */
 
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const Packet::ShortName &msg);
+bool operator>>(std::unique_ptr<Packet> &p, Packet::ShortName  &msg);
 
-struct NetSynReq {
+/* SYNC Request */
+
+struct NetSyncReq {
   uint32_t senderId;
   uint64_t clientTimeMs;
   uint64_t versionVec;
 };
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
-                                    const NetSynReq &msg);
-bool operator>>(std::unique_ptr<Packet> &p, NetSynReq &msg);
+                                    const NetSyncReq &msg);
+bool operator>>(std::unique_ptr<Packet> &p, NetSyncReq &msg);
+
+
+/* Rate Request */
 
 struct NetRateReq {
-  uint32_t bitrateKbps; // in kilo bits pers second - TODO make var int
+  uintVar_t bitrateKbps; // in kilo bits pers second
 };
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const NetRateReq &msg);
 bool operator>>(std::unique_ptr<Packet> &p, NetRateReq &msg);
+
+
 
 /*
  * struct NetNonceReq {
@@ -105,19 +129,21 @@ struct NetAuthResp {
 /*
 struct NetRedirect4RResp {
   // no souceId as sent from server
-  uint32_t netSeqNum;
+  uint32_t clientSeqNum;
   uint64_t clientToken;
   uint32_t ipAddr;
   uint16_t port;
 };
 */
 
-struct NetSeqNumTag {
-  uint32_t netSeqNum; // TODO - fix
+struct NetClientSeqNum {
+  uint32_t clientSeqNum;
 };
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
-                                    const NetSeqNumTag &msg);
-bool operator>>(std::unique_ptr<Packet> &p, NetSeqNumTag &msg);
+                                    const NetClientSeqNum &msg);
+bool operator>>(std::unique_ptr<Packet> &p, NetClientSeqNum &msg);
+
+
 
 struct NetRelaySeqNum {
   uint32_t relaySeqNum;
@@ -127,14 +153,16 @@ std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const NetRelaySeqNum &msg);
 bool operator>>(std::unique_ptr<Packet> &p, NetRelaySeqNum &msg);
 
-struct NetAckTag {
+
+
+struct NetAck {
   // todo - add ack and ECN vectors
   uint32_t netAckSeqNum;
   uint32_t netRecvTimeUs;
 };
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
-                                    const NetAckTag &msg);
-bool operator>>(std::unique_ptr<Packet> &p, NetAckTag &msg);
+                                    const NetAck &msg);
+bool operator>>(std::unique_ptr<Packet> &p, NetAck &msg);
 
 /*
 struct NetMsgSubReq {
@@ -180,26 +208,12 @@ struct NetMsgClientStats {
   uint32_t numBytesSent;
 
   uint16_t rttEstMs;
-  uint32_t upstreamBandwithEstBps;
-  uint32_t dowsteamBandwithEstBps;
+  uint32_t upstreamBandwidthEstBps;
+  uint32_t downstreamBandwidthEstBps;
 
   uint32_t reserved1;
   uint32_t reserved2;
 };
 */
-
-PacketTag nextTag(std::unique_ptr<Packet> &p);
-bool operator>>(std::unique_ptr<Packet> &p, PacketTag &tag);
-
-std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint64_t val);
-std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint32_t val);
-std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint16_t val);
-std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint8_t val);
-std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, PacketTag tag);
-
-bool operator>>(std::unique_ptr<Packet> &p, uint64_t &val);
-bool operator>>(std::unique_ptr<Packet> &p, uint32_t &val);
-bool operator>>(std::unique_ptr<Packet> &p, uint16_t &val);
-bool operator>>(std::unique_ptr<Packet> &p, uint8_t &val);
 
 } // namespace MediaNet

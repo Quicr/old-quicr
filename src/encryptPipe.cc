@@ -14,9 +14,9 @@ EncryptPipe::EncryptPipe(PipeInterface *t) : PipeInterface(t) {}
 bool EncryptPipe::send(std::unique_ptr<Packet> packet) {
 
   // TODO encrypt packet and add auth tag
-  // The message at this point has the shortName followed by the data in the buffer
-  // use the shortname to lookup key for sender and form the IV
-  // encrypt with this key and add auth data
+  // The message at this point has the shortName followed by the data in the
+  // buffer use the shortname to lookup key for sender and form the IV encrypt
+  // with this key and add auth data
 
   assert(downStream);
   return downStream->send(move(packet));

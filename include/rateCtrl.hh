@@ -68,7 +68,7 @@ private:
   std::chrono::steady_clock::time_point cycleStartTime;
   uint32_t cycleCount;
 
-  void updateRTT(uint32_t valUs, int32_t remoteTimeOffsetUs );
+  void updateRTT(uint32_t valUs, int32_t remoteTimeOffsetUs);
   uint32_t minCycleRTTUs;
   uint32_t maxCycleAckTimeUs;
   uint32_t estRTTUs;

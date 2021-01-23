@@ -18,12 +18,12 @@
 using namespace MediaNet;
 
 QuicRClient::QuicRClient()
-    : udpPipe(), fakeLossPipe(&udpPipe), crazyBitPipe(&fakeLossPipe), connectionPipe(&crazyBitPipe),
-      pacerPipe(&connectionPipe), priorityPipe(&pacerPipe),
-      retransmitPipe(&priorityPipe), fecPipe(&retransmitPipe),
-      subscribePipe(&fecPipe), fragmentPipe(&subscribePipe),
-      encryptPipe(&fragmentPipe), firstPipe(&encryptPipe), pubClientID(0),
-      secToken(0) {}
+    : udpPipe(), fakeLossPipe(&udpPipe), crazyBitPipe(&fakeLossPipe),
+      connectionPipe(&crazyBitPipe), pacerPipe(&connectionPipe),
+      priorityPipe(&pacerPipe), retransmitPipe(&priorityPipe),
+      fecPipe(&retransmitPipe), subscribePipe(&fecPipe),
+      fragmentPipe(&subscribePipe), encryptPipe(&fragmentPipe),
+      firstPipe(&encryptPipe), pubClientID(0), secToken(0) {}
 
 QuicRClient::~QuicRClient() { close(); }
 
@@ -73,4 +73,8 @@ QuicRClient::createPacket(const Packet::ShortName &shortName,
   packet->headerSize = packet->buffer.size();
 
   return packet;
+}
+
+bool QuicRClient::subscribe(Packet::ShortName name) {
+    return subscribePipe.subscribe( name );
 }

@@ -47,9 +47,10 @@ void Packet::copy(const Packet &p) {
 }
 
 std::unique_ptr<Packet> Packet::clone() const {
-    std::unique_ptr<Packet> p = std::make_unique<Packet>();;
-    p->copy( *this );
-    return p;
+  std::unique_ptr<Packet> p = std::make_unique<Packet>();
+  ;
+  p->copy(*this);
+  return p;
 }
 
 bool IpAddr::operator<(const IpAddr &rhs) const {
@@ -80,4 +81,3 @@ std::string IpAddr::toString(const IpAddr &ipAddr) {
 
   return ret;
 }
-
