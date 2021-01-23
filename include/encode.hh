@@ -12,8 +12,8 @@ namespace MediaNet {
 enum struct PacketTag : uint32_t;
 
 constexpr unsigned int packetTagGen(unsigned int val, unsigned int len,
-                                    bool mti) {
-  (void)mti;
+                                    bool mandToUnderstand) {
+  (void)mandToUnderstand;
   return (val << 8) + len;
 }
 constexpr uint16_t packetTagTruc(MediaNet::PacketTag tag) {
@@ -30,9 +30,9 @@ enum struct PacketTag : uint32_t {
   none = packetTagGen(0, 0, true), // must be smallest tag
 
   appData = packetTagGen(1, 255, true),
-  transportSeqNum = packetTagGen(2, 4, true), // make part of appData ???
+  clientSeqNum = packetTagGen(2, 4, true), // make part of appData ???
   ack = packetTagGen(3, 255, true),
-  syn = packetTagGen(4, 255, true),
+  sync = packetTagGen(4, 255, true),
   shortName = packetTagGen(5, 4, true),
   relaySeqNum = packetTagGen(7, 4, true),
   relayRateReq = packetTagGen(6, 4, true),
@@ -48,9 +48,8 @@ enum struct PacketTag : uint32_t {
   headerMagicRstCrazy = packetTagGen(23, 0, true),
 
   extraMagicVer1 = packetTagGen(12538, 0, false),
-  extraMagicVer2 = packetTagGen(8723, 0, false),
 
-  badTag = packetTagGen(10000, 1,
+  badTag = packetTagGen(16383, 0,
                         true), // must not have any tag values greater than this
 };
 

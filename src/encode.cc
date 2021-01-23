@@ -23,14 +23,14 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const NetSeqNumTag &msg) {
   p << msg.netSeqNum;
-  p << PacketTag::transportSeqNum;
+  p << PacketTag::clientSeqNum;
 
   return p;
 }
 
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetSeqNumTag &msg) {
-  if (nextTag(p) != PacketTag::transportSeqNum) {
-    std::cerr << "Did not find expected PacketTag::transportSeqNum"
+  if (nextTag(p) != PacketTag::clientSeqNum) {
+    std::cerr << "Did not find expected PacketTag::clientSeqNum"
               << std::endl;
     return false;
   }
@@ -126,15 +126,15 @@ PacketTag MediaNet::nextTag(std::unique_ptr<Packet> &p) {
   case packetTagTruc(PacketTag::appData):
     tag = PacketTag::appData;
     break;
-  case packetTagTruc(PacketTag::transportSeqNum):
-    tag = PacketTag::transportSeqNum;
+  case packetTagTruc(PacketTag::clientSeqNum):
+    tag = PacketTag::clientSeqNum;
     break;
   case packetTagTruc(PacketTag::ack):
     tag = PacketTag::ack;
     break;
 
-  case packetTagTruc(PacketTag::syn):
-    tag = PacketTag::syn;
+  case packetTagTruc(PacketTag::sync):
+    tag = PacketTag::sync;
     break;
   case packetTagTruc(PacketTag::shortName):
     tag = PacketTag::shortName;
@@ -308,7 +308,7 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   p << msg.clientTimeMs;
   p << msg.versionVec;
 
-  p << PacketTag::syn;
+  p << PacketTag::sync;
 
   return p;
 }

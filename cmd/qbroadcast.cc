@@ -37,7 +37,7 @@ void BroadcastRelay::process() {
     return;
   }
 
-  if (nextTag(packet) == PacketTag::transportSeqNum) {
+  if (nextTag(packet) == PacketTag::clientSeqNum) {
     processPub(packet);
     return;
   }
