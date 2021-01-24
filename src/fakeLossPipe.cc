@@ -16,7 +16,7 @@ bool FakeLossPipe::send(std::unique_ptr<Packet> packet) {
 
   upstreamCount++;
   if (upstreamCount % 11 == 5) {
-    //return true;
+    return true; // TODO remove
   }
 
   return downStream->send(move(packet));

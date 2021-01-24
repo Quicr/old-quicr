@@ -61,15 +61,11 @@ int main(int argc, char *argv[]) {
         bitRate = maxBitRete;
     }
 
-#if 0
-    bitRate = 2*1000*1000; // TODO remove
-#endif
-
     uint64_t bytesPerPacket64 = (bitRate / packetsPerSecond) / 8;
     uint32_t bytesPerPacket = (uint32_t)bytesPerPacket64;
 
-    if (bytesPerPacket <= headerBytes) {
-      bytesPerPacket = headerBytes + 1;
+    if (bytesPerPacket < headerBytes+2) {
+      bytesPerPacket = headerBytes + 2;
       std::clog << "Warning bitrate too low for packet rate" << std::endl;
     }
     if (bytesPerPacket > 1200) {
@@ -83,15 +79,16 @@ int main(int argc, char *argv[]) {
     name.mediaTime = packetCount;
     auto packet = qClient.createPacket(name);
 
-    assert(bytesPerPacket - headerBytes > 1);
+    assert(bytesPerPacket - headerBytes >= 1);
     packet->resize(bytesPerPacket - headerBytes);
-    //packet->resize( 1 );
+
     uint8_t *buffer = &(packet->data());
     *buffer++ = 1;
 
-    packet->enableFEC(true );
+      packet->enableFEC(false );
+      packet->setReliable(true );
 
-    qClient.publish(move(packet));
+      qClient.publish(move(packet));
 
     // empty the receive queue
     do {

@@ -9,22 +9,25 @@
 
 using namespace MediaNet;
 
-RetransmitPipe::RetransmitPipe(PipeInterface *t) : PipeInterface(t) {}
+RetransmitPipe::RetransmitPipe(PipeInterface *t) : PipeInterface(t),
+maxActTime(0) {}
 
 bool RetransmitPipe::send(std::unique_ptr<Packet> packet) {
   assert(downStream);
 
-  // TODO - for reliably packets, cache them and resend it no ack received for
-  // them
+  // for reliably packets, cache them and resend if no ack received
   if ( packet->isReliable() ) {
       auto clone = packet->clone();
+      assert( clone );
       packet->setReliable(false);
-      
+
       auto p = std::pair<Packet::ShortName, std::unique_ptr<Packet>>(packet->shortName(), move(clone));
+
+      std::lock_guard<std::mutex> lock(rtxListLock);
       auto ret = rtxList.insert(move(p));
       if (ret.second == false) {
           // element was already in map - not unique name, not good
-          std::clog << "Wanring seding same name twice" << std::endl;
+          std::clog << "Warning sending same name twice" << std::endl;
           return false;
       }
   }
@@ -42,10 +45,33 @@ std::unique_ptr<Packet> RetransmitPipe::recv() {
 
 void RetransmitPipe::ack(Packet::ShortName name) {
     PipeInterface::ack(name);
+    std::lock_guard<std::mutex> lock(rtxListLock);
 
-    //if ( name.resourceID != 1) return; // TODO REMOVE
+    rtxList.erase(name);
 
-    std::clog << "Ack of " << name.resourceID << "/" << name.senderID << "/" << (int)name.sourceID
-        << "/t=" << name.mediaTime << "/" << (int)name.fragmentID << std::endl;
+    if (name.mediaTime > maxActTime) {
+        maxActTime = name.mediaTime;
+    }
 
+#if 0
+    std::clog << "Ack of " << name.resourceID << "/" << name.senderID << "/" << (int) name.sourceID
+              << "/t=" << name.mediaTime << "/" << (int) name.fragmentID
+              << "  rtxList_size= " << rtxList.size() << std::endl;
+
+    for (auto it = rtxList.cbegin(); it != rtxList.cend(); ++it) {
+        std::clog << " [" << (*it).first.mediaTime << ']';
+    }
+    std::clog << std::endl;
+#endif
+
+    for (auto it = rtxList.begin(); it != rtxList.end(); ) {
+        // TODO - fix 15 msb static  timing here
+        if (  (*it).first.mediaTime  < maxActTime-15  ) {
+            // resend this one
+            downStream->send(move( (*it).second ));
+            it = rtxList.erase( it );
+        } else {
+            it++;
+        }
+    }
 }
