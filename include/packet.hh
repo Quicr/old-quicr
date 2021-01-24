@@ -59,12 +59,14 @@ public:
   void setReliable(bool reliable = true);
   void enableFEC(bool doFec = true);
 
-  const IpAddr &getSrc() const;
+  [[nodiscard]] const IpAddr &getSrc() const;
   void setSrc(const IpAddr &src);
-  const IpAddr &getDst() const;
+  [[nodiscard]] const IpAddr &getDst() const;
   void setDst(const IpAddr &dst);
 
   [[nodiscard]] std::unique_ptr<Packet> clone() const;
+
+  [[nodiscard]] const ShortName shortName() const { return name; };
 
 private:
   MediaNet::Packet::ShortName name;

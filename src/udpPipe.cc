@@ -247,3 +247,7 @@ bool UdpPipe::start(const uint16_t serverPort, const std::string serverName,
 
   return true;
 }
+
+void UdpPipe::updateRTT(uint64_t rttMs) {
+    (void)rttMs;
+}

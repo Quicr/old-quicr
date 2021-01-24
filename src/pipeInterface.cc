@@ -42,3 +42,20 @@ bool PipeInterface::fromDownstream(std::unique_ptr<Packet> packet) {
   assert(upStream);
   return upStream->fromDownstream(move(packet));
 }
+
+void PipeInterface::updateStat(PipeInterface::StatName stat, uint64_t value) {
+    if (upStream) {
+        upStream->updateStat(stat, value);
+    }
+}
+
+void PipeInterface::ack(Packet::ShortName name) {
+    assert(upStream);
+    upStream->ack( name );
+}
+
+void PipeInterface::updateRTT(uint64_t rttMs) {
+    assert(downStream);
+    downStream->updateRTT(rttMs);
+}
+
