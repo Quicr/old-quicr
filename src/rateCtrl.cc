@@ -33,7 +33,7 @@ RateCtrl::RateCtrl( PipeInterface* pacerPipeRef)
 }
 
 void RateCtrl::sendPacket(uint32_t seqNum, uint32_t sendTimeUs,
-                          uint16_t sizeBits) {
+                          uint16_t sizeBits, Packet::ShortName shortName  ) {
   updatePhase();
 
   assert(sizeBits > 0);
@@ -53,6 +53,7 @@ void RateCtrl::sendPacket(uint32_t seqNum, uint32_t sendTimeUs,
   rec.sizeBits = sizeBits;
   rec.sendPhaseCount = cycleCount * numPhasePerCycle + phase;
   rec.notLost = false;
+  rec.shortName = shortName;
 
   bitsSentThisPhase += sizeBits;
 }
@@ -77,9 +78,8 @@ void RateCtrl::recvAck(uint32_t seqNum, uint32_t remoteAckTimeUs,
     // TODO - figure out how this happens
     return;
   }
-  rec.notLost = true;
   assert(rec.seqNum == seqNum);
-
+  rec.notLost = true;
   rec.remoteAckTimeUs = remoteAckTimeUs;
   rec.localRecvAckTimeUs = localRecvAckTimeUs;
 
@@ -87,6 +87,9 @@ void RateCtrl::recvAck(uint32_t seqNum, uint32_t remoteAckTimeUs,
   int32_t timeOffset =
       (rec.localRecvAckTimeUs + rec.sendTimeUs) / 2 - rec.remoteAckTimeUs;
   updateRTT(rtt, timeOffset);
+
+  pacerPipe->ack( rec.shortName );
+
 
   if (seqNum - upHistorySeqOffset < 1) {
     return;
