@@ -32,10 +32,12 @@ bool FecPipe::send(std::unique_ptr<Packet> packet) {
     sendList.emplace_back(nowMs + 10, std::move(fecPacket));
   }
 
-  while (sendList.front().first <= nowMs) {
-    std::unique_ptr<Packet> fecPacket = std::move(sendList.front().second);
-    sendList.pop_front();
-    downStream->send(move(fecPacket));
+  if ( !sendList.empty() ) {
+      while (sendList.front().first <= nowMs) {
+          std::unique_ptr<Packet> fecPacket = std::move(sendList.front().second);
+          sendList.pop_front();
+          downStream->send(move(fecPacket));
+      }
   }
 
   return downStream->send(move(packet));

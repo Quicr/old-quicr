@@ -57,6 +57,8 @@ public:
   std::vector<uint8_t> buffer;
 
   void setReliable(bool reliable = true);
+  bool isReliable() const;
+
   void enableFEC(bool doFec = true);
 
   [[nodiscard]] const IpAddr &getSrc() const;
@@ -82,5 +84,8 @@ private:
   MediaNet::IpAddr src;
   MediaNet::IpAddr dst;
 };
+
+bool operator<( const Packet::ShortName& a, const Packet::ShortName& b);
+
 
 } // namespace MediaNet

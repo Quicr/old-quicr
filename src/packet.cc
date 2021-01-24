@@ -1,5 +1,6 @@
 #include <cassert>
 #include <iostream>
+#include <tuple>
 
 #if defined(__linux) || defined(__APPLE__)
 #include <arpa/inet.h>
@@ -50,7 +51,12 @@ std::unique_ptr<Packet> Packet::clone() const {
   std::unique_ptr<Packet> p = std::make_unique<Packet>();
   ;
   p->copy(*this);
+  p->name = this->name;
   return p;
+}
+
+bool Packet::isReliable() const {
+    return reliable;
 }
 
 bool IpAddr::operator<(const IpAddr &rhs) const {
@@ -80,4 +86,9 @@ std::string IpAddr::toString(const IpAddr &ipAddr) {
   std::string ret = std::string(str) + ":" + std::to_string(port);
 
   return ret;
+}
+
+bool MediaNet::operator<(const Packet::ShortName &a, const Packet::ShortName &b) {
+    return std::tie(a.mediaTime,a.resourceID,a.senderID,a.sourceID,a.fragmentID)
+        <  std::tie(b.mediaTime,b.resourceID,b.senderID,b.sourceID,b.fragmentID);
 }
