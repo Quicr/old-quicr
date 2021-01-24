@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
     uint8_t *buffer = &(packet->data());
     *buffer++ = 1;
 
-    packet->enableFEC(true);
+    packet->enableFEC(true );
 
     qClient.publish(move(packet));
 

@@ -43,4 +43,7 @@ private:
   IpAddr serverAddr;
 };
 
+bool operator<(const Packet::ShortName &a, const Packet::ShortName &b);
+
+
 } // namespace MediaNet
