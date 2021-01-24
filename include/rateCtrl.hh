@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "packet.hh"
+#include "pipeInterface.hh"
 
 using namespace MediaNet;
 
@@ -32,7 +33,7 @@ struct PacketDownstreamStatus {
 
 class RateCtrl {
 public:
-  RateCtrl();
+  RateCtrl(PipeInterface* pacerPipeRef);
 
   void sendPacket(uint32_t seqNum, uint32_t sendTimeUs, uint16_t sizeBits);
   void recvPacket(uint32_t relaySeqNum, uint32_t remoteSendTimeUs,
@@ -50,6 +51,8 @@ public:
   [[nodiscard]] uint64_t bwDownTarget() const; // in bits per second
 
 private:
+    PipeInterface* pacerPipe;
+
   uint32_t upHistorySeqOffset;
   std::vector<PacketUpstreamStatus> upstreamHistory;
 

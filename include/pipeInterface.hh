@@ -10,10 +10,11 @@ namespace MediaNet {
 class PipeInterface {
 public:
     enum struct StatName : uint16_t {
-        bad = 0,
-        mtu = 1,
-        minRTTms = 2,
-        bigRTTms = 3,
+        none = 0, // must be first
+        mtu ,
+        minRTTms ,
+        bigRTTms ,
+        bad // must be last
     };
 
   virtual bool start(const uint16_t port, const std::string server,

@@ -10,7 +10,9 @@
 
 using namespace MediaNet;
 
-PacerPipe::PacerPipe(PipeInterface *t) : PipeInterface(t), shutDown(false) {
+PacerPipe::PacerPipe(PipeInterface *t) : PipeInterface(t),
+ rateCtrl(this),
+    shutDown(false) {
   assert(downStream);
 }
 

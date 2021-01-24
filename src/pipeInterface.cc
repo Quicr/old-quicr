@@ -44,8 +44,9 @@ bool PipeInterface::fromDownstream(std::unique_ptr<Packet> packet) {
 }
 
 void PipeInterface::updateStat(PipeInterface::StatName stat, uint64_t value) {
-    assert(upStream);
-    upStream->updateStat( stat, value );
+    if (upStream) {
+        upStream->updateStat(stat, value);
+    }
 }
 
 void PipeInterface::ack(Packet::ShortName name) {

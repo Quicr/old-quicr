@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <map>
 
 #include "packet.hh"
 #include "pipeInterface.hh"
@@ -16,6 +17,7 @@ public:
     virtual void ack( Packet::ShortName name );
 
 private:
+    std::map< PipeInterface::StatName , uint64_t> stats;
 };
 
 } // namespace MediaNet

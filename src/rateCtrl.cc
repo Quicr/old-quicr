@@ -13,8 +13,9 @@ using namespace MediaNet;
 #undef max
 #endif
 
-RateCtrl::RateCtrl()
-    : upHistorySeqOffset(0), downHistorySeqOffset(0), phase(0),
+RateCtrl::RateCtrl( PipeInterface* pacerPipeRef)
+    : pacerPipe( pacerPipeRef),
+    upHistorySeqOffset(0), downHistorySeqOffset(0), phase(0),
       bitsSentThisPhase(0), cycleCount(0),
       minCycleRTTUs(std::numeric_limits<uint32_t>::max()), maxCycleAckTimeUs(0),
       estRTTUs(100 * 1000), estAckTimeUs(100 * 1000), cycleRelayTimeOffsetUs(0),
@@ -199,6 +200,14 @@ void RateCtrl::startNewCycle() {
   if (upstreamCycleMaxBw > 0.0) {
     upstreamBwEst = upstreamCycleMaxBw; // TODO - filter
   }
+
+    pacerPipe->updateRTT(  estRTTUs/1000 ); // TODO estimate
+
+    pacerPipe->updateStat(PipeInterface::StatName::minRTTms, estRTTUs/1000 );
+    pacerPipe->updateStat(PipeInterface::StatName::bigRTTms, estAckTimeUs/1000 );
+
+    pacerPipe->updateStat(PipeInterface::StatName::mtu, 1200 ); // TODO
+
 
 #if 1
   if (cycleCount > 0) {
