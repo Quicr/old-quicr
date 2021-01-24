@@ -23,7 +23,8 @@ QuicRClient::QuicRClient()
       priorityPipe(&pacerPipe), retransmitPipe(&priorityPipe),
       fecPipe(&retransmitPipe), subscribePipe(&fecPipe),
       fragmentPipe(&subscribePipe), encryptPipe(&fragmentPipe),
-      firstPipe(&encryptPipe), pubClientID(0), secToken(0) {}
+      statsPipe( &encryptPipe ), 
+      firstPipe(&statsPipe), pubClientID(0), secToken(0) {}
 
 QuicRClient::~QuicRClient() { close(); }
 

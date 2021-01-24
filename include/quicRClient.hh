@@ -18,6 +18,7 @@
 #include "retransmitPipe.hh"
 #include "subscribePipe.hh"
 #include "udpPipe.hh"
+#include "statsPipe.hh"
 
 namespace MediaNet {
 
@@ -69,6 +70,7 @@ private:
   SubscribePipe subscribePipe;
   FragmentPipe fragmentPipe;
   EncryptPipe encryptPipe;
+  StatsPipe statsPipe;
   PipeInterface *firstPipe;
 
   uint32_t pubClientID;
