@@ -118,12 +118,12 @@ uint32_t RateCtrl::rttEstUs() const { return estRTTUs; }
 
 uint64_t RateCtrl::bwUpEst() const // in bits per second
 {
-  return upstreamBwEst;
+  return (uint64_t)upstreamBwEst;
 }
 
 uint64_t RateCtrl::bwDownEst() const // in bits per second
 {
-  return downstreamBwEst;
+  return (uint64_t) downstreamBwEst;
 }
 
 uint64_t RateCtrl::bwUpTarget() const // in bits per second
@@ -135,13 +135,13 @@ uint64_t RateCtrl::bwUpTarget() const // in bits per second
 #endif
 
   if (phase == 1) {
-    return (upstreamBwEst * 5) / 4;
+    return ( (uint64_t)(upstreamBwEst) * 5) / 4;
   }
   if (phase == 2) {
-    return (upstreamBwEst * 3) / 4;
+    return ( (uint64_t)(upstreamBwEst) * 3) / 4;
   }
 
-  return (upstreamBwEst * 9) / 10;
+  return ( (uint64_t)upstreamBwEst * 9) / 10;
 }
 
 uint64_t RateCtrl::bwDownTarget() const // in bits per second
@@ -150,17 +150,17 @@ uint64_t RateCtrl::bwDownTarget() const // in bits per second
 #if 0
   // TODO remove
   downstreamBwEst = 1 * 1000*1000;
-  return downstreamBwEst;
+  return (uint64_t)downstreamBwEst;
 #endif
 
   if (phase == 3) {
-    return (downstreamBwEst * 5) / 4;
+    return ( (uint64_t)(downstreamBwEst) * 5) / 4;
   }
   if (phase == 4) {
-    return (downstreamBwEst * 3) / 4;
+    return ( (uint64_t)(downstreamBwEst) * 3) / 4;
   }
 
-  return (downstreamBwEst * 9) / 10;
+  return ( (uint64_t)(downstreamBwEst) * 9) / 10;
 }
 
 void RateCtrl::updatePhase() {
