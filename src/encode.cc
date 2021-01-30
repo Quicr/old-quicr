@@ -7,7 +7,7 @@
 using namespace MediaNet;
 
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const Packet::ShortName &msg) {
+                                              const ShortName &msg) {
 
     int startSize = p->size();
   p << msg.resourceID; // size = 8
@@ -24,7 +24,7 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   return p;
 }
 
-bool operator>>(std::unique_ptr<Packet> &p, Packet::ShortName  &msg)
+bool operator>>(std::unique_ptr<Packet> &p, ShortName  &msg)
 {
     if (nextTag(p) != PacketTag::shortName) {
         std::cerr << "Did not find expected PacketTag::shortName" << std::endl;
@@ -139,7 +139,7 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetAck &msg) {
 /*************** TAG types *************************/
 
 PacketTag MediaNet::nextTag(std::unique_ptr<Packet> &p) {
-    if (p->buffer.empty()) {
+    if (p->fullSize() <= 0 ) {
         return PacketTag::none;
     }
     uint8_t trucTag = p->buffer.back(); // TODO - support varint size tags

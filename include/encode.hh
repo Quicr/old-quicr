@@ -3,13 +3,14 @@
 #include <cstdint>
 #include <memory>
 
-#include "packet.hh"
-
-using namespace MediaNet;
+#include "name.hh"
 
 namespace MediaNet {
 
-std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint64_t val);
+    class Packet;
+
+
+    std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint64_t val);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint32_t val);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint16_t val);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint8_t val);
@@ -82,8 +83,9 @@ std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, PacketTag tag);
 /* ShortName */
 
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
-                                    const Packet::ShortName &msg);
-bool operator>>(std::unique_ptr<Packet> &p, Packet::ShortName  &msg);
+                                    const ShortName &msg);
+
+bool operator>>(std::unique_ptr<Packet> &p, ShortName  &msg);
 
 /* SYNC Request */
 

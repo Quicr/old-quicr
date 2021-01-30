@@ -11,13 +11,13 @@ using namespace MediaNet;
 
 SubscribePipe::SubscribePipe(PipeInterface *t) : PipeInterface(t) {}
 
-bool SubscribePipe::subscribe(Packet::ShortName name) {
+bool SubscribePipe::subscribe(ShortName name) {
 
     subscribeList.push_back( name );
 
     // send subscribe packet
     auto packet = std::make_unique<Packet>();
-    packet->buffer.reserve(100 ); // TODO tune
+    packet->reserve(100 ); // TODO tune
     packet << PacketTag::headerMagicData;
     packet << name;
     packet << PacketTag::shortName;

@@ -99,9 +99,12 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet) {
 
   // for each connection, make copy and forward
   for (auto const &[addr, con] : connectionMap) {
-    auto subData = std::make_unique<Packet>();
+    //auto subData = std::make_unique<Packet>();
+    //subData->copy(*packet);
 
-    subData->copy(*packet);
+    auto subData = packet->clone(); // TODO - just clone header stuff
+    //subData->resize(0);
+
     subData->setDst(addr);
 
     NetRelaySeqNum netRelaySeqNum;

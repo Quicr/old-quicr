@@ -41,11 +41,11 @@ public:
                         std::vector<uint8_t> key);
   */
 
-  virtual std::unique_ptr<Packet> createPacket(const Packet::ShortName &name,
+  virtual std::unique_ptr<Packet> createPacket(const ShortName &name,
                                                int reservedPayloadSize = 1200);
   virtual bool publish(std::unique_ptr<Packet>);
 
-  bool subscribe( Packet::ShortName );
+  bool subscribe( ShortName );
 
   /// non blocking, return nullptr if no buffer
   virtual std::unique_ptr<Packet> recv();

@@ -40,18 +40,22 @@ const IpAddr &Packet::getDst() const { return dst; }
 void Packet::setDst(const IpAddr &dstAddr) { dst = dstAddr; }
 
 void Packet::copy(const Packet &p) {
+    name = p.name;
   buffer = p.buffer;
   headerSize = p.headerSize;
   priority = p.priority;
   reliable = p.reliable;
   useFEC = p.useFEC;
+
+  src = p.src;
+  dst = p.dst;
 }
 
 std::unique_ptr<Packet> Packet::clone() const {
   std::unique_ptr<Packet> p = std::make_unique<Packet>();
-  ;
+
   p->copy(*this);
-  p->name = this->name;
+
   return p;
 }
 
@@ -88,7 +92,7 @@ std::string IpAddr::toString(const IpAddr &ipAddr) {
   return ret;
 }
 
-bool MediaNet::operator<(const Packet::ShortName &a, const Packet::ShortName &b) {
+bool MediaNet::operator<(const ShortName &a, const ShortName &b) {
     return std::tie(a.mediaTime,a.resourceID,a.senderID,a.sourceID,a.fragmentID)
         <  std::tie(b.mediaTime,b.resourceID,b.senderID,b.sourceID,b.fragmentID);
 }

@@ -62,7 +62,7 @@ uint64_t QuicRClient::getTargetUpstreamBitrate() {
 }
 
 std::unique_ptr<Packet>
-QuicRClient::createPacket(const Packet::ShortName &shortName,
+QuicRClient::createPacket(const ShortName &shortName,
                           int reservedPayloadSize) {
   auto packet = std::make_unique<Packet>();
   assert(packet);
@@ -80,6 +80,6 @@ QuicRClient::createPacket(const Packet::ShortName &shortName,
   return packet;
 }
 
-bool QuicRClient::subscribe(Packet::ShortName name) {
+bool QuicRClient::subscribe(ShortName name) {
     return subscribePipe.subscribe( name );
 }

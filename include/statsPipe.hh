@@ -14,7 +14,7 @@ public:
   StatsPipe(PipeInterface *t);
 
     virtual void updateStat( StatName stat, uint64_t value  ); // tells upstream things the stat
-    virtual void ack( Packet::ShortName name );
+    virtual void ack( ShortName name );
 
 private:
     std::map< PipeInterface::StatName , uint64_t> stats;
