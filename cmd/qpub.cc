@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
   int packetCount = 0;
   auto startTimePoint = std::chrono::steady_clock::now();
 
-  Packet::ShortName name;
+  ShortName name;
   name.resourceID = 1;
   name.sourceID = 1;
   name.senderID = 1;

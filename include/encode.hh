@@ -3,13 +3,14 @@
 #include <cstdint>
 #include <memory>
 
-#include "packet.hh"
-
-using namespace MediaNet;
+#include "name.hh"
 
 namespace MediaNet {
 
-std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint64_t val);
+    class Packet;
+
+
+    std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint64_t val);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint32_t val);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint16_t val);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint8_t val);
@@ -32,7 +33,7 @@ constexpr unsigned int packetTagGen(unsigned int val, unsigned int len,
   (void)mandToUnderstand;
   return (val << 8) + len;
 }
-constexpr uint16_t packetTagTruc(MediaNet::PacketTag tag) {
+constexpr uint16_t packetTagTrunc(MediaNet::PacketTag tag) {
   uint32_t t = (uint32_t)tag;
   t >>= 8;
   return (uint16_t)t;
@@ -47,11 +48,12 @@ enum struct PacketTag : uint32_t {
   none = packetTagGen(0, 0, true), // must be smallest tag
 
   appData = packetTagGen(1, 255, true),
+  appDataFrag = packetTagGen(9, 255, true),
   clientSeqNum = packetTagGen(2, 4, true), // make part of appData ???
   ack = packetTagGen(3, 255, true),
   sync = packetTagGen(4, 255, true),
-  shortName = packetTagGen(5, 4, true),
-  relaySeqNum = packetTagGen(7, 4, true),
+  shortName = packetTagGen(5, 18, true),
+  relaySeqNum = packetTagGen(7, 8, true),
   relayRateReq = packetTagGen(6, 4, true),
   subscribeReq = packetTagGen(8, 0, true),
 
@@ -72,6 +74,8 @@ enum struct PacketTag : uint32_t {
 };
 
 PacketTag nextTag(std::unique_ptr<Packet> &p);
+PacketTag nextTag(uint16_t trucTag);
+
 bool operator>>(std::unique_ptr<Packet> &p, PacketTag &tag);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, PacketTag tag);
 
@@ -79,8 +83,9 @@ std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, PacketTag tag);
 /* ShortName */
 
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
-                                    const Packet::ShortName &msg);
-bool operator>>(std::unique_ptr<Packet> &p, Packet::ShortName  &msg);
+                                    const ShortName &msg);
+
+bool operator>>(std::unique_ptr<Packet> &p, ShortName  &msg);
 
 /* SYNC Request */
 
@@ -215,5 +220,9 @@ struct NetMsgClientStats {
   uint32_t reserved2;
 };
 */
+
+
+std::ostream& operator<<(std::ostream& stream, const Packet& packet);
+
 
 } // namespace MediaNet

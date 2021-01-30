@@ -19,15 +19,15 @@ public:
   /// non blocking, return nullptr if no buffer
   virtual std::unique_ptr<Packet> recv();
 
-  virtual void ack( Packet::ShortName name );
+  virtual void ack( ShortName name );
 
   virtual void updateRTT( uint16_t minRttMs, uint16_t maxRttMs  ); // tells downstream things the current RTT
 
 
 private:
 
-    std::mutex rtxListLock;
-    std::map< Packet::ShortName , std::unique_ptr<Packet> > rtxList;
+    std::mutex rtxListMutex;
+    std::map< MediaNet::ShortName , std::unique_ptr<Packet> > rtxList;
 
     uint32_t maxActTime;
 

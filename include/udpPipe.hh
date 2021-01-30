@@ -43,7 +43,7 @@ private:
   IpAddr serverAddr;
 };
 
-bool operator<(const Packet::ShortName &a, const Packet::ShortName &b);
+bool operator<(const ShortName &a, const ShortName &b);
 
 
 } // namespace MediaNet

@@ -26,7 +26,7 @@ void StatsPipe::updateStat(PipeInterface::StatName stat, uint64_t value) {
     }
 }
 
-void StatsPipe::ack(Packet::ShortName name) {
+void StatsPipe::ack( ShortName name) {
     // this is here just to eat the ACKs and stop propagation up chain
     (void)name;
 }

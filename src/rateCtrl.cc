@@ -33,7 +33,7 @@ RateCtrl::RateCtrl( PipeInterface* pacerPipeRef)
 }
 
 void RateCtrl::sendPacket(uint32_t seqNum, uint32_t sendTimeUs,
-                          uint16_t sizeBits, Packet::ShortName shortName  ) {
+                          uint16_t sizeBits, ShortName shortName  ) {
   updatePhase();
 
   assert(sizeBits > 0);

@@ -56,7 +56,7 @@ void PipeInterface::updateStat(PipeInterface::StatName stat, uint64_t value) {
     }
 }
 
-void PipeInterface::ack(Packet::ShortName name) {
+void PipeInterface::ack(ShortName name) {
     if (upStream) {
         upStream->ack(name);
     }

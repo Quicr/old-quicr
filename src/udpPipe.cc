@@ -106,7 +106,7 @@ std::unique_ptr<Packet> UdpPipe::recv() {
   IpAddr remoteAddr;
   memset(&remoteAddr.addr, 0, sizeof(remoteAddr.addr));
   remoteAddr.addrLen = sizeof(remoteAddr.addr);
-  
+
   int rLen = recvfrom(fd, (char *)packet->buffer.data(),
                       (int)packet->buffer.size(), 0 /*flags*/,
                       (struct sockaddr *)&remoteAddr.addr, &remoteAddr.addrLen);

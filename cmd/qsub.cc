@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
   }
   std::cout << "Transport is ready" << std::endl;
 
-  Packet::ShortName name{};
+  ShortName name{};
   name.resourceID = 1;
   qClient.subscribe( name );
 
