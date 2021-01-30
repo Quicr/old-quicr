@@ -38,9 +38,9 @@ void Packet::enableFEC(bool doFec) { useFEC = doFec; }
 
 const IpAddr &Packet::getSrc() const { return src; }
 
-void Packet::setSrc(const IpAddr &srcAddr) { src = srcAddr; }
+[[maybe_unused]] void Packet::setSrc(const IpAddr &srcAddr) { src = srcAddr; }
 
-const IpAddr &Packet::getDst() const { return dst; }
+[[maybe_unused]] const IpAddr &Packet::getDst() const { return dst; }
 
 void Packet::setDst(const IpAddr &dstAddr) { dst = dstAddr; }
 

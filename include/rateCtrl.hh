@@ -34,7 +34,7 @@ struct PacketDownstreamStatus {
 
 class RateCtrl {
 public:
-  RateCtrl(PipeInterface *pacerPipeRef);
+  explicit RateCtrl(PipeInterface *pacerPipeRef);
 
   void sendPacket(uint32_t seqNum, uint32_t sendTimeUs, uint16_t sizeBits,
                   ShortName shortName);
@@ -43,10 +43,10 @@ public:
   void recvAck(uint32_t seqNum, uint32_t remoteAckTimeUs,
                uint32_t localRecvAckTimeUs);
 
-  [[nodiscard]] uint32_t rttEstUs() const; // in microseconds
+    [[maybe_unused]] [[nodiscard]] uint32_t rttEstUs() const; // in microseconds
 
-  [[nodiscard]] uint64_t bwUpEst() const;   // in bits per second
-  [[nodiscard]] uint64_t bwDownEst() const; // in bits per second
+    [[maybe_unused]] [[nodiscard]] uint64_t bwUpEst() const;   // in bits per second
+    [[maybe_unused]] [[nodiscard]] uint64_t bwDownEst() const; // in bits per second
 
   [[nodiscard]] uint32_t getPhase() const { return phase; }
   [[nodiscard]] uint64_t bwUpTarget() const;   // in bits per second

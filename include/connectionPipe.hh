@@ -14,15 +14,15 @@ namespace MediaNet {
 
 class ConnectionPipe : public PipeInterface {
 public:
-  ConnectionPipe(PipeInterface *t);
+  explicit ConnectionPipe(PipeInterface *t);
   void setAuthInfo(uint32_t sender, uint64_t t);
 
-  virtual bool start(const uint16_t port, const std::string server,
-                     PipeInterface *upStream);
-  virtual bool ready() const;
-  virtual void stop();
+  bool start(uint16_t port, std::string server,
+                     PipeInterface *upStream) override;
+  [[nodiscard]] bool ready() const override;
+  void stop() override;
 
-  virtual std::unique_ptr<Packet> recv();
+  std::unique_ptr<Packet> recv() override;
 
 private:
   uint32_t senderID;

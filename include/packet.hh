@@ -22,7 +22,7 @@ namespace MediaNet {
 
 class UdpPipe;
 class FecPipe;
-class QRelay;
+
 class QuicRClient;
 class CrazyBitPipe;
 class SubscribePipe;
@@ -37,12 +37,11 @@ struct IpAddr {
 };
 
 class Packet {
-  friend std::ostream &operator<<(std::ostream &os, const Packet &dt);
+  //friend std::ostream &operator<<(std::ostream &os, const Packet &dt);
   friend MediaNet::PacketTag MediaNet::nextTag(std::unique_ptr<Packet> &p);
 
   friend UdpPipe;
   friend FecPipe;
-  friend QRelay;
   friend CrazyBitPipe;
   friend QuicRClient;
   friend SubscribePipe;
@@ -57,28 +56,30 @@ public:
   // std::vector<uint8_t> pop( PacketTag tag );
 
   uint8_t &data() { return buffer.at(headerSize); }
-  const uint8_t &constData() const { return buffer.at(headerSize); }
-  size_t size() const { return buffer.size() - headerSize; }
-  size_t fullSize() const { return buffer.size(); }
+  //[[nodiscard]] const uint8_t &constData() const { return buffer.at(headerSize); }
+  [[nodiscard]] size_t size() const;
+  [[nodiscard]] size_t fullSize() const { return buffer.size(); }
   void resize(int size) { buffer.resize(headerSize + size); }
 
   void reserve(int s) { buffer.reserve(s + headerSize); }
   // bool empty( ) { return (size()  <= 0); }
 
   void setReliable(bool reliable = true);
-  bool isReliable() const;
+  [[nodiscard]] bool isReliable() const;
 
   void enableFEC(bool doFec = true);
 
   [[nodiscard]] const IpAddr &getSrc() const;
-  void setSrc(const IpAddr &src);
-  [[nodiscard]] const IpAddr &getDst() const;
+
+  [[maybe_unused]] void setSrc(const IpAddr &src);
+
+  [[maybe_unused]] [[nodiscard]] const IpAddr &getDst() const;
   void setDst(const IpAddr &dst);
 
   [[nodiscard]] std::unique_ptr<Packet> clone() const;
 
-  [[nodiscard]] const ShortName shortName() const { return name; };
-  void setFragID(const uint8_t fragmentID);
+  [[nodiscard]] ShortName shortName() const { return name; };
+  void setFragID(uint8_t fragmentID);
 
 public:
   std::vector<uint8_t> buffer; // TODO make private
@@ -88,7 +89,7 @@ private:
 
   int headerSize;
 
-  // 1 is higest (controll), 2 critical audio, 3 critical
+  // 1 is highest (control), 2 critical audio, 3 critical
   // video, 4 important, 5 not important - make enum
   uint8_t priority;
 

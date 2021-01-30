@@ -12,18 +12,18 @@ namespace MediaNet {
 
 class RetransmitPipe : public PipeInterface {
 public:
-  RetransmitPipe(PipeInterface *t);
+  explicit RetransmitPipe(PipeInterface *t);
 
-  virtual bool send(std::unique_ptr<Packet> packet);
+  bool send(std::unique_ptr<Packet> packet) override;
 
   /// non blocking, return nullptr if no buffer
-  virtual std::unique_ptr<Packet> recv();
+  std::unique_ptr<Packet> recv() override;
 
-  virtual void ack(ShortName name);
+  void ack(ShortName name) override;
 
-  virtual void
+  void
   updateRTT(uint16_t minRttMs,
-            uint16_t maxRttMs); // tells downstream things the current RTT
+            uint16_t maxRttMs) override; // tells downstream things the current RTT
 
 private:
   std::mutex rtxListMutex;

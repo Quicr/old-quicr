@@ -145,9 +145,9 @@ PacketTag MediaNet::nextTag(std::unique_ptr<Packet> &p) {
   return nextTag(trucTag);
 }
 
-PacketTag MediaNet::nextTag(uint16_t trucTag) {
+PacketTag MediaNet::nextTag(uint16_t truncTag) {
   PacketTag tag = PacketTag::badTag;
-  switch (trucTag) {
+  switch (truncTag) {
   case packetTagTrunc(PacketTag::none):
     tag = PacketTag::none;
     break;
@@ -519,4 +519,8 @@ std::ostream &MediaNet::operator<<(std::ostream &stream, const Packet &packet) {
     }
   }
   return stream;
+}
+
+size_t Packet::size() const {
+    return buffer.size() - headerSize;
 }

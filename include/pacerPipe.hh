@@ -15,20 +15,20 @@ namespace MediaNet {
 
 class PacerPipe : public PipeInterface {
 public:
-  PacerPipe(PipeInterface *t);
-  ~PacerPipe();
+  explicit PacerPipe(PipeInterface *t);
+  ~PacerPipe() override;
 
-  virtual bool start(const uint16_t port, const std::string server,
-                     PipeInterface *upStream);
-  virtual bool ready() const;
-  virtual void stop();
+  bool start(uint16_t port, std::string server,
+                     PipeInterface *upStream) override;
+  [[nodiscard]] bool ready() const override;
+  void stop() override;
 
   uint64_t getTargetUpstreamBirate(); // in bps
 
-  virtual bool send(std::unique_ptr<Packet>);
+  bool send(std::unique_ptr<Packet>) override;
 
   /// non blocking, return nullptr if no buffer
-  virtual std::unique_ptr<Packet> recv();
+  std::unique_ptr<Packet> recv() override;
 
 private:
   RateCtrl rateCtrl;

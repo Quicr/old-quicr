@@ -12,13 +12,13 @@ namespace MediaNet {
 
 class FecPipe : public PipeInterface {
 public:
-  FecPipe(PipeInterface *t);
-  ~FecPipe();
+  explicit FecPipe(PipeInterface *t);
+  ~FecPipe() override;
 
-  virtual bool send(std::unique_ptr<Packet> packet);
+  bool send(std::unique_ptr<Packet> packet) override;
 
   /// non blocking, return nullptr if no buffer
-  virtual std::unique_ptr<Packet> recv();
+  std::unique_ptr<Packet> recv() override;
 
 private:
   // This is a list of FEC packets to send and time in ms to send them

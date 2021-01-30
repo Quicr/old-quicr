@@ -29,9 +29,9 @@ class QuicRClient {
 public:
   QuicRClient();
   virtual ~QuicRClient();
-  virtual bool open(uint32_t clientID, const std::string relayName,
-                    const uint16_t port, uint64_t token);
-  virtual bool ready() const;
+  virtual bool open(uint32_t clientID, std::string relayName,
+                    uint16_t port, uint64_t token);
+  [[nodiscard]] virtual bool ready() const;
   virtual void close();
 
   /*

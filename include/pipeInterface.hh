@@ -17,9 +17,9 @@ public:
     bad // must be last
   };
 
-  virtual bool start(const uint16_t port, const std::string server,
+  virtual bool start(uint16_t port, std::string server,
                      PipeInterface *upStream);
-  virtual bool ready() const;
+  [[nodiscard]] virtual bool ready() const;
   virtual void stop();
 
   virtual bool send(std::unique_ptr<Packet>);
@@ -38,7 +38,7 @@ public:
             uint16_t bitRttMs); // tells downstream things the current RTT
 
 protected:
-  PipeInterface(PipeInterface *downStream);
+  explicit PipeInterface(PipeInterface *downStream);
   virtual ~PipeInterface();
 
   PipeInterface *downStream;

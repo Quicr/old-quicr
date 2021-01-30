@@ -14,7 +14,8 @@ public:
   explicit SubscribePipe(PipeInterface *t);
 
   bool subscribe(const ShortName &name);
-  virtual std::unique_ptr<Packet> recv();
+
+  std::unique_ptr<Packet> recv() override;
 
 private:
   std::vector<MediaNet::ShortName> subscribeList;
