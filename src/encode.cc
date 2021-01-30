@@ -153,9 +153,12 @@ PacketTag MediaNet::nextTag(uint16_t trucTag) {
     tag = PacketTag::none;
     break;
 
-  case packetTagTrunc(PacketTag::appData):
-    tag = PacketTag::appData;
-    break;
+      case packetTagTrunc(PacketTag::appData):
+          tag = PacketTag::appData;
+          break;
+      case packetTagTrunc(PacketTag::appDataFrag):
+          tag = PacketTag::appDataFrag;
+          break;
   case packetTagTrunc(PacketTag::clientSeqNum):
     tag = PacketTag::clientSeqNum;
     break;
