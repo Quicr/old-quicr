@@ -56,7 +56,7 @@ bool QuicRClient::open(uint32_t clientID, const std::string relayName,
 }
 
 uint64_t QuicRClient::getTargetUpstreamBitrate() {
-  return pacerPipe.getTargetUpstreamBirate();
+  return pacerPipe.getTargetUpstreamBirate(); // TODO - move to stats
 }
 
 std::unique_ptr<Packet>
