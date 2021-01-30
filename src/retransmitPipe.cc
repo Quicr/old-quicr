@@ -10,7 +10,7 @@
 using namespace MediaNet;
 
 RetransmitPipe::RetransmitPipe(PipeInterface *t) : PipeInterface(t),
-maxActTime(0) {}
+maxActTime(0),minRtt(100),bigRtt(200) {}
 
 bool RetransmitPipe::send(std::unique_ptr<Packet> packet) {
   assert(downStream);
@@ -38,8 +38,6 @@ bool RetransmitPipe::send(std::unique_ptr<Packet> packet) {
 std::unique_ptr<Packet> RetransmitPipe::recv() {
   assert(downStream);
 
-  // TODO - watch for ACK to stop retransmission
-
   return downStream->recv();
 }
 
@@ -65,8 +63,10 @@ void RetransmitPipe::ack(Packet::ShortName name) {
 #endif
 
     for (auto it = rtxList.begin(); it != rtxList.end(); ) {
-        // TODO - fix 15 msb static  timing here
-        if (  (*it).first.mediaTime  < maxActTime-15  ) {
+        // TODO - fix 15 ms static timing here with maxRTT - minRTT
+        assert( bigRtt >= minRtt );
+
+        if (  (*it).first.mediaTime  < maxActTime-(bigRtt-minRtt)  ) {
             // resend this one
             downStream->send(move( (*it).second ));
             it = rtxList.erase( it );
@@ -74,4 +74,11 @@ void RetransmitPipe::ack(Packet::ShortName name) {
             it++;
         }
     }
+}
+
+void RetransmitPipe::updateRTT(uint16_t minRttMs, uint16_t bigRttMs) {
+    PipeInterface::updateRTT(minRttMs, bigRttMs);
+
+    bigRtt = bigRttMs;
+    minRtt = minRttMs;
 }
