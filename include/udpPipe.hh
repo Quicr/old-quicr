@@ -1,7 +1,8 @@
-
 #pragma once
 
 #include <sys/types.h>
+#include <mutex>
+
 #if defined(__linux__) || defined(__APPLE__)
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -32,6 +33,7 @@ public:
   virtual std::unique_ptr<Packet> recv(); // non blocking, return nullptr if no buffer
 
 private:
+    std::mutex socketMutex;
 #if defined(_WIN32)
   SOCKET fd; // UDP socket
 #else
