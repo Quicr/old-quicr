@@ -10,7 +10,7 @@ namespace MediaNet {
 
 class FragmentPipe : public PipeInterface {
 public:
-  FragmentPipe(PipeInterface *t);
+  explicit FragmentPipe(PipeInterface *t);
 
   virtual bool send(std::unique_ptr<Packet> packet);
 

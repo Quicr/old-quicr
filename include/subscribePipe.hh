@@ -13,7 +13,8 @@ class SubscribePipe : public PipeInterface {
 public:
   explicit SubscribePipe(PipeInterface *t);
 
-    bool subscribe( ShortName name );
+    bool subscribe( const ShortName& name );
+    virtual std::unique_ptr<Packet> recv();
 
 private:
     std::vector<MediaNet::ShortName> subscribeList;

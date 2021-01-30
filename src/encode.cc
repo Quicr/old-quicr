@@ -24,7 +24,7 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   return p;
 }
 
-bool operator>>(std::unique_ptr<Packet> &p, ShortName  &msg)
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p, ShortName  &msg)
 {
     if (nextTag(p) != PacketTag::shortName) {
         std::cerr << "Did not find expected PacketTag::shortName" << std::endl;
@@ -514,6 +514,9 @@ std::ostream& MediaNet::operator<<(std::ostream& stream, const Packet& packet)
                 break;
             case PacketTag::shortName:
                 stream << " shortName";
+                break;
+            case PacketTag::relaySeqNum:
+                stream << " relaySeqNum";
                 break;
             case PacketTag::appData:
                 stream << " appData(" << len << ")";

@@ -25,6 +25,7 @@ class FecPipe;
 class QRelay;
 class QuicRClient;
 class CrazyBitPipe;
+class SubscribePipe;
 
 struct IpAddr {
   struct sockaddr_in addr;
@@ -43,6 +44,7 @@ class Packet {
   friend QRelay;
   friend CrazyBitPipe;
   friend QuicRClient;
+  friend SubscribePipe;
 
 public:
 
@@ -76,7 +78,7 @@ public:
   [[nodiscard]] std::unique_ptr<Packet> clone() const;
 
   [[nodiscard]] const ShortName shortName() const { return name; };
-    void setFragID(const uint8_t fragmentID) { name.fragmentID = fragmentID; };
+    void setFragID(const uint8_t fragmentID);
 
 public:
     std::vector<uint8_t> buffer; // TODO make private

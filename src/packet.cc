@@ -25,6 +25,11 @@ Packet::Packet() : headerSize(0), priority(1), reliable(false), useFEC(false) {
   src.addrLen = 0;
   dst.addrLen = 0;
   buffer.reserve(1480 /* MTU estimate */);
+  name.fragmentID=0;
+  name.mediaTime=0;
+  name.sourceID=0;
+  name.senderID=0;
+  name.resourceID=0;
 }
 
 void Packet::setReliable(bool r) { Packet::reliable = r; }
@@ -95,4 +100,13 @@ std::string IpAddr::toString(const IpAddr &ipAddr) {
 bool MediaNet::operator<(const ShortName &a, const ShortName &b) {
     return std::tie(a.mediaTime,a.resourceID,a.senderID,a.sourceID,a.fragmentID)
         <  std::tie(b.mediaTime,b.resourceID,b.senderID,b.sourceID,b.fragmentID);
+}
+
+void  Packet::setFragID(const uint8_t fragmentID)
+{
+    name.fragmentID = fragmentID;
+    if ( buffer.size() > 19 ) {
+        assert( buffer.at(19) == packetTagTrunc(PacketTag::shortName) );
+        buffer.at(18) = fragmentID;
+    }
 }

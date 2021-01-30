@@ -113,6 +113,8 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet) {
 
     subData << netRelaySeqNum;
 
+    //std::clog << "Relay send: " << *subData << std::endl;
+
     bool simLoss = false;
 
     if (false) {

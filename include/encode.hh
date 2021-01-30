@@ -53,7 +53,7 @@ enum struct PacketTag : uint32_t {
   ack = packetTagGen(3, 255, true),
   sync = packetTagGen(4, 255, true),
   shortName = packetTagGen(5, 18, true),
-  relaySeqNum = packetTagGen(7, 4, true),
+  relaySeqNum = packetTagGen(7, 8, true),
   relayRateReq = packetTagGen(6, 4, true),
   subscribeReq = packetTagGen(8, 0, true),
 

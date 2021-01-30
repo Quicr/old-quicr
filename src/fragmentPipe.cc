@@ -67,13 +67,15 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
         fragPacket << (uint16_t )numUse;
         fragPacket << PacketTag::appDataFrag;
 
-        fragPacket->setFragID( frag );
+        fragPacket->setFragID( frag*2 + ((numLeft>0)?0:1) );
 
         if ( numLeft <= 0 ) {
             // TODO - some way to indicate last fragment
         }
 
         //std::clog << "Send Frag: " << *fragPacket << std::endl;
+
+        //std::clog << "Frag Send:" << fragPacket->shortName() << std::endl;
 
         ok &= downStream->send(move(fragPacket));
 
@@ -89,7 +91,12 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
   assert(downStream);
   auto packet =  downStream->recv();
 
-  std::clog << "Frag recv:" << *packet << std::endl;
+  if ( packet ) {
+      if ( nextTag(packet) == PacketTag::appDataFrag ) {
+          //std::clog << "Frag recv:" << *packet << std::endl;
+          std::clog << "Frag Recv:" << packet->shortName()  << std::endl;
+      }
+  }
 
   return packet;
 }

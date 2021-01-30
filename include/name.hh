@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-
+#include <iostream>
 
 namespace MediaNet {
 
@@ -14,6 +14,7 @@ namespace MediaNet {
         uint8_t fragmentID;
     };
 
+    std::ostream& operator<<(std::ostream& stream, const ShortName& name);
 
 
 } // namespace
