@@ -26,6 +26,8 @@ class QRelay;
 class QuicRClient;
 class CrazyBitPipe;
 class SubscribePipe;
+class FragmentPipe;
+
 
 struct IpAddr {
   struct sockaddr_in addr;
@@ -45,6 +47,7 @@ class Packet {
   friend CrazyBitPipe;
   friend QuicRClient;
   friend SubscribePipe;
+  friend FragmentPipe;
 
 public:
 

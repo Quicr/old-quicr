@@ -34,16 +34,67 @@ void QuicRClient::close() { firstPipe->stop(); }
 
 bool QuicRClient::publish(std::unique_ptr<Packet> packet) {
   size_t payloadSize = packet->buffer.size() - packet->headerSize;
-  assert(payloadSize < 1200); // TODO
-  packet << (uint16_t)payloadSize;
+  assert(payloadSize < 63*1200);
+
+    std::clog << "QuicR send packet size=" << payloadSize << std::endl;
+
+    packet << (uint16_t)payloadSize;
   packet << PacketTag::appData;
   return firstPipe->send(move(packet));
 }
 
 std::unique_ptr<Packet> QuicRClient::recv() {
-    // TODO - check it is one single app data and strip add data tags and len
 
-  auto packet = firstPipe->recv();
+    auto packet = std::unique_ptr<Packet>(nullptr);
+
+    bool bad=true;
+    while(bad) {
+
+        packet = firstPipe->recv();
+
+        if (!packet) {
+            return packet;
+        }
+
+        if (packet->size() < 1) {
+            // TODO log bad data
+            std::clog << "quicr recv very bad size = " << packet->size() << std::endl;
+            continue;
+        }
+
+        PacketTag tag;
+        packet >> tag;
+
+        if (tag == PacketTag::headerMagicData) {
+            //std::clog << "quicr empty message " << std::endl;
+            continue;
+        }
+
+        if (tag != PacketTag::appData) {
+            // TODO log bad data
+            std::clog << "quicr recv bad tag: " << (((uint16_t) (tag)) >> 8) << std::endl;
+            continue;
+        }
+
+        if (packet->size() < 2) {
+            // TODO log bad data
+            std::clog << "quicr recv bad size=" << packet->size() << std::endl;
+            continue;
+        }
+
+        uint16_t payloadSize;
+        packet >> payloadSize;
+        if (payloadSize > packet->size()) {
+            std::clog << "quicr recv bad data size " << payloadSize << " " << packet->size() << std::endl;
+            continue;
+        }
+
+        packet->headerSize = packet->fullSize() - payloadSize;
+
+        bad = false;
+    }
+
+  std::clog << "QuicR received packet size=" << packet->size() << std::endl;
   return packet;
 }
 
