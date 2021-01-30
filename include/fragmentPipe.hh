@@ -2,6 +2,8 @@
 
 #include <cstdint>
 #include <memory>
+#include <map>
+#include <mutex>
 
 #include "packet.hh"
 #include "pipeInterface.hh"
@@ -21,6 +23,10 @@ public:
 
 private:
     uint16_t mtu;
+
+    std::mutex fragListMutex;
+    std::map< MediaNet::ShortName , std::unique_ptr<Packet> > fragList;
+
 };
 
 } // namespace MediaNet

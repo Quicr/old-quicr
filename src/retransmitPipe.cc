@@ -23,7 +23,7 @@ bool RetransmitPipe::send(std::unique_ptr<Packet> packet) {
 
       auto p = std::pair<MediaNet::ShortName, std::unique_ptr<Packet>>(packet->shortName(), move(clone));
 
-      std::lock_guard<std::mutex> lock(rtxListLock);
+      std::lock_guard<std::mutex> lock(rtxListMutex);
       auto ret = rtxList.insert(move(p));
       if (ret.second == false) {
           // element was already in map - not unique name, not good
@@ -43,7 +43,7 @@ std::unique_ptr<Packet> RetransmitPipe::recv() {
 
 void RetransmitPipe::ack( ShortName name) {
     PipeInterface::ack(name);
-    std::lock_guard<std::mutex> lock(rtxListLock);
+    std::lock_guard<std::mutex> lock(rtxListMutex);
 
     rtxList.erase(name);
 

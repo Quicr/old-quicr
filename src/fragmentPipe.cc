@@ -87,16 +87,53 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
 
 std::unique_ptr<Packet> FragmentPipe::recv() {
     // TODO - cache fragments and reassemble then pass on the when full packet is received
+    assert(downStream);
 
-  assert(downStream);
-  auto packet =  downStream->recv();
+    while (true) {
 
-  if ( packet ) {
-      if ( nextTag(packet) == PacketTag::appDataFrag ) {
-          //std::clog << "Frag recv:" << *packet << std::endl;
-          std::clog << "Frag Recv:" << packet->shortName()  << std::endl;
-      }
-  }
+        auto packet = downStream->recv();
+        if (!packet) {
+            return packet;
+        }
+        if (nextTag(packet) != PacketTag::appDataFrag) {
+            return packet;
+        }
 
-  return packet;
+        ShortName name = packet->shortName();
+        std::clog << "Frag Recv:" << name << std::endl;
+
+        auto p = std::pair<MediaNet::ShortName, std::unique_ptr<Packet>>(packet->shortName(), move(packet));
+        {
+            std::lock_guard<std::mutex> lock(fragListMutex);
+            fragList.insert( move(p) );
+        }
+
+        // TODO - clear out old fragments
+
+        // check if we have all the fragments
+        bool haveAll = true;
+        int frag = 0;
+        int numFrag = 0;
+        while ( haveAll ) {
+            frag++;
+            ShortName fragName = name;
+            fragName.fragmentID = frag*2;
+            if ( fragList.find(fragName) != fragList.end() ) {
+                // exists but is not the last fragment
+                continue;
+            }
+            fragName.fragmentID = frag*2+1;
+            if ( fragList.find(fragName) != fragList.end() ) {
+                // exists and is the last element
+                numFrag = frag;
+                break;
+            }
+            haveAll = false;
+        }
+
+        if (haveAll){
+            // form the new packet from all fragments and return
+            std::clog << "HAVE ALL for: " << name << std::endl;
+        }
+    }
 }
