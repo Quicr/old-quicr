@@ -61,18 +61,22 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
 
         fragPacket->resize( numUse );
         std::copy( &(packet->data())+numDone, &(packet->data())+numDone+numUse, &(fragPacket->data()) );
+        numDone += numUse;
+        numLeft -= numUse;
 
         fragPacket << (uint16_t )numUse;
         fragPacket << PacketTag::appDataFrag;
 
         fragPacket->setFragID( frag );
 
+        if ( numLeft <= 0 ) {
+            // TODO - some way to indicate last fragment
+        }
+
         //std::clog << "Send Frag: " << *fragPacket << std::endl;
 
         ok &= downStream->send(move(fragPacket));
 
-        numDone += numUse;
-        numLeft -= numUse;
         frag++;
     }
 
