@@ -27,7 +27,7 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
     //std::clog << "Frag::Send packet " << *packet << std::endl;
 
     // TODO  break packets larger than mtu bytes into equal size fragments less
-    mtu = 128; // TODO REMOVE - just for testing
+
     int extraHeaderSize = 25; // TODO tune
 
     if ( packet->fullSize()  + extraHeaderSize <= mtu  ) {

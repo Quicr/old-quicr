@@ -36,7 +36,7 @@ bool QuicRClient::publish(std::unique_ptr<Packet> packet) {
   size_t payloadSize = packet->buffer.size() - packet->headerSize;
   assert(payloadSize < 63*1200);
 
-    std::clog << "QuicR send packet size=" << payloadSize << std::endl;
+    //std::clog << "QuicR send packet size=" << payloadSize << std::endl;
 
     packet << (uint16_t)payloadSize;
   packet << PacketTag::appData;
@@ -94,7 +94,7 @@ std::unique_ptr<Packet> QuicRClient::recv() {
         bad = false;
     }
 
-  std::clog << "QuicR received packet size=" << packet->size() << std::endl;
+  //std::clog << "QuicR received packet size=" << packet->size() << std::endl;
   return packet;
 }
 
