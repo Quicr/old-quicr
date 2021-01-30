@@ -178,6 +178,10 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
     tag = PacketTag::relayRateReq;
     break;
 
+    case packetTagTrunc(PacketTag::subscribeReq):
+          tag = PacketTag::subscribeReq;
+          break;
+
   case packetTagTrunc(PacketTag::headerMagicData):
     tag = PacketTag::headerMagicData;
     break;

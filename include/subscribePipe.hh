@@ -14,7 +14,6 @@ public:
   explicit SubscribePipe(PipeInterface *t);
 
   bool subscribe(const ShortName &name);
-
   std::unique_ptr<Packet> recv() override;
 
 private:

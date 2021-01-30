@@ -19,9 +19,10 @@ bool SubscribePipe::subscribe(const ShortName &name) {
   // send subscribe packet
   auto packet = std::make_unique<Packet>();
   packet->reserve(100); // TODO tune
+
   packet << PacketTag::headerMagicData;
   packet << name;
-  packet << PacketTag::shortName;
+  packet << PacketTag::subscribeReq;
 
   packet->enableFEC(true);
   packet->setReliable(true);
