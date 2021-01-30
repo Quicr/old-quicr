@@ -75,6 +75,8 @@ QuicRClient::createPacket(const Packet::ShortName &shortName,
 
   packet->headerSize = (int)( packet->buffer.size() );
 
+  //std::clog << "Create empty packet " << *packet << std::endl;
+
   return packet;
 }
 

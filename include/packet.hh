@@ -1,6 +1,8 @@
 #pragma once
 
 #include <sys/types.h>
+#include <iostream>
+
 #if defined(__linux__) || defined(__APPLE__)
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -29,6 +31,7 @@ struct IpAddr {
 };
 
 class Packet {
+    friend std::ostream& operator<<(std::ostream& os, const Packet& dt);
   friend UdpPipe;
   friend FecPipe;
   friend QRelay;
@@ -50,9 +53,10 @@ public:
   // PacketTag peek();
   // std::vector<uint8_t> pop( PacketTag tag );
 
-  uint8_t &data() { return buffer.at(headerSize); }
-    size_t size() { return buffer.size() - headerSize; }
-    size_t fullSize() { return buffer.size(); }
+    uint8_t &data()  { return buffer.at(headerSize); }
+    const uint8_t &constData() const  { return buffer.at(headerSize); }
+    size_t size() const { return buffer.size() - headerSize; }
+    size_t fullSize() const { return buffer.size(); }
     void resize(int size) { buffer.resize(headerSize + size); }
 
   std::vector<uint8_t> buffer;
@@ -70,6 +74,7 @@ public:
   [[nodiscard]] std::unique_ptr<Packet> clone() const;
 
   [[nodiscard]] const ShortName shortName() const { return name; };
+    void setFragID(const uint8_t fragmentID) { name.fragmentID = fragmentID; };
 
 private:
   MediaNet::Packet::ShortName name;
@@ -87,6 +92,5 @@ private:
 };
 
 bool operator<( const Packet::ShortName& a, const Packet::ShortName& b);
-
 
 } // namespace MediaNet

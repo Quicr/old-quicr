@@ -9,11 +9,15 @@ using namespace MediaNet;
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const Packet::ShortName &msg) {
 
-  p << msg.resourceID;
-  p << msg.senderID;
-  p << msg.sourceID;
-  p << msg.mediaTime;
-  p << msg.fragmentID;
+    int startSize = p->size();
+  p << msg.resourceID; // size = 8
+  p << msg.senderID; // size = 4
+  p << msg.sourceID; // size = 1
+  p << msg.mediaTime; // size = 4
+  p << msg.fragmentID; // size = 1
+    int endSize = p->size();
+
+    assert( (endSize-startSize) == 18 );
 
   p << PacketTag::shortName;
 
@@ -135,63 +139,67 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetAck &msg) {
 /*************** TAG types *************************/
 
 PacketTag MediaNet::nextTag(std::unique_ptr<Packet> &p) {
-  if (p->buffer.empty()) {
-    return PacketTag::none;
-  }
-  uint8_t trucTag = p->buffer.back();
+    if (p->buffer.empty()) {
+        return PacketTag::none;
+    }
+    uint8_t trucTag = p->buffer.back(); // TODO - support varint size tags
+    return nextTag( trucTag);
+}
+
+PacketTag MediaNet::nextTag(uint16_t trucTag) {
   PacketTag tag = PacketTag::badTag;
   switch (trucTag) {
-  case packetTagTruc(PacketTag::none):
+  case packetTagTrunc(PacketTag::none):
     tag = PacketTag::none;
     break;
 
-  case packetTagTruc(PacketTag::appData):
+  case packetTagTrunc(PacketTag::appData):
     tag = PacketTag::appData;
     break;
-  case packetTagTruc(PacketTag::clientSeqNum):
+  case packetTagTrunc(PacketTag::clientSeqNum):
     tag = PacketTag::clientSeqNum;
     break;
-  case packetTagTruc(PacketTag::ack):
+  case packetTagTrunc(PacketTag::ack):
     tag = PacketTag::ack;
     break;
 
-  case packetTagTruc(PacketTag::sync):
+  case packetTagTrunc(PacketTag::sync):
     tag = PacketTag::sync;
     break;
-  case packetTagTruc(PacketTag::shortName):
+  case packetTagTrunc(PacketTag::shortName):
     tag = PacketTag::shortName;
     break;
-  case packetTagTruc(PacketTag::relaySeqNum):
+  case packetTagTrunc(PacketTag::relaySeqNum):
     tag = PacketTag::relaySeqNum;
     break;
-  case packetTagTruc(PacketTag::relayRateReq):
+  case packetTagTrunc(PacketTag::relayRateReq):
     tag = PacketTag::relayRateReq;
     break;
 
-  case packetTagTruc(PacketTag::headerMagicData):
+  case packetTagTrunc(PacketTag::headerMagicData):
     tag = PacketTag::headerMagicData;
     break;
-  case packetTagTruc(PacketTag::headerMagicSyn):
+  case packetTagTrunc(PacketTag::headerMagicSyn):
     tag = PacketTag::headerMagicSyn;
     break;
-  case packetTagTruc(PacketTag::headerMagicRst):
+  case packetTagTrunc(PacketTag::headerMagicRst):
     tag = PacketTag::headerMagicRst;
     break;
-  case packetTagTruc(PacketTag::headerMagicDataCrazy):
+  case packetTagTrunc(PacketTag::headerMagicDataCrazy):
     tag = PacketTag::headerMagicDataCrazy;
     break;
-  case packetTagTruc(PacketTag::headerMagicRstCrazy):
+  case packetTagTrunc(PacketTag::headerMagicRstCrazy):
     tag = PacketTag::headerMagicRstCrazy;
     break;
-  case packetTagTruc(PacketTag::headerMagicSynCrazy):
+  case packetTagTrunc(PacketTag::headerMagicSynCrazy):
     tag = PacketTag::headerMagicSynCrazy;
     break;
 
-  case packetTagTruc(PacketTag::extraMagicVer1):
+  case packetTagTrunc(PacketTag::extraMagicVer1):
     tag = PacketTag::extraMagicVer1;
     break;
 
-  case packetTagTruc(PacketTag::badTag):
+  case packetTagTrunc(PacketTag::badTag):
     tag = PacketTag::badTag;
     break;
   default:
@@ -204,7 +212,7 @@ PacketTag MediaNet::nextTag(std::unique_ptr<Packet> &p) {
 
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               PacketTag tag) {
-  uint16_t t = MediaNet::packetTagTruc(tag);
+  uint16_t t = MediaNet::packetTagTrunc(tag);
   assert(t < 127); // TODO var len encode
   p->buffer.push_back((uint8_t)t);
   return p;
@@ -469,3 +477,52 @@ uint64_t MediaNet::fromVarInt(  uintVar_t v )
 {
     return static_cast<uint64_t >(v);
 }
+
+
+std::ostream& MediaNet::operator<<(std::ostream& stream, const Packet& packet)
+{
+    int ptr = packet.buffer.size()-1;
+    while( ptr >= 0 ) {
+        const uint8_t* data = packet.buffer.data();
+        MediaNet::PacketTag tag = nextTag( data[ptr--] );
+        uint16_t len = ((uint16_t)tag) & 0xFF;
+        if ( len == 255 ) {
+            if ( ptr >= 2 ) {
+                uint16_t lenHigh = data[ptr--];
+                uint16_t lenLow = data[ptr--];
+                len = (lenHigh<<8) + lenLow;
+            }
+        }
+
+        ptr -= len;
+
+        switch (tag) {
+            case PacketTag::headerMagicData:
+            case PacketTag::headerMagicDataCrazy:
+                stream << " magicData";
+                break;
+            case PacketTag::headerMagicSyn:
+            case PacketTag::headerMagicSynCrazy:
+                stream << " magicSync";
+                break;
+            case PacketTag::headerMagicRst:
+            case PacketTag::headerMagicRstCrazy:
+                stream << " magicReset";
+                break;
+            case PacketTag::shortName:
+                stream << " shortName";
+                break;
+            case PacketTag::appData:
+                stream << " appData(" << len << ")";
+                break;
+            case PacketTag::appDataFrag:
+                stream << " appDataFrag(" << len << ")";
+                break;
+            default:
+                stream << " tag:" << (((uint16_t)tag) >>8) << "(" << len << ")";
+        }
+        if ( ((uint16_t)tag) == 0 ) { ptr=-1; }
+    }
+    return stream;
+}
+

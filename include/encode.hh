@@ -32,7 +32,7 @@ constexpr unsigned int packetTagGen(unsigned int val, unsigned int len,
   (void)mandToUnderstand;
   return (val << 8) + len;
 }
-constexpr uint16_t packetTagTruc(MediaNet::PacketTag tag) {
+constexpr uint16_t packetTagTrunc(MediaNet::PacketTag tag) {
   uint32_t t = (uint32_t)tag;
   t >>= 8;
   return (uint16_t)t;
@@ -47,10 +47,11 @@ enum struct PacketTag : uint32_t {
   none = packetTagGen(0, 0, true), // must be smallest tag
 
   appData = packetTagGen(1, 255, true),
+  appDataFrag = packetTagGen(9, 255, true),
   clientSeqNum = packetTagGen(2, 4, true), // make part of appData ???
   ack = packetTagGen(3, 255, true),
   sync = packetTagGen(4, 255, true),
-  shortName = packetTagGen(5, 4, true),
+  shortName = packetTagGen(5, 18, true),
   relaySeqNum = packetTagGen(7, 4, true),
   relayRateReq = packetTagGen(6, 4, true),
   subscribeReq = packetTagGen(8, 0, true),
@@ -72,6 +73,8 @@ enum struct PacketTag : uint32_t {
 };
 
 PacketTag nextTag(std::unique_ptr<Packet> &p);
+PacketTag nextTag(uint16_t trucTag);
+
 bool operator>>(std::unique_ptr<Packet> &p, PacketTag &tag);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, PacketTag tag);
 
@@ -215,5 +218,9 @@ struct NetMsgClientStats {
   uint32_t reserved2;
 };
 */
+
+
+std::ostream& operator<<(std::ostream& stream, const Packet& packet);
+
 
 } // namespace MediaNet
