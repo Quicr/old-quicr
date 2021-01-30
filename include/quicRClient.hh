@@ -42,7 +42,7 @@ public:
   */
 
   virtual std::unique_ptr<Packet> createPacket(const ShortName &name,
-                                               int reservedPayloadSize = 1200);
+                                               int reservedPayloadSize);
   virtual bool publish(std::unique_ptr<Packet>);
 
   bool subscribe(ShortName);
@@ -73,8 +73,8 @@ private:
   StatsPipe statsPipe;
   PipeInterface *firstPipe;
 
-  uint32_t pubClientID;
-  uint64_t secToken;
+  //uint32_t pubClientID;
+  //uint64_t secToken;
 };
 
 } // namespace MediaNet
