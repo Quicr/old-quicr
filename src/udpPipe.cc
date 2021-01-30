@@ -32,17 +32,23 @@ bool UdpPipe::ready() const { return (fd > 0); }
 
 void UdpPipe::stop() {
   if (fd > 0) {
+      std::lock_guard<std::mutex> lock(socketMutex);
 #if defined(_WIN32)
     closesocket(fd);
 #else
     ::close(fd);
 #endif
+    fd = 0;
   }
-
-  fd = 0;
 }
 
 bool UdpPipe::send(std::unique_ptr<Packet> packet) {
+    //std::lock_guard<std::mutex> lock(socketMutex);
+
+    if (fd == 0) {
+        return false;
+    }
+
   if (!packet) {
     return false;
   }
@@ -86,6 +92,8 @@ bool UdpPipe::send(std::unique_ptr<Packet> packet) {
 }
 
 std::unique_ptr<Packet> UdpPipe::recv() {
+    std::lock_guard<std::mutex> lock(socketMutex);
+
   if (fd == 0) {
     return std::unique_ptr<Packet>(nullptr);
   }
@@ -98,8 +106,7 @@ std::unique_ptr<Packet> UdpPipe::recv() {
   IpAddr remoteAddr;
   memset(&remoteAddr.addr, 0, sizeof(remoteAddr.addr));
   remoteAddr.addrLen = sizeof(remoteAddr.addr);
-
-  // TODO - lock and check FD !=0 and make close sit on lock
+  
   int rLen = recvfrom(fd, (char *)packet->buffer.data(),
                       (int)packet->buffer.size(), 0 /*flags*/,
                       (struct sockaddr *)&remoteAddr.addr, &remoteAddr.addrLen);
@@ -149,6 +156,7 @@ std::unique_ptr<Packet> UdpPipe::recv() {
 
 bool UdpPipe::start(const uint16_t serverPort, const std::string serverName,
                     PipeInterface *upTransport) {
+    std::lock_guard<std::mutex> lock(socketMutex);
   upStream = upTransport;
 
   // set up network
