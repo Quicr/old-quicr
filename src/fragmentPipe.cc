@@ -87,5 +87,9 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
     // TODO - cache fragments and reassemble then pass on the when full packet is received
 
   assert(downStream);
-  return downStream->recv();
+  auto packet =  downStream->recv();
+
+  std::clog << "Frag recv:" << *packet << std::endl;
+
+  return packet;
 }
