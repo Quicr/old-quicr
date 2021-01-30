@@ -51,8 +51,9 @@ public:
   // std::vector<uint8_t> pop( PacketTag tag );
 
   uint8_t &data() { return buffer.at(headerSize); }
-  size_t size() { return buffer.size() - headerSize; }
-  void resize(int size) { buffer.resize(headerSize + size); }
+    size_t size() { return buffer.size() - headerSize; }
+    size_t fullSize() { return buffer.size(); }
+    void resize(int size) { buffer.resize(headerSize + size); }
 
   std::vector<uint8_t> buffer;
 

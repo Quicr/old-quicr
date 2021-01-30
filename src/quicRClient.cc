@@ -41,6 +41,8 @@ bool QuicRClient::publish(std::unique_ptr<Packet> packet) {
 }
 
 std::unique_ptr<Packet> QuicRClient::recv() {
+    // TODO - check it is one single app data and strip add data tags and len
+
   auto packet = firstPipe->recv();
   return packet;
 }
