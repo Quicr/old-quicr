@@ -22,18 +22,61 @@ void FragmentPipe::updateStat(PipeInterface::StatName stat, uint64_t value) {
 
 
 bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
-    // TODO  break packets larger than mtu bytes into equal size fragments less
-    mtu = 100; // TODO REMOVE - just for testing
-
-    if (nextTag(packet) == PacketTag::appData) {
-        std::clog << "Packet fullSize=" << packet->fullSize() << " size=" << packet->size() << std::endl;
-    }
-    else {
-        assert(0);
-    }
-
     assert(downStream);
-    return downStream->send(move(packet));
+
+    //std::clog << "Frag::Send packet " << *packet << std::endl;
+
+    // TODO  break packets larger than mtu bytes into equal size fragments less
+    mtu = 128; // TODO REMOVE - just for testing
+    int extraHeaderSize = 25; // TODO tune
+
+    if ( packet->fullSize()  + extraHeaderSize <= mtu  ) {
+        return downStream->send(move(packet));
+    }
+
+    assert( nextTag(packet) == PacketTag::appData );
+    bool ok = true;
+
+    uint16_t payloadSize;
+    PacketTag  tag;
+
+    packet >> tag;
+    packet >> payloadSize;
+    uint16_t dataSize = mtu - ( extraHeaderSize +  ( packet->fullSize() - packet->size()  ) );
+    if ( dataSize < 56 ) { dataSize = 56; }
+    assert( dataSize > 1 );
+    assert( payloadSize == packet->size() );
+
+    size_t   numDone = 0;
+    size_t   numLeft = packet->size();
+    uint8_t  frag = 1;
+
+    while (numLeft > 0 ) {
+        size_t numUse = dataSize;
+        if ( numUse > numLeft ) {
+            numUse = numLeft;
+        }
+
+        std::unique_ptr<Packet> fragPacket = packet->clone(); // TODO - make a clone just base
+
+        fragPacket->resize( numUse );
+        std::copy( &(packet->data())+numDone, &(packet->data())+numDone+numUse, &(fragPacket->data()) );
+
+        fragPacket << (uint16_t )numUse;
+        fragPacket << PacketTag::appDataFrag;
+
+        fragPacket->setFragID( frag );
+
+        //std::clog << "Send Frag: " << *fragPacket << std::endl;
+
+        ok &= downStream->send(move(fragPacket));
+
+        numDone += numUse;
+        numLeft -= numUse;
+        frag++;
+    }
+
+    return ok;
 }
 
 std::unique_ptr<Packet> FragmentPipe::recv() {

@@ -20,7 +20,7 @@ public:
   virtual std::unique_ptr<Packet> recv();
 
 private:
-    int mtu;
+    uint16_t mtu;
 };
 
 } // namespace MediaNet
