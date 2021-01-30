@@ -10,9 +10,8 @@
 
 using namespace MediaNet;
 
-PacerPipe::PacerPipe(PipeInterface *t) : PipeInterface(t),
- rateCtrl(this),
-    shutDown(false) {
+PacerPipe::PacerPipe(PipeInterface *t)
+    : PipeInterface(t), rateCtrl(this), shutDown(false) {
   assert(downStream);
 }
 
@@ -102,7 +101,7 @@ void PacerPipe::runNetSend() {
       // packet << PacketTag::extraMagicVer2;
 
       NetRateReq rateReq;
-      rateReq.bitrateKbps = toVarInt( rateCtrl.bwDownTarget() / 1000); // TODO
+      rateReq.bitrateKbps = toVarInt(rateCtrl.bwDownTarget() / 1000); // TODO
       packet << rateReq;
 
       // std::clog << "Send Rate Req" << std::endl;
@@ -139,10 +138,11 @@ void PacerPipe::runNetSend() {
                     42 * 8; // Capture shows 42 byte header before UDP payload
                             // including ethernet frame
 
-      assert(packet);
-      rateCtrl.sendPacket((seqTag.clientSeqNum) , nowUs, bits, packet->shortName() );
+    assert(packet);
+    rateCtrl.sendPacket((seqTag.clientSeqNum), nowUs, bits,
+                        packet->shortName());
 
-      downStream->send(move(packet));
+    downStream->send(move(packet));
 
     // std::clog << ">";
   }

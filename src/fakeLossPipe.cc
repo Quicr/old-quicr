@@ -30,7 +30,7 @@ std::unique_ptr<Packet> FakeLossPipe::recv() {
   if (packet) {
     downStreamCount++;
     if (downStreamCount % 13 == 7) {
-      //return std::unique_ptr<Packet>(nullptr);
+      // return std::unique_ptr<Packet>(nullptr);
     }
   }
 

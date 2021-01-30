@@ -55,16 +55,16 @@ int main(int argc, char *argv[]) {
 
     uint64_t bitRate = qClient.getTargetUpstreamBitrate(); // in bps
 
-    const int maxBitRete = 3*1000*1000;
-    if ( bitRate >  maxBitRete) {
-        // limit bitRate
-        bitRate = maxBitRete;
+    const int maxBitRete = 3 * 1000 * 1000;
+    if (bitRate > maxBitRete) {
+      // limit bitRate
+      bitRate = maxBitRete;
     }
 
     uint64_t bytesPerPacket64 = (bitRate / packetsPerSecond) / 8;
     uint32_t bytesPerPacket = (uint32_t)bytesPerPacket64;
 
-    if (bytesPerPacket < headerBytes+2) {
+    if (bytesPerPacket < headerBytes + 2) {
       bytesPerPacket = headerBytes + 2;
       std::clog << "Warning bitrate too low for packet rate" << std::endl;
     }
@@ -85,10 +85,10 @@ int main(int argc, char *argv[]) {
     uint8_t *buffer = &(packet->data());
     *buffer++ = 1;
 
-      packet->enableFEC(false );
-      packet->setReliable(true );
+    packet->enableFEC(false);
+    packet->setReliable(true);
 
-      qClient.publish(move(packet));
+    qClient.publish(move(packet));
 
     // empty the receive queue
     do {

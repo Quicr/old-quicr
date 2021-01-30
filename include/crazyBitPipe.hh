@@ -17,12 +17,14 @@ public:
   /// non blocking, return nullptr if no buffer
   virtual std::unique_ptr<Packet> recv();
 
-  virtual void updateRTT( uint16_t minRttMs, uint16_t maxRttMs  ); // tells downstream things the current RTT
+  virtual void
+  updateRTT(uint16_t minRttMs,
+            uint16_t maxRttMs); // tells downstream things the current RTT
 
 private:
-    uint16_t rttMs;
-    bool spinBitVal;
-    uint32_t lastSpinTimeMs;
+  uint16_t rttMs;
+  bool spinBitVal;
+  uint32_t lastSpinTimeMs;
 };
 
 } // namespace MediaNet

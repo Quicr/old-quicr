@@ -1,7 +1,7 @@
 #pragma once
 
-#include <sys/types.h>
 #include <mutex>
+#include <sys/types.h>
 
 #if defined(__linux__) || defined(__APPLE__)
 #include <netinet/in.h>
@@ -30,10 +30,11 @@ public:
   virtual void stop();
 
   virtual bool send(std::unique_ptr<Packet>);
-  virtual std::unique_ptr<Packet> recv(); // non blocking, return nullptr if no buffer
+  virtual std::unique_ptr<Packet>
+  recv(); // non blocking, return nullptr if no buffer
 
 private:
-    std::mutex socketMutex;
+  std::mutex socketMutex;
 #if defined(_WIN32)
   SOCKET fd; // UDP socket
 #else
@@ -44,6 +45,5 @@ private:
 };
 
 bool operator<(const ShortName &a, const ShortName &b);
-
 
 } // namespace MediaNet

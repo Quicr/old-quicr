@@ -13,10 +13,9 @@ using namespace MediaNet;
 #undef max
 #endif
 
-RateCtrl::RateCtrl( PipeInterface* pacerPipeRef)
-    : pacerPipe( pacerPipeRef),
-    upHistorySeqOffset(0), downHistorySeqOffset(0), phase(0),
-      bitsSentThisPhase(0), cycleCount(0),
+RateCtrl::RateCtrl(PipeInterface *pacerPipeRef)
+    : pacerPipe(pacerPipeRef), upHistorySeqOffset(0), downHistorySeqOffset(0),
+      phase(0), bitsSentThisPhase(0), cycleCount(0),
       minCycleRTTUs(std::numeric_limits<uint32_t>::max()), maxCycleAckTimeUs(0),
       estRTTUs(100 * 1000), estAckTimeUs(100 * 1000), cycleRelayTimeOffsetUs(0),
       estRelayTimeOffsetUs(0), upstreamPacketLossRate(0), upstreamCycleMaxBw(0),
@@ -33,7 +32,7 @@ RateCtrl::RateCtrl( PipeInterface* pacerPipeRef)
 }
 
 void RateCtrl::sendPacket(uint32_t seqNum, uint32_t sendTimeUs,
-                          uint16_t sizeBits, ShortName shortName  ) {
+                          uint16_t sizeBits, ShortName shortName) {
   updatePhase();
 
   assert(sizeBits > 0);
@@ -88,8 +87,7 @@ void RateCtrl::recvAck(uint32_t seqNum, uint32_t remoteAckTimeUs,
       (rec.localRecvAckTimeUs + rec.sendTimeUs) / 2 - rec.remoteAckTimeUs;
   updateRTT(rtt, timeOffset);
 
-  pacerPipe->ack( rec.shortName );
-
+  pacerPipe->ack(rec.shortName);
 
   if (seqNum - upHistorySeqOffset < 1) {
     return;
@@ -123,7 +121,7 @@ uint64_t RateCtrl::bwUpEst() const // in bits per second
 
 uint64_t RateCtrl::bwDownEst() const // in bits per second
 {
-  return (uint64_t) downstreamBwEst;
+  return (uint64_t)downstreamBwEst;
 }
 
 uint64_t RateCtrl::bwUpTarget() const // in bits per second
@@ -135,13 +133,13 @@ uint64_t RateCtrl::bwUpTarget() const // in bits per second
 #endif
 
   if (phase == 1) {
-    return ( (uint64_t)(upstreamBwEst) * 5) / 4;
+    return ((uint64_t)(upstreamBwEst)*5) / 4;
   }
   if (phase == 2) {
-    return ( (uint64_t)(upstreamBwEst) * 3) / 4;
+    return ((uint64_t)(upstreamBwEst)*3) / 4;
   }
 
-  return ( (uint64_t)upstreamBwEst * 9) / 10;
+  return ((uint64_t)upstreamBwEst * 9) / 10;
 }
 
 uint64_t RateCtrl::bwDownTarget() const // in bits per second
@@ -154,13 +152,13 @@ uint64_t RateCtrl::bwDownTarget() const // in bits per second
 #endif
 
   if (phase == 3) {
-    return ( (uint64_t)(downstreamBwEst) * 5) / 4;
+    return ((uint64_t)(downstreamBwEst)*5) / 4;
   }
   if (phase == 4) {
-    return ( (uint64_t)(downstreamBwEst) * 3) / 4;
+    return ((uint64_t)(downstreamBwEst)*3) / 4;
   }
 
-  return ( (uint64_t)(downstreamBwEst) * 9) / 10;
+  return ((uint64_t)(downstreamBwEst)*9) / 10;
 }
 
 void RateCtrl::updatePhase() {
@@ -204,12 +202,11 @@ void RateCtrl::startNewCycle() {
     upstreamBwEst = upstreamCycleMaxBw; // TODO - filter
   }
 
+  pacerPipe->updateStat(PipeInterface::StatName::bigRTTms, estAckTimeUs / 1000);
+  pacerPipe->updateStat(PipeInterface::StatName::minRTTms,
+                        estRTTUs / 1000); // do min last
 
-  pacerPipe->updateStat(PipeInterface::StatName::bigRTTms, estAckTimeUs/1000 );
-  pacerPipe->updateStat(PipeInterface::StatName::minRTTms, estRTTUs/1000 ); // do min last
-
-  //pacerPipe->updateStat(PipeInterface::StatName::mtu, 1200 ); // TODO
-
+  // pacerPipe->updateStat(PipeInterface::StatName::mtu, 1200 ); // TODO
 
 #if 1
   if (cycleCount > 0) {

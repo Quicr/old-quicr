@@ -19,7 +19,7 @@ struct PacketUpstreamStatus {
   // bool congested;
   uint32_t remoteAckTimeUs;
   uint32_t localRecvAckTimeUs;
-    MediaNet::ShortName shortName;
+  MediaNet::ShortName shortName;
 };
 
 struct PacketDownstreamStatus {
@@ -34,9 +34,10 @@ struct PacketDownstreamStatus {
 
 class RateCtrl {
 public:
-  RateCtrl(PipeInterface* pacerPipeRef);
+  RateCtrl(PipeInterface *pacerPipeRef);
 
-  void sendPacket(uint32_t seqNum, uint32_t sendTimeUs, uint16_t sizeBits, ShortName shortName );
+  void sendPacket(uint32_t seqNum, uint32_t sendTimeUs, uint16_t sizeBits,
+                  ShortName shortName);
   void recvPacket(uint32_t relaySeqNum, uint32_t remoteSendTimeUs,
                   uint32_t localRecvTimeUs, uint16_t sizeBits);
   void recvAck(uint32_t seqNum, uint32_t remoteAckTimeUs,
@@ -52,7 +53,7 @@ public:
   [[nodiscard]] uint64_t bwDownTarget() const; // in bits per second
 
 private:
-    PipeInterface* pacerPipe;
+  PipeInterface *pacerPipe;
 
   uint32_t upHistorySeqOffset;
   std::vector<PacketUpstreamStatus> upstreamHistory;

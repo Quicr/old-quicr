@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cstdint>
-#include <memory>
 #include <map>
+#include <memory>
 #include <mutex>
 
 #include "packet.hh"
@@ -16,17 +16,16 @@ public:
 
   virtual bool send(std::unique_ptr<Packet> packet);
 
-  virtual void updateStat( StatName stat, uint64_t value  );
+  virtual void updateStat(StatName stat, uint64_t value);
 
   /// non blocking, return nullptr if no buffer
   virtual std::unique_ptr<Packet> recv();
 
 private:
-    uint16_t mtu;
+  uint16_t mtu;
 
-    std::mutex fragListMutex;
-    std::map< MediaNet::ShortName , std::unique_ptr<Packet> > fragList;
-
+  std::mutex fragListMutex;
+  std::map<MediaNet::ShortName, std::unique_ptr<Packet>> fragList;
 };
 
 } // namespace MediaNet

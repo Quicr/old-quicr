@@ -86,24 +86,24 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet) {
   }
 
   NetAck ackTag{};
-  ackTag.netAckSeqNum = ( seqNumTag.clientSeqNum );
+  ackTag.netAckSeqNum = (seqNumTag.clientSeqNum);
   ackTag.netRecvTimeUs = nowUs;
   ack << ackTag;
 
   transport.send(move(ack));
 
-  prevAckSeqNum = ( seqNumTag.clientSeqNum );
+  prevAckSeqNum = (seqNumTag.clientSeqNum);
   prevRecvTimeUs = nowUs;
 
   // TODO - loop over connections and remove ones with old last Syn time
 
   // for each connection, make copy and forward
   for (auto const &[addr, con] : connectionMap) {
-    //auto subData = std::make_unique<Packet>();
-    //subData->copy(*packet);
+    // auto subData = std::make_unique<Packet>();
+    // subData->copy(*packet);
 
     auto subData = packet->clone(); // TODO - just clone header stuff
-    //subData->resize(0);
+    // subData->resize(0);
 
     subData->setDst(addr);
 
@@ -113,7 +113,7 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet) {
 
     subData << netRelaySeqNum;
 
-    //std::clog << "Relay send: " << *subData << std::endl;
+    // std::clog << "Relay send: " << *subData << std::endl;
 
     bool simLoss = false;
 

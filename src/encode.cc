@@ -9,42 +9,41 @@ using namespace MediaNet;
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const ShortName &msg) {
 
-    int startSize = p->size();
+  int startSize = p->size();
   p << msg.resourceID; // size = 8
-  p << msg.senderID; // size = 4
-  p << msg.sourceID; // size = 1
-  p << msg.mediaTime; // size = 4
+  p << msg.senderID;   // size = 4
+  p << msg.sourceID;   // size = 1
+  p << msg.mediaTime;  // size = 4
   p << msg.fragmentID; // size = 1
-    int endSize = p->size();
+  int endSize = p->size();
 
-    assert( (endSize-startSize) == 18 );
+  assert((endSize - startSize) == 18);
 
   p << PacketTag::shortName;
 
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, ShortName  &msg)
-{
-    if (nextTag(p) != PacketTag::shortName) {
-        std::cerr << "Did not find expected PacketTag::shortName" << std::endl;
-        return false;
-    }
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p, ShortName &msg) {
+  if (nextTag(p) != PacketTag::shortName) {
+    std::cerr << "Did not find expected PacketTag::shortName" << std::endl;
+    return false;
+  }
 
-    PacketTag tag = PacketTag::none;
-    bool ok = true;
-    ok &= p >> tag;
-    ok &= p >> msg.fragmentID;
-    ok &= p >> msg.mediaTime;
-    ok &= p >> msg.sourceID;
-    ok &= p >> msg.senderID;
-    ok &= p >> msg.resourceID;
+  PacketTag tag = PacketTag::none;
+  bool ok = true;
+  ok &= p >> tag;
+  ok &= p >> msg.fragmentID;
+  ok &= p >> msg.mediaTime;
+  ok &= p >> msg.sourceID;
+  ok &= p >> msg.senderID;
+  ok &= p >> msg.resourceID;
 
-    if (!ok) {
-        std::cerr << "problem parsing shortName" << std::endl;
-    }
+  if (!ok) {
+    std::cerr << "problem parsing shortName" << std::endl;
+  }
 
-    return ok;
+  return ok;
 }
 
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
@@ -139,11 +138,11 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetAck &msg) {
 /*************** TAG types *************************/
 
 PacketTag MediaNet::nextTag(std::unique_ptr<Packet> &p) {
-    if (p->fullSize() <= 0 ) {
-        return PacketTag::none;
-    }
-    uint8_t trucTag = p->buffer.back(); // TODO - support varint size tags
-    return nextTag( trucTag);
+  if (p->fullSize() <= 0) {
+    return PacketTag::none;
+  }
+  uint8_t trucTag = p->buffer.back(); // TODO - support varint size tags
+  return nextTag(trucTag);
 }
 
 PacketTag MediaNet::nextTag(uint16_t trucTag) {
@@ -153,12 +152,12 @@ PacketTag MediaNet::nextTag(uint16_t trucTag) {
     tag = PacketTag::none;
     break;
 
-      case packetTagTrunc(PacketTag::appData):
-          tag = PacketTag::appData;
-          break;
-      case packetTagTrunc(PacketTag::appDataFrag):
-          tag = PacketTag::appDataFrag;
-          break;
+  case packetTagTrunc(PacketTag::appData):
+    tag = PacketTag::appData;
+    break;
+  case packetTagTrunc(PacketTag::appDataFrag):
+    tag = PacketTag::appDataFrag;
+    break;
   case packetTagTrunc(PacketTag::clientSeqNum):
     tag = PacketTag::clientSeqNum;
     break;
@@ -374,161 +373,150 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRateReq &msg) {
   return ok;
 }
 
+std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
+                                              uintVar_t v) {
+  uint64_t val = fromVarInt(v);
 
-std::unique_ptr<Packet>& MediaNet::operator<<(std::unique_ptr<Packet> &p, uintVar_t v)
-{
-    uint64_t val = fromVarInt(v);
+  assert(val < ((uint64_t)1 << 61));
 
-    assert( val < ( (uint64_t)1<<61) );
+  if (val <= ((uint64_t)1 << 7)) {
+    p->buffer.push_back(uint8_t(((val >> 0) & 0x7F)) | 0x00);
+    return p;
+  }
 
-    if ( val <= ((uint64_t)1<<7) ) {
-        p->buffer.push_back(uint8_t( ((val >> 0) & 0x7F)) | 0x00 );
-        return p;
-    }
+  if (val <= ((uint64_t)1 << 14)) {
+    p->buffer.push_back(uint8_t((val >> 0) & 0xFF));
+    p->buffer.push_back(uint8_t(((val >> 8) & 0x3F) | 0x80));
+    return p;
+  }
 
-    if ( val <= ((uint64_t)1<<14) ) {
-        p->buffer.push_back(uint8_t((val >> 0) & 0xFF));
-        p->buffer.push_back(uint8_t( ((val >> 8) & 0x3F) | 0x80 ) );
-        return p;
-    }
-
-    if ( val <= ((uint64_t)1<<29) ) {
-        p->buffer.push_back(uint8_t((val >> 0) & 0xFF));
-        p->buffer.push_back(uint8_t((val >> 8) & 0xFF));
-        p->buffer.push_back(uint8_t((val >> 16) & 0xFF));
-        p->buffer.push_back(uint8_t( ((val >> 24) & 0x1F) | 0x80 | 0x40 ) );
-        return p;
-    }
-
+  if (val <= ((uint64_t)1 << 29)) {
     p->buffer.push_back(uint8_t((val >> 0) & 0xFF));
     p->buffer.push_back(uint8_t((val >> 8) & 0xFF));
     p->buffer.push_back(uint8_t((val >> 16) & 0xFF));
-    p->buffer.push_back(uint8_t((val >> 24) & 0xFF));
-    p->buffer.push_back(uint8_t((val >> 32) & 0xFF));
-    p->buffer.push_back(uint8_t((val >> 40) & 0xFF));
-    p->buffer.push_back(uint8_t((val >> 48) & 0xFF));
-    p->buffer.push_back(uint8_t( ((val >> 56) & 0x0F) | 0x80 | 0x40 | 0x20 ) );
-
+    p->buffer.push_back(uint8_t(((val >> 24) & 0x1F) | 0x80 | 0x40));
     return p;
+  }
+
+  p->buffer.push_back(uint8_t((val >> 0) & 0xFF));
+  p->buffer.push_back(uint8_t((val >> 8) & 0xFF));
+  p->buffer.push_back(uint8_t((val >> 16) & 0xFF));
+  p->buffer.push_back(uint8_t((val >> 24) & 0xFF));
+  p->buffer.push_back(uint8_t((val >> 32) & 0xFF));
+  p->buffer.push_back(uint8_t((val >> 40) & 0xFF));
+  p->buffer.push_back(uint8_t((val >> 48) & 0xFF));
+  p->buffer.push_back(uint8_t(((val >> 56) & 0x0F) | 0x80 | 0x40 | 0x20));
+
+  return p;
 }
 
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p, uintVar_t &v) {
-    uint8_t byte[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-    bool ok = true;
+  uint8_t byte[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+  bool ok = true;
 
-    if (p->buffer.empty()) {
-        return false;
-    }
-    uint8_t first = p->buffer.back();
+  if (p->buffer.empty()) {
+    return false;
+  }
+  uint8_t first = p->buffer.back();
 
-    if ((first & (0x80)) == 0 ) {
-        ok &= p >> byte[0];
-        uint8_t val = ( (byte[0]& 0x7F) << 0);
-        v = toVarInt(val);
-        return ok;
-    }
+  if ((first & (0x80)) == 0) {
+    ok &= p >> byte[0];
+    uint8_t val = ((byte[0] & 0x7F) << 0);
+    v = toVarInt(val);
+    return ok;
+  }
 
-    if ((first & (0x80 | 0x40)) == 0x80) {
-        ok &= p >> byte[1];
-        ok &= p >> byte[0];
-        uint16_t val = ( ( (uint16_t)byte[1] & 0x3F) << 8)
-                        + ( (uint16_t)byte[0] << 0);
-        v = toVarInt(val);
-        return ok;
-    }
+  if ((first & (0x80 | 0x40)) == 0x80) {
+    ok &= p >> byte[1];
+    ok &= p >> byte[0];
+    uint16_t val = (((uint16_t)byte[1] & 0x3F) << 8) + ((uint16_t)byte[0] << 0);
+    v = toVarInt(val);
+    return ok;
+  }
 
-    if ((first & (0x80 | 0x40 | 0x20) ) == (0x80|0x40) ) {
-        ok &= p >> byte[3];
-        ok &= p >> byte[2];
-        ok &= p >> byte[1];
-        ok &= p >> byte[0];
-        uint32_t val = ( (uint32_t)(byte[3] & 0x1F) << 24)
-                + ( (uint32_t)byte[2] << 16)
-                + ( (uint32_t)byte[1] << 8)
-                + ( (uint32_t)byte[0] << 0);
-        v = toVarInt(val);
-        return ok;
-    }
-
-    ok &= p >> byte[7];
-    ok &= p >> byte[6];
-    ok &= p >> byte[5];
-    ok &= p >> byte[4];
+  if ((first & (0x80 | 0x40 | 0x20)) == (0x80 | 0x40)) {
     ok &= p >> byte[3];
     ok &= p >> byte[2];
     ok &= p >> byte[1];
     ok &= p >> byte[0];
-    uint64_t val = ( (uint64_t)(byte[3] & 0x0F) << 56)
-            + ((uint64_t)(byte[2]) << 48)
-            + ((uint64_t)(byte[1]) << 40)
-            + ((uint64_t)(byte[0]) << 32)
-            + ((uint64_t)(byte[2]) << 24)
-            + ((uint64_t)(byte[2]) << 16)
-            + ((uint64_t)(byte[1]) << 8)
-            + ( (uint64_t)(byte[0]) << 0);
+    uint32_t val = ((uint32_t)(byte[3] & 0x1F) << 24) +
+                   ((uint32_t)byte[2] << 16) + ((uint32_t)byte[1] << 8) +
+                   ((uint32_t)byte[0] << 0);
     v = toVarInt(val);
     return ok;
+  }
+
+  ok &= p >> byte[7];
+  ok &= p >> byte[6];
+  ok &= p >> byte[5];
+  ok &= p >> byte[4];
+  ok &= p >> byte[3];
+  ok &= p >> byte[2];
+  ok &= p >> byte[1];
+  ok &= p >> byte[0];
+  uint64_t val = ((uint64_t)(byte[3] & 0x0F) << 56) +
+                 ((uint64_t)(byte[2]) << 48) + ((uint64_t)(byte[1]) << 40) +
+                 ((uint64_t)(byte[0]) << 32) + ((uint64_t)(byte[2]) << 24) +
+                 ((uint64_t)(byte[2]) << 16) + ((uint64_t)(byte[1]) << 8) +
+                 ((uint64_t)(byte[0]) << 0);
+  v = toVarInt(val);
+  return ok;
 }
 
-uintVar_t MediaNet::toVarInt( uint64_t v)
-{
-    assert( v < ( (uint64_t)0x1 <<61 ));
-    return static_cast<uintVar_t>(v);
+uintVar_t MediaNet::toVarInt(uint64_t v) {
+  assert(v < ((uint64_t)0x1 << 61));
+  return static_cast<uintVar_t>(v);
 }
 
-uint64_t MediaNet::fromVarInt(  uintVar_t v )
-{
-    return static_cast<uint64_t >(v);
-}
+uint64_t MediaNet::fromVarInt(uintVar_t v) { return static_cast<uint64_t>(v); }
 
-
-std::ostream& MediaNet::operator<<(std::ostream& stream, const Packet& packet)
-{
-    int ptr = packet.buffer.size()-1;
-    while( ptr >= 0 ) {
-        const uint8_t* data = packet.buffer.data();
-        MediaNet::PacketTag tag = nextTag( data[ptr--] );
-        uint16_t len = ((uint16_t)tag) & 0xFF;
-        if ( len == 255 ) {
-            if ( ptr >= 2 ) {
-                uint16_t lenHigh = data[ptr--];
-                uint16_t lenLow = data[ptr--];
-                len = (lenHigh<<8) + lenLow;
-            }
-        }
-
-        ptr -= len;
-
-        switch (tag) {
-            case PacketTag::headerMagicData:
-            case PacketTag::headerMagicDataCrazy:
-                stream << " magicData";
-                break;
-            case PacketTag::headerMagicSyn:
-            case PacketTag::headerMagicSynCrazy:
-                stream << " magicSync";
-                break;
-            case PacketTag::headerMagicRst:
-            case PacketTag::headerMagicRstCrazy:
-                stream << " magicReset";
-                break;
-            case PacketTag::shortName:
-                stream << " shortName";
-                break;
-            case PacketTag::relaySeqNum:
-                stream << " relaySeqNum";
-                break;
-            case PacketTag::appData:
-                stream << " appData(" << len << ")";
-                break;
-            case PacketTag::appDataFrag:
-                stream << " appDataFrag(" << len << ")";
-                break;
-            default:
-                stream << " tag:" << (((uint16_t)tag) >>8) << "(" << len << ")";
-        }
-        if ( ((uint16_t)tag) == 0 ) { ptr=-1; }
+std::ostream &MediaNet::operator<<(std::ostream &stream, const Packet &packet) {
+  int ptr = packet.buffer.size() - 1;
+  while (ptr >= 0) {
+    const uint8_t *data = packet.buffer.data();
+    MediaNet::PacketTag tag = nextTag(data[ptr--]);
+    uint16_t len = ((uint16_t)tag) & 0xFF;
+    if (len == 255) {
+      if (ptr >= 2) {
+        uint16_t lenHigh = data[ptr--];
+        uint16_t lenLow = data[ptr--];
+        len = (lenHigh << 8) + lenLow;
+      }
     }
-    return stream;
-}
 
+    ptr -= len;
+
+    switch (tag) {
+    case PacketTag::headerMagicData:
+    case PacketTag::headerMagicDataCrazy:
+      stream << " magicData";
+      break;
+    case PacketTag::headerMagicSyn:
+    case PacketTag::headerMagicSynCrazy:
+      stream << " magicSync";
+      break;
+    case PacketTag::headerMagicRst:
+    case PacketTag::headerMagicRstCrazy:
+      stream << " magicReset";
+      break;
+    case PacketTag::shortName:
+      stream << " shortName";
+      break;
+    case PacketTag::relaySeqNum:
+      stream << " relaySeqNum";
+      break;
+    case PacketTag::appData:
+      stream << " appData(" << len << ")";
+      break;
+    case PacketTag::appDataFrag:
+      stream << " appDataFrag(" << len << ")";
+      break;
+    default:
+      stream << " tag:" << (((uint16_t)tag) >> 8) << "(" << len << ")";
+    }
+    if (((uint16_t)tag) == 0) {
+      ptr = -1;
+    }
+  }
+  return stream;
+}

@@ -16,9 +16,9 @@
 #include "pipeInterface.hh"
 #include "priorityPipe.hh"
 #include "retransmitPipe.hh"
+#include "statsPipe.hh"
 #include "subscribePipe.hh"
 #include "udpPipe.hh"
-#include "statsPipe.hh"
 
 namespace MediaNet {
 
@@ -45,7 +45,7 @@ public:
                                                int reservedPayloadSize = 1200);
   virtual bool publish(std::unique_ptr<Packet>);
 
-  bool subscribe( ShortName );
+  bool subscribe(ShortName);
 
   /// non blocking, return nullptr if no buffer
   virtual std::unique_ptr<Packet> recv();

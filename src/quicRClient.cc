@@ -23,8 +23,8 @@ QuicRClient::QuicRClient()
       priorityPipe(&pacerPipe), retransmitPipe(&priorityPipe),
       fecPipe(&retransmitPipe), subscribePipe(&fecPipe),
       fragmentPipe(&subscribePipe), encryptPipe(&fragmentPipe),
-      statsPipe( &encryptPipe ), 
-      firstPipe(&statsPipe), pubClientID(0), secToken(0) {}
+      statsPipe(&encryptPipe), firstPipe(&statsPipe), pubClientID(0),
+      secToken(0) {}
 
 QuicRClient::~QuicRClient() { close(); }
 
@@ -34,67 +34,69 @@ void QuicRClient::close() { firstPipe->stop(); }
 
 bool QuicRClient::publish(std::unique_ptr<Packet> packet) {
   size_t payloadSize = packet->buffer.size() - packet->headerSize;
-  assert(payloadSize < 63*1200);
+  assert(payloadSize < 63 * 1200);
 
-    //std::clog << "QuicR send packet size=" << payloadSize << std::endl;
+  // std::clog << "QuicR send packet size=" << payloadSize << std::endl;
 
-    packet << (uint16_t)payloadSize;
+  packet << (uint16_t)payloadSize;
   packet << PacketTag::appData;
   return firstPipe->send(move(packet));
 }
 
 std::unique_ptr<Packet> QuicRClient::recv() {
 
-    auto packet = std::unique_ptr<Packet>(nullptr);
+  auto packet = std::unique_ptr<Packet>(nullptr);
 
-    bool bad=true;
-    while(bad) {
+  bool bad = true;
+  while (bad) {
 
-        packet = firstPipe->recv();
+    packet = firstPipe->recv();
 
-        if (!packet) {
-            return packet;
-        }
-
-        if (packet->size() < 1) {
-            // TODO log bad data
-            std::clog << "quicr recv very bad size = " << packet->size() << std::endl;
-            continue;
-        }
-
-        PacketTag tag;
-        packet >> tag;
-
-        if (tag == PacketTag::headerMagicData) {
-            //std::clog << "quicr empty message " << std::endl;
-            continue;
-        }
-
-        if (tag != PacketTag::appData) {
-            // TODO log bad data
-            std::clog << "quicr recv bad tag: " << (((uint16_t) (tag)) >> 8) << std::endl;
-            continue;
-        }
-
-        if (packet->size() < 2) {
-            // TODO log bad data
-            std::clog << "quicr recv bad size=" << packet->size() << std::endl;
-            continue;
-        }
-
-        uint16_t payloadSize;
-        packet >> payloadSize;
-        if (payloadSize > packet->size()) {
-            std::clog << "quicr recv bad data size " << payloadSize << " " << packet->size() << std::endl;
-            continue;
-        }
-
-        packet->headerSize = packet->fullSize() - payloadSize;
-
-        bad = false;
+    if (!packet) {
+      return packet;
     }
 
-  //std::clog << "QuicR received packet size=" << packet->size() << std::endl;
+    if (packet->size() < 1) {
+      // TODO log bad data
+      std::clog << "quicr recv very bad size = " << packet->size() << std::endl;
+      continue;
+    }
+
+    PacketTag tag;
+    packet >> tag;
+
+    if (tag == PacketTag::headerMagicData) {
+      // std::clog << "quicr empty message " << std::endl;
+      continue;
+    }
+
+    if (tag != PacketTag::appData) {
+      // TODO log bad data
+      std::clog << "quicr recv bad tag: " << (((uint16_t)(tag)) >> 8)
+                << std::endl;
+      continue;
+    }
+
+    if (packet->size() < 2) {
+      // TODO log bad data
+      std::clog << "quicr recv bad size=" << packet->size() << std::endl;
+      continue;
+    }
+
+    uint16_t payloadSize;
+    packet >> payloadSize;
+    if (payloadSize > packet->size()) {
+      std::clog << "quicr recv bad data size " << payloadSize << " "
+                << packet->size() << std::endl;
+      continue;
+    }
+
+    packet->headerSize = packet->fullSize() - payloadSize;
+
+    bad = false;
+  }
+
+  // std::clog << "QuicR received packet size=" << packet->size() << std::endl;
   return packet;
 }
 
@@ -112,9 +114,8 @@ uint64_t QuicRClient::getTargetUpstreamBitrate() {
   return pacerPipe.getTargetUpstreamBirate(); // TODO - move to stats
 }
 
-std::unique_ptr<Packet>
-QuicRClient::createPacket(const ShortName &shortName,
-                          int reservedPayloadSize) {
+std::unique_ptr<Packet> QuicRClient::createPacket(const ShortName &shortName,
+                                                  int reservedPayloadSize) {
   auto packet = std::make_unique<Packet>();
   assert(packet);
   packet->name = shortName;
@@ -124,13 +125,13 @@ QuicRClient::createPacket(const ShortName &shortName,
   packet << shortName;
   // packet << PacketTag::extraMagicVer1;
 
-  packet->headerSize = (int)( packet->buffer.size() );
+  packet->headerSize = (int)(packet->buffer.size());
 
-  //std::clog << "Create empty packet " << *packet << std::endl;
+  // std::clog << "Create empty packet " << *packet << std::endl;
 
   return packet;
 }
 
 bool QuicRClient::subscribe(ShortName name) {
-    return subscribePipe.subscribe( name );
+  return subscribePipe.subscribe(name);
 }

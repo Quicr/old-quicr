@@ -32,7 +32,7 @@ bool UdpPipe::ready() const { return (fd > 0); }
 
 void UdpPipe::stop() {
   if (fd > 0) {
-      std::lock_guard<std::mutex> lock(socketMutex);
+    std::lock_guard<std::mutex> lock(socketMutex);
 #if defined(_WIN32)
     closesocket(fd);
 #else
@@ -43,11 +43,11 @@ void UdpPipe::stop() {
 }
 
 bool UdpPipe::send(std::unique_ptr<Packet> packet) {
-    //std::lock_guard<std::mutex> lock(socketMutex);
+  // std::lock_guard<std::mutex> lock(socketMutex);
 
-    if (fd == 0) {
-        return false;
-    }
+  if (fd == 0) {
+    return false;
+  }
 
   if (!packet) {
     return false;
@@ -92,7 +92,7 @@ bool UdpPipe::send(std::unique_ptr<Packet> packet) {
 }
 
 std::unique_ptr<Packet> UdpPipe::recv() {
-    std::lock_guard<std::mutex> lock(socketMutex);
+  std::lock_guard<std::mutex> lock(socketMutex);
 
   if (fd == 0) {
     return std::unique_ptr<Packet>(nullptr);
@@ -156,7 +156,7 @@ std::unique_ptr<Packet> UdpPipe::recv() {
 
 bool UdpPipe::start(const uint16_t serverPort, const std::string serverName,
                     PipeInterface *upTransport) {
-    std::lock_guard<std::mutex> lock(socketMutex);
+  std::lock_guard<std::mutex> lock(socketMutex);
   upStream = upTransport;
 
   // set up network
