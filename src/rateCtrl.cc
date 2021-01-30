@@ -204,12 +204,11 @@ void RateCtrl::startNewCycle() {
     upstreamBwEst = upstreamCycleMaxBw; // TODO - filter
   }
 
-    pacerPipe->updateRTT(  estRTTUs/1000 ); // TODO estimate
 
-    pacerPipe->updateStat(PipeInterface::StatName::minRTTms, estRTTUs/1000 );
-    pacerPipe->updateStat(PipeInterface::StatName::bigRTTms, estAckTimeUs/1000 );
+  pacerPipe->updateStat(PipeInterface::StatName::bigRTTms, estAckTimeUs/1000 );
+  pacerPipe->updateStat(PipeInterface::StatName::minRTTms, estRTTUs/1000 ); // do min last
 
-    pacerPipe->updateStat(PipeInterface::StatName::mtu, 1200 ); // TODO
+  //pacerPipe->updateStat(PipeInterface::StatName::mtu, 1200 ); // TODO
 
 
 #if 1
