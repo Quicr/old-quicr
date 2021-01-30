@@ -31,8 +31,6 @@ public:
   virtual bool send(std::unique_ptr<Packet>);
   virtual std::unique_ptr<Packet> recv(); // non blocking, return nullptr if no buffer
 
-  virtual void updateRTT( uint64_t rttMs );
-
 private:
 #if defined(_WIN32)
   SOCKET fd; // UDP socket

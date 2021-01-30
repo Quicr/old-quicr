@@ -17,8 +17,16 @@ StatsPipe::StatsPipe(PipeInterface *t) : PipeInterface(t) {
 
 void StatsPipe::updateStat(PipeInterface::StatName stat, uint64_t value) {
     stats.at( stat ) = value;
+
+    // TODO if min or max rtt to a set of all of them
+    if ( stat == PipeInterface::StatName::minRTTms ) {
+        uint16_t minRtt = stats.at( PipeInterface::StatName::minRTTms );
+        uint16_t bigRtt = stats.at( PipeInterface::StatName::bigRTTms );
+        this->updateRTT(minRtt,bigRtt);
+    }
 }
 
 void StatsPipe::ack(Packet::ShortName name) {
+    // this is here just to eat the ACKs and stop propagation up chain
     (void)name;
 }
