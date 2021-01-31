@@ -3,7 +3,6 @@
 #include <cassert>
 #include <iostream>
 
-#include "encode.hh"
 #include "encryptPipe.hh"
 #include "packet.hh"
 

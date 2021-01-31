@@ -15,29 +15,29 @@ bool PipeInterface::start(const uint16_t port, const std::string server,
   assert(downStream);
   // assert(upStreamLink);
   upStream = upStreamLink;
-    if(downStream) {
-        return downStream->start(port, server, this);
-    }
+  if (downStream) {
+    return downStream->start(port, server, this);
+  }
 
-    return true;
+  return true;
 }
 
 bool PipeInterface::ready() const {
-    if(downStream) {
-        return downStream->ready();
-    }
-    return true;
+  if (downStream) {
+    return downStream->ready();
+  }
+  return true;
 }
 
 void PipeInterface::stop() {
-    if(downStream) {
-        downStream->stop();
-    }
+  if (downStream) {
+    downStream->stop();
+  }
 }
 
 bool PipeInterface::send(std::unique_ptr<Packet> packet) {
-    assert(downStream);
-    return downStream->send(move(packet));
+  assert(downStream);
+  return downStream->send(move(packet));
 }
 
 std::unique_ptr<Packet> PipeInterface::recv() {
@@ -51,20 +51,19 @@ bool PipeInterface::fromDownstream(std::unique_ptr<Packet> packet) {
 }
 
 void PipeInterface::updateStat(PipeInterface::StatName stat, uint64_t value) {
-    if (upStream) {
-        upStream->updateStat(stat, value);
-    }
+  if (upStream) {
+    upStream->updateStat(stat, value);
+  }
 }
 
 void PipeInterface::ack(ShortName name) {
-    if (upStream) {
-        upStream->ack(name);
-    }
+  if (upStream) {
+    upStream->ack(name);
+  }
 }
 
-void PipeInterface::updateRTT( uint16_t minRtMs, uint16_t bigRtMs ) {
-   if(downStream) {
-       downStream->updateRTT(minRtMs, bigRtMs);
-   }
+void PipeInterface::updateRTT(uint16_t minRtMs, uint16_t bigRtMs) {
+  if (downStream) {
+    downStream->updateRTT(minRtMs, bigRtMs);
+  }
 }
-

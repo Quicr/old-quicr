@@ -1,7 +1,7 @@
 #pragma once
 
-#include <sys/types.h>
 #include <iostream>
+#include <sys/types.h>
 
 #if defined(__linux__) || defined(__APPLE__)
 #include <netinet/in.h>
@@ -15,19 +15,14 @@
 #include <string>
 #include <vector>
 
-#include "name.hh"
 #include "encode.hh"
+#include "name.hh"
 
 namespace MediaNet {
 
-class UdpPipe;
-class FecPipe;
-class QRelay;
 class QuicRClient;
-class CrazyBitPipe;
 class SubscribePipe;
 class FragmentPipe;
-
 
 struct IpAddr {
   struct sockaddr_in addr;
@@ -38,60 +33,66 @@ struct IpAddr {
 };
 
 class Packet {
-    friend std::ostream& operator<<(std::ostream& os, const Packet& dt);
-    friend MediaNet::PacketTag MediaNet::nextTag(std::unique_ptr<Packet> &p);
+  // friend std::ostream &operator<<(std::ostream &os, const Packet &dt);
+  // friend MediaNet::PacketTag MediaNet::nextTag(std::unique_ptr<Packet> &p);
 
-  friend UdpPipe;
-  friend FecPipe;
-  friend QRelay;
-  friend CrazyBitPipe;
+  // friend UdpPipe;
+  // friend FecPipe;
+  // friend CrazyBitPipe;
   friend QuicRClient;
   friend SubscribePipe;
   friend FragmentPipe;
 
 public:
-
-
   Packet();
   void copy(const Packet &p);
+  [[nodiscard]] std::unique_ptr<Packet> clone() const;
 
   // void push( PacketTag tag, const std::vector<uint8_t> value );
   // PacketTag peek();
   // std::vector<uint8_t> pop( PacketTag tag );
 
-    uint8_t &data()  { return buffer.at(headerSize); }
-    const uint8_t &constData() const  { return buffer.at(headerSize); }
-    size_t size() const { return buffer.size() - headerSize; }
-    size_t fullSize() const { return buffer.size(); }
-    void resize(int size) { buffer.resize(headerSize + size); }
+  uint8_t &data() { return buffer.at(headerSize); }
+  uint8_t &fullData() { return buffer.at(0); }
+  //[[nodiscard]] const uint8_t &constData() const { return
+  //buffer.at(headerSize); }
+  [[nodiscard]] size_t size() const;
+  [[nodiscard]] size_t fullSize() const { return buffer.size(); }
+  void resize(int size) { buffer.resize(headerSize + size); }
+  void resizeFull(int size) { buffer.resize(size); }
 
-    void reserve( int s ) { buffer.reserve(s + headerSize); }
-    //bool empty( ) { return (size()  <= 0); }
+  void reserve(int s) { buffer.reserve(s + headerSize); }
+  // bool empty( ) { return (size()  <= 0); }
 
   void setReliable(bool reliable = true);
-  bool isReliable() const;
+  [[nodiscard]] bool isReliable() const;
 
-  void enableFEC(bool doFec = true);
+  void setFEC(bool doFec = true);
+  bool getFEC();
 
   [[nodiscard]] const IpAddr &getSrc() const;
-  void setSrc(const IpAddr &src);
-  [[nodiscard]] const IpAddr &getDst() const;
+  [[maybe_unused]] void setSrc(const IpAddr &src);
+  [[maybe_unused]] [[nodiscard]] const IpAddr &getDst() const;
   void setDst(const IpAddr &dst);
 
-  [[nodiscard]] std::unique_ptr<Packet> clone() const;
+  [[nodiscard]] ShortName shortName() const { return name; };
 
-  [[nodiscard]] const ShortName shortName() const { return name; };
-    void setFragID(const uint8_t fragmentID);
+  void setFragID(uint8_t fragmentID);
 
-public:
-    std::vector<uint8_t> buffer; // TODO make private
+  void push_back(uint8_t t) { buffer.push_back(t); };
+  void pop_back() { buffer.pop_back(); };
+  uint8_t back() { return buffer.back(); };
+
+  [[maybe_unused]] [[nodiscard]] uint8_t getPriority() const;
+  void setPriority(uint8_t priority);
 
 private:
+  std::vector<uint8_t> buffer; // TODO make private
+  int headerSize;
+
   MediaNet::ShortName name;
 
-    int headerSize;
-
-  // 1 is higest (controll), 2 critical audio, 3 critical
+  // 1 is highest (control), 2 critical audio, 3 critical
   // video, 4 important, 5 not important - make enum
   uint8_t priority;
 
@@ -102,6 +103,6 @@ private:
   MediaNet::IpAddr dst;
 };
 
-bool operator<( const MediaNet::ShortName& a, const MediaNet::ShortName& b);
+bool operator<(const MediaNet::ShortName &a, const MediaNet::ShortName &b);
 
 } // namespace MediaNet

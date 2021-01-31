@@ -16,9 +16,9 @@
 #include "pipeInterface.hh"
 #include "priorityPipe.hh"
 #include "retransmitPipe.hh"
+#include "statsPipe.hh"
 #include "subscribePipe.hh"
 #include "udpPipe.hh"
-#include "statsPipe.hh"
 
 namespace MediaNet {
 
@@ -29,9 +29,9 @@ class QuicRClient {
 public:
   QuicRClient();
   virtual ~QuicRClient();
-  virtual bool open(uint32_t clientID, const std::string relayName,
-                    const uint16_t port, uint64_t token);
-  virtual bool ready() const;
+  virtual bool open(uint32_t clientID, std::string relayName, uint16_t port,
+                    uint64_t token);
+  [[nodiscard]] virtual bool ready() const;
   virtual void close();
 
   /*
@@ -42,10 +42,10 @@ public:
   */
 
   virtual std::unique_ptr<Packet> createPacket(const ShortName &name,
-                                               int reservedPayloadSize = 1200);
+                                               int reservedPayloadSize);
   virtual bool publish(std::unique_ptr<Packet>);
 
-  bool subscribe( ShortName );
+  bool subscribe(ShortName);
 
   /// non blocking, return nullptr if no buffer
   virtual std::unique_ptr<Packet> recv();
@@ -73,8 +73,8 @@ private:
   StatsPipe statsPipe;
   PipeInterface *firstPipe;
 
-  uint32_t pubClientID;
-  uint64_t secToken;
+  // uint32_t pubClientID;
+  // uint64_t secToken;
 };
 
 } // namespace MediaNet

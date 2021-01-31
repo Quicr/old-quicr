@@ -1,7 +1,7 @@
 #pragma once
 
-#include <sys/types.h>
 #include <mutex>
+#include <sys/types.h>
 
 #if defined(__linux__) || defined(__APPLE__)
 #include <netinet/in.h>
@@ -22,18 +22,19 @@ namespace MediaNet {
 class UdpPipe : public PipeInterface {
 public:
   UdpPipe();
-  ~UdpPipe();
+  ~UdpPipe() override;
 
-  virtual bool start(const uint16_t serverPort, const std::string serverName,
-                     PipeInterface *upStream);
-  virtual bool ready() const;
-  virtual void stop();
+  bool start(uint16_t serverPort, std::string serverName,
+             PipeInterface *upStream) override;
+  [[nodiscard]] bool ready() const override;
+  void stop() override;
 
-  virtual bool send(std::unique_ptr<Packet>);
-  virtual std::unique_ptr<Packet> recv(); // non blocking, return nullptr if no buffer
+  bool send(std::unique_ptr<Packet>) override;
+  std::unique_ptr<Packet>
+  recv() override; // non blocking, return nullptr if no buffer
 
 private:
-    std::mutex socketMutex;
+  std::mutex socketMutex;
 #if defined(_WIN32)
   SOCKET fd; // UDP socket
 #else
@@ -42,8 +43,5 @@ private:
 
   IpAddr serverAddr;
 };
-
-bool operator<(const ShortName &a, const ShortName &b);
-
 
 } // namespace MediaNet

@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cstdint>
-#include <memory>
 #include <map>
+#include <memory>
 #include <mutex>
 
 #include "packet.hh"
@@ -14,19 +14,18 @@ class FragmentPipe : public PipeInterface {
 public:
   explicit FragmentPipe(PipeInterface *t);
 
-  virtual bool send(std::unique_ptr<Packet> packet);
+  bool send(std::unique_ptr<Packet> packet) override;
 
-  virtual void updateStat( StatName stat, uint64_t value  );
+  void updateStat(StatName stat, uint64_t value) override;
 
   /// non blocking, return nullptr if no buffer
-  virtual std::unique_ptr<Packet> recv();
+  std::unique_ptr<Packet> recv() override;
 
 private:
-    uint16_t mtu;
+  uint16_t mtu;
 
-    std::mutex fragListMutex;
-    std::map< MediaNet::ShortName , std::unique_ptr<Packet> > fragList;
-
+  std::mutex fragListMutex;
+  std::map<MediaNet::ShortName, std::unique_ptr<Packet>> fragList;
 };
 
 } // namespace MediaNet

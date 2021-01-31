@@ -1,7 +1,5 @@
 
 #include <cassert>
-#include <iostream>
-#include <string.h> // memcpy
 #include <thread>
 
 #include "encode.hh"
@@ -10,9 +8,8 @@
 
 using namespace MediaNet;
 
-PacerPipe::PacerPipe(PipeInterface *t) : PipeInterface(t),
- rateCtrl(this),
-    shutDown(false) {
+PacerPipe::PacerPipe(PipeInterface *t)
+    : PipeInterface(t), rateCtrl(this), shutDown(false), oldPhase(0) {
   assert(downStream);
 }
 
@@ -95,14 +92,14 @@ void PacerPipe::runNetSend() {
 
       auto packet = std::make_unique<Packet>();
       assert(packet);
-      packet->buffer.reserve(20); // TODO - tune the 20
+      // packet->buffer.reserve(20); // TODO - tune the 20
 
       packet << PacketTag::headerMagicData;
       // packet << PacketTag::extraMagicVer1;
       // packet << PacketTag::extraMagicVer2;
 
-      NetRateReq rateReq;
-      rateReq.bitrateKbps = toVarInt( rateCtrl.bwDownTarget() / 1000); // TODO
+      NetRateReq rateReq{};
+      rateReq.bitrateKbps = toVarInt(rateCtrl.bwDownTarget() / 1000); // TODO
       packet << rateReq;
 
       // std::clog << "Send Rate Req" << std::endl;
@@ -124,7 +121,7 @@ void PacerPipe::runNetSend() {
       sendQ.pop();
     }
 
-    NetClientSeqNum seqTag;
+    NetClientSeqNum seqTag{};
     static uint32_t nextSeqNum = 0; // TODO - add mutex etc
     seqTag.clientSeqNum = (nextSeqNum++);
     packet << seqTag;
@@ -135,14 +132,15 @@ void PacerPipe::runNetSend() {
         (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(dn)
             .count();
 
-    uint16_t bits = (uint16_t)packet->buffer.size() * 8 +
+    uint16_t bits = (uint16_t)packet->fullSize() * 8 +
                     42 * 8; // Capture shows 42 byte header before UDP payload
                             // including ethernet frame
 
-      assert(packet);
-      rateCtrl.sendPacket((seqTag.clientSeqNum) , nowUs, bits, packet->shortName() );
+    assert(packet);
+    rateCtrl.sendPacket((seqTag.clientSeqNum), nowUs, bits,
+                        packet->shortName());
 
-      downStream->send(move(packet));
+    downStream->send(move(packet));
 
     // std::clog << ">";
   }
@@ -174,10 +172,10 @@ void PacerPipe::runNetRecv() {
 
     // look for incoming relaySeqNum
     if (nextTag(packet) == PacketTag::relaySeqNum) {
-      NetRelaySeqNum relaySeqNum;
+      NetRelaySeqNum relaySeqNum{};
       packet >> relaySeqNum;
 
-      uint16_t bits = (uint16_t)packet->buffer.size() * 8 +
+      uint16_t bits = (uint16_t)packet->fullSize() * 8 +
                       42 * 8; // Capture shows 42 byte header before UDP payload
                               // including ethernet frame
 
@@ -196,4 +194,4 @@ void PacerPipe::runNetRecv() {
   }
 }
 
-uint64_t PacerPipe::getTargetUpstreamBirate() { return rateCtrl.bwUpTarget(); }
+uint64_t PacerPipe::getTargetUpstreamBitrate() { return rateCtrl.bwUpTarget(); }

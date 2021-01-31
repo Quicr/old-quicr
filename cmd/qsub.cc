@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
 
   ShortName name{};
   name.resourceID = 1;
-  qClient.subscribe( name );
+  qClient.subscribe(name);
 
   int numRecv = 0;
   // empty the receive queue

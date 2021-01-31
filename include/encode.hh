@@ -7,10 +7,9 @@
 
 namespace MediaNet {
 
-    class Packet;
+class Packet;
 
-
-    std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint64_t val);
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint64_t val);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint32_t val);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint16_t val);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint8_t val);
@@ -23,8 +22,8 @@ bool operator>>(std::unique_ptr<Packet> &p, uint8_t &val);
 enum class uintVar_t : uint64_t {};
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uintVar_t val);
 bool operator>>(std::unique_ptr<Packet> &p, uintVar_t &val);
-uintVar_t toVarInt( uint64_t );
-uint64_t fromVarInt(  uintVar_t );
+uintVar_t toVarInt(uint64_t);
+uint64_t fromVarInt(uintVar_t);
 
 enum struct PacketTag : uint32_t;
 
@@ -34,7 +33,7 @@ constexpr unsigned int packetTagGen(unsigned int val, unsigned int len,
   return (val << 8) + len;
 }
 constexpr uint16_t packetTagTrunc(MediaNet::PacketTag tag) {
-  uint32_t t = (uint32_t)tag;
+  auto t = (uint32_t)tag;
   t >>= 8;
   return (uint16_t)t;
 }
@@ -74,18 +73,17 @@ enum struct PacketTag : uint32_t {
 };
 
 PacketTag nextTag(std::unique_ptr<Packet> &p);
-PacketTag nextTag(uint16_t trucTag);
+PacketTag nextTag(uint16_t truncTag);
 
 bool operator>>(std::unique_ptr<Packet> &p, PacketTag &tag);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, PacketTag tag);
-
 
 /* ShortName */
 
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const ShortName &msg);
 
-bool operator>>(std::unique_ptr<Packet> &p, ShortName  &msg);
+bool operator>>(std::unique_ptr<Packet> &p, ShortName &msg);
 
 /* SYNC Request */
 
@@ -98,7 +96,6 @@ std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const NetSyncReq &msg);
 bool operator>>(std::unique_ptr<Packet> &p, NetSyncReq &msg);
 
-
 /* Rate Request */
 
 struct NetRateReq {
@@ -107,8 +104,6 @@ struct NetRateReq {
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const NetRateReq &msg);
 bool operator>>(std::unique_ptr<Packet> &p, NetRateReq &msg);
-
-
 
 /*
  * struct NetNonceReq {
@@ -133,7 +128,7 @@ struct NetAuthResp {
 
 /*
 struct NetRedirect4RResp {
-  // no souceId as sent from server
+  // no sourceId as sent from server
   uint32_t clientSeqNum;
   uint64_t clientToken;
   uint32_t ipAddr;
@@ -148,8 +143,6 @@ std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const NetClientSeqNum &msg);
 bool operator>>(std::unique_ptr<Packet> &p, NetClientSeqNum &msg);
 
-
-
 struct NetRelaySeqNum {
   uint32_t relaySeqNum;
   uint32_t remoteSendTimeMs;
@@ -157,8 +150,6 @@ struct NetRelaySeqNum {
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const NetRelaySeqNum &msg);
 bool operator>>(std::unique_ptr<Packet> &p, NetRelaySeqNum &msg);
-
-
 
 struct NetAck {
   // todo - add ack and ECN vectors
@@ -221,8 +212,6 @@ struct NetMsgClientStats {
 };
 */
 
-
-std::ostream& operator<<(std::ostream& stream, const Packet& packet);
-
+std::ostream &operator<<(std::ostream &stream, Packet &packet);
 
 } // namespace MediaNet

@@ -10,19 +10,20 @@ namespace MediaNet {
 
 class CrazyBitPipe : public PipeInterface {
 public:
-  CrazyBitPipe(PipeInterface *t);
+  explicit CrazyBitPipe(PipeInterface *t);
 
-  virtual bool send(std::unique_ptr<Packet> packet);
+  bool send(std::unique_ptr<Packet> packet) override;
 
   /// non blocking, return nullptr if no buffer
-  virtual std::unique_ptr<Packet> recv();
+  std::unique_ptr<Packet> recv() override;
 
-  virtual void updateRTT( uint16_t minRttMs, uint16_t maxRttMs  ); // tells downstream things the current RTT
+  void updateRTT(uint16_t minRttMs, uint16_t maxRttMs)
+      override; // tells downstream things the current RTT
 
 private:
-    uint16_t rttMs;
-    bool spinBitVal;
-    uint32_t lastSpinTimeMs;
+  uint16_t rttMs;
+  bool spinBitVal;
+  uint32_t lastSpinTimeMs;
 };
 
 } // namespace MediaNet

@@ -1,7 +1,6 @@
 
 #include <cassert>
 #include <iostream>
-#include <string.h> // memcpy
 #include <thread>
 
 #if defined(__linux) || defined(__APPLE__)
@@ -24,15 +23,25 @@
 
 using namespace MediaNet;
 
-UdpPipe::UdpPipe() : PipeInterface(nullptr) { fd = 0; }
+UdpPipe::UdpPipe() : PipeInterface(nullptr), serverAddr() { fd = 0; }
 
-UdpPipe::~UdpPipe() { stop(); }
+UdpPipe::~UdpPipe() {
+  if (fd > 0) {
+    std::lock_guard<std::mutex> lock(socketMutex);
+#if defined(_WIN32)
+    closesocket(fd);
+#else
+    ::close(fd);
+#endif
+    fd = 0;
+  }
+}
 
 bool UdpPipe::ready() const { return (fd > 0); }
 
 void UdpPipe::stop() {
   if (fd > 0) {
-      std::lock_guard<std::mutex> lock(socketMutex);
+    std::lock_guard<std::mutex> lock(socketMutex);
 #if defined(_WIN32)
     closesocket(fd);
 #else
@@ -43,29 +52,29 @@ void UdpPipe::stop() {
 }
 
 bool UdpPipe::send(std::unique_ptr<Packet> packet) {
-    //std::lock_guard<std::mutex> lock(socketMutex);
+  // std::lock_guard<std::mutex> lock(socketMutex);
 
-    if (fd == 0) {
-        return false;
-    }
+  if (fd == 0) {
+    return false;
+  }
 
   if (!packet) {
     return false;
   }
 
-  if (packet->buffer.size() == 0) {
+  if (packet->fullSize() == 0) {
     return false;
   }
 
   IpAddr addr = serverAddr;
-  if (packet->dst.addrLen != 0) {
-    addr = packet->dst;
+  if (packet->getDst().addrLen != 0) {
+    addr = packet->getDst();
   }
   // std::clog << "Send to " << addr.toString() << std::endl;
 
-  int numSent = sendto(fd, (const char *)packet->buffer.data(),
-                       (int)packet->buffer.size(), 0 /*flags*/,
-                       (struct sockaddr *)&(addr.addr), addr.addrLen);
+  int numSent =
+      sendto(fd, (const char *)&(packet->fullData()), (int)(packet->fullSize()),
+             0 /*flags*/, (struct sockaddr *)&(addr.addr), addr.addrLen);
   if (numSent < 0) {
 #if defined(_WIN32)
     int error = WSAGetLastError();
@@ -84,7 +93,7 @@ bool UdpPipe::send(std::unique_ptr<Packet> packet) {
               << std::endl;
     assert(0); // TODO
 #endif
-  } else if (numSent != (int)packet->buffer.size()) {
+  } else if (numSent != (int)(packet->fullSize())) {
     assert(0); // TODO
   }
 
@@ -92,7 +101,7 @@ bool UdpPipe::send(std::unique_ptr<Packet> packet) {
 }
 
 std::unique_ptr<Packet> UdpPipe::recv() {
-    std::lock_guard<std::mutex> lock(socketMutex);
+  std::lock_guard<std::mutex> lock(socketMutex);
 
   if (fd == 0) {
     return std::unique_ptr<Packet>(nullptr);
@@ -101,14 +110,14 @@ std::unique_ptr<Packet> UdpPipe::recv() {
   auto packet = std::make_unique<Packet>();
 
   const int dataSize = 1500;
-  packet->buffer.resize(dataSize);
+  packet->resizeFull(dataSize);
 
-  IpAddr remoteAddr;
+  IpAddr remoteAddr{};
   memset(&remoteAddr.addr, 0, sizeof(remoteAddr.addr));
   remoteAddr.addrLen = sizeof(remoteAddr.addr);
 
-  int rLen = recvfrom(fd, (char *)packet->buffer.data(),
-                      (int)packet->buffer.size(), 0 /*flags*/,
+  int rLen = recvfrom(fd, (char *)&(packet->fullData()),
+                      (int)packet->fullSize(), 0 /*flags*/,
                       (struct sockaddr *)&remoteAddr.addr, &remoteAddr.addrLen);
   if (rLen < 0) {
 #if defined(_WIN32)
@@ -148,15 +157,15 @@ std::unique_ptr<Packet> UdpPipe::recv() {
     return std::unique_ptr<Packet>(nullptr);
   }
 
-  packet->src = remoteAddr;
-  packet->buffer.resize(rLen);
+  packet->setSrc(remoteAddr);
+  packet->resizeFull(rLen);
 
   return packet;
 }
 
 bool UdpPipe::start(const uint16_t serverPort, const std::string serverName,
                     PipeInterface *upTransport) {
-    std::lock_guard<std::mutex> lock(socketMutex);
+  std::lock_guard<std::mutex> lock(socketMutex);
   upStream = upTransport;
 
   // set up network
@@ -175,7 +184,7 @@ bool UdpPipe::start(const uint16_t serverPort, const std::string serverName,
   }
 
   // make socket non blocking IO
-  struct timeval timeOut;
+  struct timeval timeOut {};
   timeOut.tv_sec = 0;
   timeOut.tv_usec = 2000; // TODO 2 ms
   auto err = setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeOut,
@@ -208,12 +217,12 @@ bool UdpPipe::start(const uint16_t serverPort, const std::string serverName,
       assert(0); // TODO
     }
 
-    std::cout << "UdpTranpsport: Server on port " << serverPort << ", fd " << fd
+    std::cout << "UdpTransport: Server on port " << serverPort << ", fd " << fd
               << std::endl;
   } else {
     // ================= set up client  ======================
 
-    struct sockaddr_in clientAddr;
+    struct sockaddr_in clientAddr {};
     clientAddr.sin_family = AF_INET;
     clientAddr.sin_addr.s_addr = htonl(INADDR_ANY);
     clientAddr.sin_port = 0;
@@ -224,7 +233,7 @@ bool UdpPipe::start(const uint16_t serverPort, const std::string serverName,
 
     // find server address
     std::string sPort = std::to_string(htons(serverPort));
-    struct addrinfo hints = {}, *address_list = NULL;
+    struct addrinfo hints = {}, *address_list = nullptr;
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_protocol = IPPROTO_UDP;
@@ -232,15 +241,15 @@ bool UdpPipe::start(const uint16_t serverPort, const std::string serverName,
     if (err) {
       assert(0);
     }
-    struct addrinfo *item = NULL, *found_addr = NULL;
-    for (item = address_list; item != NULL; item = item->ai_next) {
+    struct addrinfo *item = nullptr, *found_addr = nullptr;
+    for (item = address_list; item != nullptr; item = item->ai_next) {
       if (item->ai_family == AF_INET && item->ai_socktype == SOCK_DGRAM &&
           item->ai_protocol == IPPROTO_UDP) {
         found_addr = item;
         break;
       }
     }
-    if (found_addr == NULL) {
+    if (found_addr == nullptr) {
       assert(0);
     }
 
@@ -249,7 +258,7 @@ bool UdpPipe::start(const uint16_t serverPort, const std::string serverName,
     serverAddr.addr.sin_port = htons(serverPort);
     serverAddr.addrLen = sizeof(serverAddr.addr);
 
-    std::cout << "UdpTranpsport: Client connect to " << serverName << ":"
+    std::cout << "UdpTransport: Client connect to " << serverName << ":"
               << serverPort << ", fd " << fd << std::endl;
   }
 

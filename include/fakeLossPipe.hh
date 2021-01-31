@@ -10,12 +10,12 @@ namespace MediaNet {
 
 class FakeLossPipe : public PipeInterface {
 public:
-  FakeLossPipe(PipeInterface *t);
+  explicit FakeLossPipe(PipeInterface *t);
 
-  virtual bool send(std::unique_ptr<Packet> packet);
+  bool send(std::unique_ptr<Packet> packet) override;
 
   /// non blocking, return nullptr if no buffer
-  virtual std::unique_ptr<Packet> recv();
+  std::unique_ptr<Packet> recv() override;
 
 private:
   int upstreamCount;

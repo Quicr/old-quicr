@@ -25,27 +25,27 @@ Packet::Packet() : headerSize(0), priority(1), reliable(false), useFEC(false) {
   src.addrLen = 0;
   dst.addrLen = 0;
   buffer.reserve(1480 /* MTU estimate */);
-  name.fragmentID=0;
-  name.mediaTime=0;
-  name.sourceID=0;
-  name.senderID=0;
-  name.resourceID=0;
+  name.fragmentID = 0;
+  name.mediaTime = 0;
+  name.sourceID = 0;
+  name.senderID = 0;
+  name.resourceID = 0;
 }
 
 void Packet::setReliable(bool r) { Packet::reliable = r; }
 
-void Packet::enableFEC(bool doFec) { useFEC = doFec; }
+void Packet::setFEC(bool doFec) { useFEC = doFec; }
 
 const IpAddr &Packet::getSrc() const { return src; }
 
-void Packet::setSrc(const IpAddr &srcAddr) { src = srcAddr; }
+[[maybe_unused]] void Packet::setSrc(const IpAddr &srcAddr) { src = srcAddr; }
 
-const IpAddr &Packet::getDst() const { return dst; }
+[[maybe_unused]] const IpAddr &Packet::getDst() const { return dst; }
 
 void Packet::setDst(const IpAddr &dstAddr) { dst = dstAddr; }
 
 void Packet::copy(const Packet &p) {
-    name = p.name;
+  name = p.name;
   buffer = p.buffer;
   headerSize = p.headerSize;
   priority = p.priority;
@@ -64,9 +64,7 @@ std::unique_ptr<Packet> Packet::clone() const {
   return p;
 }
 
-bool Packet::isReliable() const {
-    return reliable;
-}
+bool Packet::isReliable() const { return reliable; }
 
 bool IpAddr::operator<(const IpAddr &rhs) const {
   assert(this->addr.sin_family == AF_INET);
@@ -98,15 +96,16 @@ std::string IpAddr::toString(const IpAddr &ipAddr) {
 }
 
 bool MediaNet::operator<(const ShortName &a, const ShortName &b) {
-    return std::tie(a.mediaTime,a.resourceID,a.senderID,a.sourceID,a.fragmentID)
-        <  std::tie(b.mediaTime,b.resourceID,b.senderID,b.sourceID,b.fragmentID);
+  return std::tie(a.mediaTime, a.resourceID, a.senderID, a.sourceID,
+                  a.fragmentID) < std::tie(b.mediaTime, b.resourceID,
+                                           b.senderID, b.sourceID,
+                                           b.fragmentID);
 }
 
-void  Packet::setFragID(const uint8_t fragmentID)
-{
-    name.fragmentID = fragmentID;
-    if ( buffer.size() > 19 ) {
-        assert( buffer.at(19) == packetTagTrunc(PacketTag::shortName) );
-        buffer.at(18) = fragmentID;
-    }
+void Packet::setFragID(const uint8_t fragmentID) {
+  name.fragmentID = fragmentID;
+  if (buffer.size() > 19) {
+    assert(buffer.at(19) == packetTagTrunc(PacketTag::shortName));
+    buffer.at(18) = fragmentID;
+  }
 }
