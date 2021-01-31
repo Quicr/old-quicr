@@ -176,6 +176,7 @@ std::unique_ptr<Packet> PacerPipe::recv() {
 
 void PacerPipe::updateMTU(uint16_t val,uint32_t pps) {
     mtu = val;
+    targetPpsUp = pps;
 
     PipeInterface::updateMTU(val,pps);
 }
