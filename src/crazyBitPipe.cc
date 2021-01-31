@@ -4,7 +4,6 @@
 #include <iostream>
 
 #include "crazyBitPipe.hh"
-#include "encode.hh"
 #include "packet.hh"
 
 using namespace MediaNet;
@@ -48,7 +47,7 @@ std::unique_ptr<Packet> CrazyBitPipe::recv() {
   }
 
   // clear the spin bit in first byte of incoming packet
-  assert(packet->buffer.size() >= 1);
+  assert(packet->fullSize() >= 1);
   packet->buffer[0] &= 0xFE;
 
   return packet;

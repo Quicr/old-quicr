@@ -26,7 +26,7 @@ bool RetransmitPipe::send(std::unique_ptr<Packet> packet) {
 
     std::lock_guard<std::mutex> lock(rtxListMutex);
     auto ret = rtxList.insert(move(p));
-    if (ret.second == false) {
+    if ( !ret.second ) {
       // element was already in map - not unique name, not good
       std::clog << "Warning sending same name twice" << std::endl;
       return false;

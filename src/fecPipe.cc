@@ -24,7 +24,7 @@ bool FecPipe::send(std::unique_ptr<Packet> packet) {
   if (packet->useFEC) {
     // TODO for packets with FEC enabled, save them and send them again in 10 ms
 
-    if (true) {
+   {
       std::unique_ptr<Packet> fecPacket = packet->clone();
       fecPacket->useFEC = false;
       fecPacket->reliable = false;
@@ -32,7 +32,7 @@ bool FecPipe::send(std::unique_ptr<Packet> packet) {
       sendList.emplace_back(nowMs + 10, std::move(fecPacket));
     }
 
-    if (true) {
+  {
       std::unique_ptr<Packet> fecPacket = packet->clone();
       fecPacket->useFEC = false;
       fecPacket->reliable = false;

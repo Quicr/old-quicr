@@ -118,7 +118,7 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
 
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetAck &msg) {
   if (nextTag(p) != PacketTag::ack) {
-    // std::cerr << "Did not find expected PacketTag::ack" << std::endl;
+    // std::clog << "Did not find expected PacketTag::ack" << std::endl;
     return false;
   }
 
@@ -141,8 +141,8 @@ PacketTag MediaNet::nextTag(std::unique_ptr<Packet> &p) {
   if (p->fullSize() <= 0) {
     return PacketTag::none;
   }
-  uint8_t trucTag = p->buffer.back(); // TODO - support varint size tags
-  return nextTag(trucTag);
+  uint8_t truncTag = p->buffer.back(); // TODO - support var int size tags
+  return nextTag(truncTag);
 }
 
 PacketTag MediaNet::nextTag(uint16_t truncTag) {
@@ -209,8 +209,7 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
     tag = PacketTag::badTag;
     break;
   default:
-    assert(0); // TODO remove
-    tag = PacketTag::badTag;
+      break;
   }
 
   return tag;
@@ -240,7 +239,7 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, PacketTag &tag) {
 
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               uint64_t val) {
-  // TODO - memcpy version for little endian machines optimization
+  // TODO - std::copy version for little endian machines optimization
 
   // buffer on wire is little endian (that is *not* network byte order)
   p->buffer.push_back(uint8_t((val >> 0) & 0xFF));
@@ -359,7 +358,7 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
 
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRateReq &msg) {
   if (nextTag(p) != PacketTag::relayRateReq) {
-    // std::cerr << "Did not find expected PacketTag::relayRateReq" <<
+    // std::clog << "Did not find expected PacketTag::relayRateReq" <<
     // std::endl;
     return false;
   }
@@ -475,7 +474,7 @@ uintVar_t MediaNet::toVarInt(uint64_t v) {
 uint64_t MediaNet::fromVarInt(uintVar_t v) { return static_cast<uint64_t>(v); }
 
 std::ostream &MediaNet::operator<<(std::ostream &stream, const Packet &packet) {
-  int ptr = packet.buffer.size() - 1;
+  int ptr = (int)packet.fullSize() - 1;
   while (ptr >= 0) {
     const uint8_t *data = packet.buffer.data();
     MediaNet::PacketTag tag = nextTag(data[ptr--]);

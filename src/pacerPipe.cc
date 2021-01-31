@@ -1,7 +1,5 @@
 
 #include <cassert>
-#include <iostream>
-#include <string.h> // memcpy
 #include <thread>
 
 #include "encode.hh"
@@ -11,7 +9,7 @@
 using namespace MediaNet;
 
 PacerPipe::PacerPipe(PipeInterface *t)
-    : PipeInterface(t), rateCtrl(this), shutDown(false) {
+    : PipeInterface(t), rateCtrl(this), shutDown(false), oldPhase(0) {
   assert(downStream);
 }
 
@@ -100,7 +98,7 @@ void PacerPipe::runNetSend() {
       // packet << PacketTag::extraMagicVer1;
       // packet << PacketTag::extraMagicVer2;
 
-      NetRateReq rateReq;
+      NetRateReq rateReq{};
       rateReq.bitrateKbps = toVarInt(rateCtrl.bwDownTarget() / 1000); // TODO
       packet << rateReq;
 
@@ -123,7 +121,7 @@ void PacerPipe::runNetSend() {
       sendQ.pop();
     }
 
-    NetClientSeqNum seqTag;
+    NetClientSeqNum seqTag{};
     static uint32_t nextSeqNum = 0; // TODO - add mutex etc
     seqTag.clientSeqNum = (nextSeqNum++);
     packet << seqTag;
@@ -174,7 +172,7 @@ void PacerPipe::runNetRecv() {
 
     // look for incoming relaySeqNum
     if (nextTag(packet) == PacketTag::relaySeqNum) {
-      NetRelaySeqNum relaySeqNum;
+      NetRelaySeqNum relaySeqNum{};
       packet >> relaySeqNum;
 
       uint16_t bits = (uint16_t)packet->buffer.size() * 8 +
@@ -196,4 +194,4 @@ void PacerPipe::runNetRecv() {
   }
 }
 
-uint64_t PacerPipe::getTargetUpstreamBirate() { return rateCtrl.bwUpTarget(); }
+uint64_t PacerPipe::getTargetUpstreamBitrate() { return rateCtrl.bwUpTarget(); }

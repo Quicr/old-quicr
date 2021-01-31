@@ -23,7 +23,7 @@ public:
   [[nodiscard]] bool ready() const override;
   void stop() override;
 
-  uint64_t getTargetUpstreamBirate(); // in bps
+  uint64_t getTargetUpstreamBitrate(); // in bps
 
   bool send(std::unique_ptr<Packet>) override;
 

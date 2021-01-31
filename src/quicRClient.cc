@@ -25,7 +25,7 @@ QuicRClient::QuicRClient()
       fragmentPipe(&subscribePipe), encryptPipe(&fragmentPipe),
       statsPipe(&encryptPipe), firstPipe(&statsPipe)  {}
 
-QuicRClient::~QuicRClient() { close(); }
+QuicRClient::~QuicRClient() { firstPipe->stop(); }
 
 bool QuicRClient::ready() const { return firstPipe->ready(); }
 
@@ -90,7 +90,7 @@ std::unique_ptr<Packet> QuicRClient::recv() {
       continue;
     }
 
-    packet->headerSize = packet->fullSize() - payloadSize;
+    packet->headerSize = (int)(packet->fullSize()) - payloadSize;
 
     bad = false;
   }
@@ -110,7 +110,7 @@ bool QuicRClient::open(uint32_t clientID, const std::string relayName,
 }
 
 uint64_t QuicRClient::getTargetUpstreamBitrate() {
-  return pacerPipe.getTargetUpstreamBirate(); // TODO - move to stats
+  return pacerPipe.getTargetUpstreamBitrate(); // TODO - move to stats
 }
 
 std::unique_ptr<Packet> QuicRClient::createPacket(const ShortName &shortName,

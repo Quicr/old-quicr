@@ -170,13 +170,13 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
           result = move(fragPacket);
           result->setFragID(0);
           assert(dataSize <= result->fullSize());
-          result->headerSize = result->fullSize() - dataSize;
+          result->headerSize = (int)(result->fullSize()) - dataSize;
           continue;
         }
 
         assert(result);
         assert(fragPacket);
-        result->resize(result->size() + dataSize);
+        result->resize((int)(result->size()) + dataSize);
 
         uint8_t *src = &(fragPacket->data()) + fragPacket->size() - dataSize;
         uint8_t *end = &(fragPacket->data()) + fragPacket->size();

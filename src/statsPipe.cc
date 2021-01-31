@@ -4,7 +4,6 @@
 #include <iostream>
 
 #include "encode.hh"
-#include "packet.hh"
 #include "statsPipe.hh"
 
 using namespace MediaNet;

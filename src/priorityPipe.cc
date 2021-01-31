@@ -3,7 +3,6 @@
 #include <cassert>
 #include <iostream>
 
-#include "encode.hh"
 #include "packet.hh"
 #include "priorityPipe.hh"
 

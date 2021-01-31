@@ -1,8 +1,6 @@
 
 
 #include <cassert>
-#include <iostream>
-#include <string.h>
 #include <thread>
 
 #include "connectionPipe.hh"
@@ -12,7 +10,7 @@
 using namespace MediaNet;
 
 ConnectionPipe::ConnectionPipe(PipeInterface *t)
-    : PipeInterface(t), senderID(0) {}
+    : PipeInterface(t), senderID(0), token(0),open(false) {}
 
 bool ConnectionPipe::start(const uint16_t port, const std::string server,
                            PipeInterface *upStrm) {
@@ -29,7 +27,7 @@ bool ConnectionPipe::start(const uint16_t port, const std::string server,
   // packet << PacketTag::extraMagicVer1;
   // packet << PacketTag::extraMagicVer2;
 
-  NetSyncReq synReq;
+  NetSyncReq synReq{};
   synReq.clientTimeMs = 0; // TODO
   synReq.senderId = senderID;
   synReq.versionVec = 1;
