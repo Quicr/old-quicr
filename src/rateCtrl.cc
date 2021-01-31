@@ -112,17 +112,6 @@ void RateCtrl::recvAck(uint32_t seqNum, uint32_t remoteAckTimeUs,
 #endif
 }
 
-[[maybe_unused]] uint32_t RateCtrl::rttEstUs() const { return estRTTUs; }
-
-[[maybe_unused]] uint64_t RateCtrl::bwUpEst() const // in bits per second
-{
-  return (uint64_t)upstreamBwEst;
-}
-
-[[maybe_unused]] uint64_t RateCtrl::bwDownEst() const // in bits per second
-{
-  return (uint64_t)downstreamBwEst;
-}
 
 uint64_t RateCtrl::bwUpTarget() const // in bits per second
 {
