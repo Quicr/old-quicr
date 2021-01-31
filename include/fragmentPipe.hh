@@ -21,6 +21,8 @@ public:
   /// non blocking, return nullptr if no buffer
   std::unique_ptr<Packet> recv() override;
 
+    void updateMTU(uint16_t mtu) override;
+
 private:
   uint16_t mtu;
 

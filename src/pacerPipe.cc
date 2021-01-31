@@ -9,7 +9,7 @@
 using namespace MediaNet;
 
 PacerPipe::PacerPipe(PipeInterface *t)
-    : PipeInterface(t), rateCtrl(this), shutDown(false), oldPhase(0) {
+    : PipeInterface(t), rateCtrl(this), shutDown(false), oldPhase(0),mtu(1200) {
   assert(downStream);
 }
 
@@ -172,4 +172,10 @@ uint64_t PacerPipe::getTargetUpstreamBitrate() { return rateCtrl.bwUpTarget(); }
 std::unique_ptr<Packet> PacerPipe::recv() {
     assert(0);
     return std::unique_ptr<Packet>(nullptr);
+}
+
+void PacerPipe::updateMTU(uint16_t val) {
+    mtu = val;
+
+    PipeInterface::updateMTU(val);
 }

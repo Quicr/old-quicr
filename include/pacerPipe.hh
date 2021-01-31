@@ -28,6 +28,8 @@ public:
   bool send(std::unique_ptr<Packet>) override;
   std::unique_ptr<Packet> recv() override;
 
+    void updateMTU(uint16_t mtu) override;
+
 private:
   RateCtrl rateCtrl;
 
@@ -40,6 +42,8 @@ private:
   std::thread sendThread;
 
   uint32_t oldPhase;
+
+    uint16_t mtu;
 };
 
 } // namespace MediaNet
