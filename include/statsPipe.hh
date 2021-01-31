@@ -16,6 +16,10 @@ public:
   void updateStat(StatName stat,
                   uint64_t value) override; // tells upstream things the stat
 
+    void updateRTT(uint16_t minRttMs, uint16_t bitRttMs) override;
+
+    void updateMTU(uint16_t mtu, uint32_t pps) override;
+
 private:
   std::map<PipeInterface::StatName, uint64_t> stats;
 };
