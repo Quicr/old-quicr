@@ -21,7 +21,7 @@ bool ConnectionPipe::start(const uint16_t port, const std::string server,
   // TODO - send a Syn - need logic to retransmit
   auto packet = std::make_unique<Packet>();
   assert(packet);
-  packet->buffer.reserve(20); // TODO - tune the 20
+  //packet->buffer.reserve(20); // TODO - tune the 20
 
   packet << PacketTag::headerMagicSyn;
   // packet << PacketTag::extraMagicVer1;
@@ -53,7 +53,7 @@ void ConnectionPipe::stop() {
   // TODO send a Rst
   auto packet = std::make_unique<Packet>();
   assert(packet);
-  packet->buffer.reserve(20); // TODO - tune the 20
+  //packet->buffer.reserve(20); // TODO - tune the 20
 
   packet << PacketTag::headerMagicRst;
   // packet << PacketTag::extraMagicVer1;

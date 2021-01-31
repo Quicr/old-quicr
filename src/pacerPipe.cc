@@ -92,7 +92,7 @@ void PacerPipe::runNetSend() {
 
       auto packet = std::make_unique<Packet>();
       assert(packet);
-      packet->buffer.reserve(20); // TODO - tune the 20
+      //packet->buffer.reserve(20); // TODO - tune the 20
 
       packet << PacketTag::headerMagicData;
       // packet << PacketTag::extraMagicVer1;
@@ -132,7 +132,7 @@ void PacerPipe::runNetSend() {
         (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(dn)
             .count();
 
-    uint16_t bits = (uint16_t)packet->buffer.size() * 8 +
+    uint16_t bits = (uint16_t)packet->fullSize() * 8 +
                     42 * 8; // Capture shows 42 byte header before UDP payload
                             // including ethernet frame
 
@@ -175,7 +175,7 @@ void PacerPipe::runNetRecv() {
       NetRelaySeqNum relaySeqNum{};
       packet >> relaySeqNum;
 
-      uint16_t bits = (uint16_t)packet->buffer.size() * 8 +
+      uint16_t bits = (uint16_t)packet->fullSize() * 8 +
                       42 * 8; // Capture shows 42 byte header before UDP payload
                               // including ethernet frame
 

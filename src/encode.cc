@@ -219,19 +219,19 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               PacketTag tag) {
   uint16_t t = MediaNet::packetTagTrunc(tag);
   assert(t < 127); // TODO var len encode
-  p->buffer.push_back((uint8_t)t);
+  p->push_back((uint8_t)t);
   return p;
 }
 
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p, PacketTag &tag) {
-  if (p->buffer.empty()) {
+  if (p->fullSize() == 0 ) {
     tag = PacketTag::none;
     return false;
   }
 
   tag = MediaNet::nextTag(p);
 
-  p->buffer.pop_back();
+  p->pop_back();
   return true;
 }
 
@@ -242,14 +242,14 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   // TODO - std::copy version for little endian machines optimization
 
   // buffer on wire is little endian (that is *not* network byte order)
-  p->buffer.push_back(uint8_t((val >> 0) & 0xFF));
-  p->buffer.push_back(uint8_t((val >> 8) & 0xFF));
-  p->buffer.push_back(uint8_t((val >> 16) & 0xFF));
-  p->buffer.push_back(uint8_t((val >> 24) & 0xFF));
-  p->buffer.push_back(uint8_t((val >> 32) & 0xFF));
-  p->buffer.push_back(uint8_t((val >> 40) & 0xFF));
-  p->buffer.push_back(uint8_t((val >> 48) & 0xFF));
-  p->buffer.push_back(uint8_t((val >> 56) & 0xFF));
+  p->push_back(uint8_t((val >> 0) & 0xFF));
+  p->push_back(uint8_t((val >> 8) & 0xFF));
+  p->push_back(uint8_t((val >> 16) & 0xFF));
+  p->push_back(uint8_t((val >> 24) & 0xFF));
+  p->push_back(uint8_t((val >> 32) & 0xFF));
+  p->push_back(uint8_t((val >> 40) & 0xFF));
+  p->push_back(uint8_t((val >> 48) & 0xFF));
+  p->push_back(uint8_t((val >> 56) & 0xFF));
 
   return p;
 }
@@ -257,10 +257,10 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               uint32_t val) {
   // buffer on wire is little endian (that is *not* network byte order)
-  p->buffer.push_back(uint8_t((val >> 0) & 0xFF));
-  p->buffer.push_back(uint8_t((val >> 8) & 0xFF));
-  p->buffer.push_back(uint8_t((val >> 16) & 0xFF));
-  p->buffer.push_back(uint8_t((val >> 24) & 0xFF));
+  p->push_back(uint8_t((val >> 0) & 0xFF));
+  p->push_back(uint8_t((val >> 8) & 0xFF));
+  p->push_back(uint8_t((val >> 16) & 0xFF));
+  p->push_back(uint8_t((val >> 24) & 0xFF));
 
   return p;
 }
@@ -268,15 +268,15 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               uint16_t val) {
   // buffer on wire is little endian (that is *not* network byte order)
-  p->buffer.push_back(uint8_t((val >> 0) & 0xFF));
-  p->buffer.push_back(uint8_t((val >> 8) & 0xFF));
+  p->push_back(uint8_t((val >> 0) & 0xFF));
+  p->push_back(uint8_t((val >> 8) & 0xFF));
 
   return p;
 }
 
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               uint8_t val) {
-  p->buffer.push_back(val);
+  p->push_back(val);
 
   return p;
 }
@@ -329,11 +329,11 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, uint16_t &val) {
 }
 
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p, uint8_t &val) {
-  if (p->buffer.empty()) {
+  if (p->fullSize() == 0 ) {
     return false;
   }
-  val = p->buffer.back();
-  p->buffer.pop_back();
+  val = p->back();
+  p->pop_back();
   return true;
 }
 
@@ -383,32 +383,32 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   assert(val < ((uint64_t)1 << 61));
 
   if (val <= ((uint64_t)1 << 7)) {
-    p->buffer.push_back(uint8_t(((val >> 0) & 0x7F)) | 0x00);
+    p->push_back(uint8_t(((val >> 0) & 0x7F)) | 0x00);
     return p;
   }
 
   if (val <= ((uint64_t)1 << 14)) {
-    p->buffer.push_back(uint8_t((val >> 0) & 0xFF));
-    p->buffer.push_back(uint8_t(((val >> 8) & 0x3F) | 0x80));
+    p->push_back(uint8_t((val >> 0) & 0xFF));
+    p->push_back(uint8_t(((val >> 8) & 0x3F) | 0x80));
     return p;
   }
 
   if (val <= ((uint64_t)1 << 29)) {
-    p->buffer.push_back(uint8_t((val >> 0) & 0xFF));
-    p->buffer.push_back(uint8_t((val >> 8) & 0xFF));
-    p->buffer.push_back(uint8_t((val >> 16) & 0xFF));
-    p->buffer.push_back(uint8_t(((val >> 24) & 0x1F) | 0x80 | 0x40));
+    p->push_back(uint8_t((val >> 0) & 0xFF));
+    p->push_back(uint8_t((val >> 8) & 0xFF));
+    p->push_back(uint8_t((val >> 16) & 0xFF));
+    p->push_back(uint8_t(((val >> 24) & 0x1F) | 0x80 | 0x40));
     return p;
   }
 
-  p->buffer.push_back(uint8_t((val >> 0) & 0xFF));
-  p->buffer.push_back(uint8_t((val >> 8) & 0xFF));
-  p->buffer.push_back(uint8_t((val >> 16) & 0xFF));
-  p->buffer.push_back(uint8_t((val >> 24) & 0xFF));
-  p->buffer.push_back(uint8_t((val >> 32) & 0xFF));
-  p->buffer.push_back(uint8_t((val >> 40) & 0xFF));
-  p->buffer.push_back(uint8_t((val >> 48) & 0xFF));
-  p->buffer.push_back(uint8_t(((val >> 56) & 0x0F) | 0x80 | 0x40 | 0x20));
+  p->push_back(uint8_t((val >> 0) & 0xFF));
+  p->push_back(uint8_t((val >> 8) & 0xFF));
+  p->push_back(uint8_t((val >> 16) & 0xFF));
+  p->push_back(uint8_t((val >> 24) & 0xFF));
+  p->push_back(uint8_t((val >> 32) & 0xFF));
+  p->push_back(uint8_t((val >> 40) & 0xFF));
+  p->push_back(uint8_t((val >> 48) & 0xFF));
+  p->push_back(uint8_t(((val >> 56) & 0x0F) | 0x80 | 0x40 | 0x20));
 
   return p;
 }
@@ -417,10 +417,10 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, uintVar_t &v) {
   uint8_t byte[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   bool ok = true;
 
-  if (p->buffer.empty()) {
+  if (p->fullSize() == 0) {
     return false;
   }
-  uint8_t first = p->buffer.back();
+  uint8_t first = p->back();
 
   if ((first & (0x80)) == 0) {
     ok &= p >> byte[0];
@@ -473,10 +473,10 @@ uintVar_t MediaNet::toVarInt(uint64_t v) {
 
 uint64_t MediaNet::fromVarInt(uintVar_t v) { return static_cast<uint64_t>(v); }
 
-std::ostream &MediaNet::operator<<(std::ostream &stream, const Packet &packet) {
+std::ostream &MediaNet::operator<<(std::ostream &stream,  Packet &packet) {
   int ptr = (int)packet.fullSize() - 1;
   while (ptr >= 0) {
-    const uint8_t *data = packet.buffer.data();
+    const uint8_t *data = &(packet.fullData());
     MediaNet::PacketTag tag = nextTag(data[ptr--]);
     uint16_t len = ((uint16_t)tag) & 0xFF;
     if (len == 255) {

@@ -27,12 +27,12 @@ void BroadcastRelay::process() {
     return;
   }
 
-  if (packet->buffer.size() <= 1) {
+  if (packet->fullSize() <= 1) {
     // log bad packet
     return;
   }
 
-  if (packet->buffer.at(0) == packetTagTrunc(PacketTag::headerMagicSyn)) {
+  if (packet->fullData() == packetTagTrunc(PacketTag::headerMagicSyn)) {
     processSyn(packet);
     return;
   }
@@ -136,7 +136,7 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet) {
 void BroadcastRelay::processSyn(std::unique_ptr<MediaNet::Packet> &packet) {
   std::clog << "Got a Syn"
             << " from=" << IpAddr::toString(packet->getSrc())
-            << " len=" << packet->buffer.size() << std::endl;
+            << " len=" << packet->fullSize() << std::endl;
 
   auto conIndex = connectionMap.find(packet->getSrc());
   if (conIndex == connectionMap.end()) {

@@ -212,6 +212,6 @@ struct NetMsgClientStats {
 };
 */
 
-std::ostream &operator<<(std::ostream &stream, const Packet &packet);
+std::ostream &operator<<(std::ostream &stream,  Packet &packet);
 
 } // namespace MediaNet

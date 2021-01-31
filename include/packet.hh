@@ -55,8 +55,9 @@ public:
   // PacketTag peek();
   // std::vector<uint8_t> pop( PacketTag tag );
 
-  uint8_t &data() { return buffer.at(headerSize); }
-  //[[nodiscard]] const uint8_t &constData() const { return buffer.at(headerSize); }
+    uint8_t &data() { return buffer.at(headerSize); }
+    uint8_t &fullData()  { return buffer.at(0); }
+    //[[nodiscard]] const uint8_t &constData() const { return buffer.at(headerSize); }
   [[nodiscard]] size_t size() const;
   [[nodiscard]] size_t fullSize() const { return buffer.size(); }
   void resize(int size) { buffer.resize(headerSize + size); }
@@ -81,14 +82,16 @@ public:
   [[nodiscard]] ShortName shortName() const { return name; };
   void setFragID(uint8_t fragmentID);
 
-public:
-  std::vector<uint8_t> buffer; // TODO make private
+  void push_back(uint8_t t) { buffer.push_back(t); };
+  void pop_back() { buffer.pop_back(); };
+    uint8_t back() { return buffer.back(); };
 
 private:
-  MediaNet::ShortName name;
-
+  std::vector<uint8_t> buffer; // TODO make private
   int headerSize;
 
+  MediaNet::ShortName name;
+  
   // 1 is highest (control), 2 critical audio, 3 critical
   // video, 4 important, 5 not important - make enum
   uint8_t priority;
