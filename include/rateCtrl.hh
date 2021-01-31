@@ -38,7 +38,6 @@ struct PacketDownstreamStatus {
 
   bool notLost;
   // bool congested;
-
 };
 
 class RateCtrl {
