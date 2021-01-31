@@ -11,25 +11,33 @@ using namespace MediaNet;
 namespace MediaNet {
 
 struct PacketUpstreamStatus {
-  uint32_t seqNum;
-  uint32_t sendTimeUs;
-  uint16_t sizeBits;
-  uint32_t sendPhaseCount; // cycleCount * numPhasePerCycle + phase
-  bool notLost;
-  // bool congested;
-  uint32_t remoteAckTimeUs;
-  uint32_t localRecvAckTimeUs;
-  MediaNet::ShortName shortName;
+    uint32_t seqNum;
+    uint16_t sizeBits;
+
+    uint32_t sendTimeUs;
+    uint32_t remoteAckTimeUs;
+    uint32_t localRecvAckTimeUs;
+
+    uint32_t sendPhaseCount; // cycleCount * numPhasePerCycle + phase
+
+    bool notLost;
+    // bool congested;
+
+    MediaNet::ShortName shortName;
 };
 
 struct PacketDownstreamStatus {
-  uint32_t relaySeqNum;
-  uint32_t receiveTimeUs;
-  uint32_t remoteSendTimeUs;
+  uint32_t remoteSeqNum;
   uint16_t sizeBits;
+
+  uint32_t remoteSendTimeUs;
+  uint32_t receiveTimeUs;
+
   uint32_t sendPhaseCount; // cycleCount * numPhasePerCycle + phase
+
   bool notLost;
   // bool congested;
+
 };
 
 class RateCtrl {
@@ -38,16 +46,20 @@ public:
 
   void sendPacket(uint32_t seqNum, uint32_t sendTimeUs, uint16_t sizeBits,
                   ShortName shortName);
+
   void recvPacket(uint32_t relaySeqNum, uint32_t remoteSendTimeUs,
                   uint32_t localRecvTimeUs, uint16_t sizeBits);
   void recvAck(uint32_t seqNum, uint32_t remoteAckTimeUs,
                uint32_t localRecvAckTimeUs);
 
-  [[maybe_unused]] [[nodiscard]] uint32_t rttEstUs() const; // in microseconds
+    // in microseconds
+  [[maybe_unused]] [[nodiscard]] uint32_t rttEstUs() const;
 
-  [[maybe_unused]] [[nodiscard]] uint64_t bwUpEst() const; // in bits per second
-  [[maybe_unused]] [[nodiscard]] uint64_t
-  bwDownEst() const; // in bits per second
+    // in bits per second
+  [[maybe_unused]] [[nodiscard]] uint64_t bwUpEst() const;
+
+    // in bits per second
+  [[maybe_unused]] [[nodiscard]] uint64_t bwDownEst() const;
 
   [[nodiscard]] uint32_t getPhase() const { return phase; }
   [[nodiscard]] uint64_t bwUpTarget() const;   // in bits per second

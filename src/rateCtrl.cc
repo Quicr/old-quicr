@@ -333,7 +333,7 @@ void RateCtrl::recvPacket(uint32_t relaySeqNum, uint32_t remoteSendTimeMs,
   updatePhase();
 
 #if 0
-  std::clog << "Got subData seq=" << relaySeqNum
+  std::clog << "Got subData seq=" << remoteSeqNum
             << " remoteTime(ms)=" << remoteSendTimeMs
             << " localTime(us)=" << localRecvTimeUs << " size=" << sizeBits
             << " spc=" << cycleCount * numPhasePerCycle + phase
@@ -368,7 +368,7 @@ void RateCtrl::recvPacket(uint32_t relaySeqNum, uint32_t remoteSendTimeMs,
   PacketDownstreamStatus &rec =
       downstreamHistory.at(relaySeqNum - downHistorySeqOffset);
 
-  rec.relaySeqNum = relaySeqNum;
+  rec.remoteSeqNum = relaySeqNum;
   rec.receiveTimeUs = localRecvTimeUs;
   rec.remoteSendTimeUs = remoteSendTimeMs;
   rec.sizeBits = sizeBits;
@@ -429,7 +429,7 @@ void RateCtrl::estDownstreamBw() {
     }
 
     if (!i->notLost) {
-      // std::clog << "Lost  seq=" << i->relaySeqNum
+      // std::clog << "Lost  seq=" << i->remoteSeqNum
       //          << " sph=" << i->sendPhaseCount << std::endl;
 
       lostCount++;
@@ -437,7 +437,7 @@ void RateCtrl::estDownstreamBw() {
       continue;
     }
 
-    // std::clog << "Counting  seq=" << i->relaySeqNum
+    // std::clog << "Counting  seq=" << i->remoteSeqNum
     //          << " sph=" << i->sendPhaseCount << std::endl;
 
     notLostCount++;
