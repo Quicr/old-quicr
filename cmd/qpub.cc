@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
     // std::clog << "bytesPerPackt=" << bytesPerPacket << std::endl;
 
     name.mediaTime = packetCount;
-    auto packet = qClient.createPacket(name,1200);
+    auto packet = qClient.createPacket(name, 1200);
 
     assert(bytesPerPacket - headerBytes >= 1);
     packet->resize(bytesPerPacket - headerBytes);
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
     uint8_t *buffer = &(packet->data());
     *buffer++ = 1;
 
-      packet->setFEC(false);
+    packet->setFEC(false);
     packet->setReliable(true);
 
     qClient.publish(move(packet));

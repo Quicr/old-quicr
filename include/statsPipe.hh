@@ -14,7 +14,7 @@ public:
   explicit StatsPipe(PipeInterface *t);
 
   void updateStat(StatName stat,
-                          uint64_t value) override; // tells upstream things the stat
+                  uint64_t value) override; // tells upstream things the stat
   void ack(ShortName name) override;
 
 private:

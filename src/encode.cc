@@ -178,9 +178,9 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
     tag = PacketTag::relayRateReq;
     break;
 
-    case packetTagTrunc(PacketTag::subscribeReq):
-          tag = PacketTag::subscribeReq;
-          break;
+  case packetTagTrunc(PacketTag::subscribeReq):
+    tag = PacketTag::subscribeReq;
+    break;
 
   case packetTagTrunc(PacketTag::headerMagicData):
     tag = PacketTag::headerMagicData;
@@ -209,7 +209,7 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
     tag = PacketTag::badTag;
     break;
   default:
-      break;
+    break;
   }
 
   return tag;
@@ -224,7 +224,7 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
 }
 
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p, PacketTag &tag) {
-  if (p->fullSize() == 0 ) {
+  if (p->fullSize() == 0) {
     tag = PacketTag::none;
     return false;
   }
@@ -329,7 +329,7 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, uint16_t &val) {
 }
 
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p, uint8_t &val) {
-  if (p->fullSize() == 0 ) {
+  if (p->fullSize() == 0) {
     return false;
   }
   val = p->back();
@@ -473,7 +473,7 @@ uintVar_t MediaNet::toVarInt(uint64_t v) {
 
 uint64_t MediaNet::fromVarInt(uintVar_t v) { return static_cast<uint64_t>(v); }
 
-std::ostream &MediaNet::operator<<(std::ostream &stream,  Packet &packet) {
+std::ostream &MediaNet::operator<<(std::ostream &stream, Packet &packet) {
   int ptr = (int)packet.fullSize() - 1;
   while (ptr >= 0) {
     const uint8_t *data = &(packet.fullData());
@@ -524,16 +524,10 @@ std::ostream &MediaNet::operator<<(std::ostream &stream,  Packet &packet) {
   return stream;
 }
 
-size_t Packet::size() const {
-    return buffer.size() - headerSize;
-}
+size_t Packet::size() const { return buffer.size() - headerSize; }
 
-[[maybe_unused]] uint8_t Packet::getPriority() const {
-    return priority;
-}
+[[maybe_unused]] uint8_t Packet::getPriority() const { return priority; }
 
-void Packet::setPriority(uint8_t priority) {
-    Packet::priority = priority;
-}
+void Packet::setPriority(uint8_t priority) { Packet::priority = priority; }
 
 bool Packet::getFEC() { return useFEC; }

@@ -24,7 +24,7 @@ bool SubscribePipe::subscribe(const ShortName &name) {
   packet << name;
   packet << PacketTag::subscribeReq;
 
-    packet->setFEC(true);
+  packet->setFEC(true);
   packet->setReliable(true);
 
   downStream->send(move(packet));
@@ -48,7 +48,7 @@ std::unique_ptr<Packet> SubscribePipe::recv() {
         ShortName name{};
         bool ok = (clone >> name);
         if (!ok) {
-          //assert(0); // TODO - remove and log bad packet
+          // assert(0); // TODO - remove and log bad packet
           return std::unique_ptr<Packet>(nullptr);
         }
         packet->name = name;

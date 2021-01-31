@@ -92,7 +92,7 @@ void PacerPipe::runNetSend() {
 
       auto packet = std::make_unique<Packet>();
       assert(packet);
-      //packet->buffer.reserve(20); // TODO - tune the 20
+      // packet->buffer.reserve(20); // TODO - tune the 20
 
       packet << PacketTag::headerMagicData;
       // packet << PacketTag::extraMagicVer1;

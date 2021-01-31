@@ -33,7 +33,7 @@ constexpr unsigned int packetTagGen(unsigned int val, unsigned int len,
   return (val << 8) + len;
 }
 constexpr uint16_t packetTagTrunc(MediaNet::PacketTag tag) {
-    auto t = (uint32_t)tag;
+  auto t = (uint32_t)tag;
   t >>= 8;
   return (uint16_t)t;
 }
@@ -212,6 +212,6 @@ struct NetMsgClientStats {
 };
 */
 
-std::ostream &operator<<(std::ostream &stream,  Packet &packet);
+std::ostream &operator<<(std::ostream &stream, Packet &packet);
 
 } // namespace MediaNet

@@ -18,7 +18,7 @@ public:
   void setAuthInfo(uint32_t sender, uint64_t t);
 
   bool start(uint16_t port, std::string server,
-                     PipeInterface *upStream) override;
+             PipeInterface *upStream) override;
   [[nodiscard]] bool ready() const override;
   void stop() override;
 

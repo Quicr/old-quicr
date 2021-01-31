@@ -23,7 +23,7 @@ QuicRClient::QuicRClient()
       priorityPipe(&pacerPipe), retransmitPipe(&priorityPipe),
       fecPipe(&retransmitPipe), subscribePipe(&fecPipe),
       fragmentPipe(&subscribePipe), encryptPipe(&fragmentPipe),
-      statsPipe(&encryptPipe), firstPipe(&statsPipe)  {}
+      statsPipe(&encryptPipe), firstPipe(&statsPipe) {}
 
 QuicRClient::~QuicRClient() { firstPipe->stop(); }
 
@@ -102,7 +102,7 @@ std::unique_ptr<Packet> QuicRClient::recv() {
 bool QuicRClient::open(uint32_t clientID, const std::string relayName,
                        const uint16_t port, uint64_t token) {
   (void)clientID; // TODO
-  (void)token; // TODO
+  (void)token;    // TODO
 
   connectionPipe.setAuthInfo(clientID, token);
 

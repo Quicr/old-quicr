@@ -20,7 +20,7 @@
 
 namespace MediaNet {
 
-    class QuicRClient;
+class QuicRClient;
 class SubscribePipe;
 class FragmentPipe;
 
@@ -33,12 +33,12 @@ struct IpAddr {
 };
 
 class Packet {
-  //friend std::ostream &operator<<(std::ostream &os, const Packet &dt);
-  //friend MediaNet::PacketTag MediaNet::nextTag(std::unique_ptr<Packet> &p);
+  // friend std::ostream &operator<<(std::ostream &os, const Packet &dt);
+  // friend MediaNet::PacketTag MediaNet::nextTag(std::unique_ptr<Packet> &p);
 
-  //friend UdpPipe;
-  //friend FecPipe;
-  //friend CrazyBitPipe;
+  // friend UdpPipe;
+  // friend FecPipe;
+  // friend CrazyBitPipe;
   friend QuicRClient;
   friend SubscribePipe;
   friend FragmentPipe;
@@ -52,15 +52,16 @@ public:
   // PacketTag peek();
   // std::vector<uint8_t> pop( PacketTag tag );
 
-    uint8_t &data() { return buffer.at(headerSize); }
-    uint8_t &fullData()  { return buffer.at(0); }
-    //[[nodiscard]] const uint8_t &constData() const { return buffer.at(headerSize); }
+  uint8_t &data() { return buffer.at(headerSize); }
+  uint8_t &fullData() { return buffer.at(0); }
+  //[[nodiscard]] const uint8_t &constData() const { return
+  //buffer.at(headerSize); }
   [[nodiscard]] size_t size() const;
   [[nodiscard]] size_t fullSize() const { return buffer.size(); }
-    void resize(int size) { buffer.resize(headerSize + size); }
-    void resizeFull(int size) { buffer.resize(size); }
+  void resize(int size) { buffer.resize(headerSize + size); }
+  void resizeFull(int size) { buffer.resize(size); }
 
-    void reserve(int s) { buffer.reserve(s + headerSize); }
+  void reserve(int s) { buffer.reserve(s + headerSize); }
   // bool empty( ) { return (size()  <= 0); }
 
   void setReliable(bool reliable = true);
@@ -74,7 +75,6 @@ public:
   [[maybe_unused]] [[nodiscard]] const IpAddr &getDst() const;
   void setDst(const IpAddr &dst);
 
-
   [[nodiscard]] ShortName shortName() const { return name; };
 
   void setFragID(uint8_t fragmentID);
@@ -83,8 +83,8 @@ public:
   void pop_back() { buffer.pop_back(); };
   uint8_t back() { return buffer.back(); };
 
-    [[maybe_unused]] [[nodiscard]] uint8_t getPriority() const;
-    void setPriority(uint8_t priority);
+  [[maybe_unused]] [[nodiscard]] uint8_t getPriority() const;
+  void setPriority(uint8_t priority);
 
 private:
   std::vector<uint8_t> buffer; // TODO make private

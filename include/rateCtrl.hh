@@ -43,10 +43,11 @@ public:
   void recvAck(uint32_t seqNum, uint32_t remoteAckTimeUs,
                uint32_t localRecvAckTimeUs);
 
-    [[maybe_unused]] [[nodiscard]] uint32_t rttEstUs() const; // in microseconds
+  [[maybe_unused]] [[nodiscard]] uint32_t rttEstUs() const; // in microseconds
 
-    [[maybe_unused]] [[nodiscard]] uint64_t bwUpEst() const;   // in bits per second
-    [[maybe_unused]] [[nodiscard]] uint64_t bwDownEst() const; // in bits per second
+  [[maybe_unused]] [[nodiscard]] uint64_t bwUpEst() const; // in bits per second
+  [[maybe_unused]] [[nodiscard]] uint64_t
+  bwDownEst() const; // in bits per second
 
   [[nodiscard]] uint32_t getPhase() const { return phase; }
   [[nodiscard]] uint64_t bwUpTarget() const;   // in bits per second

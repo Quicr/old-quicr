@@ -21,22 +21,22 @@ bool FecPipe::send(std::unique_ptr<Packet> packet) {
       (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(dn)
           .count();
 
-  if (packet->getFEC() ) {
+  if (packet->getFEC()) {
     // TODO for packets with FEC enabled, save them and send them again in 10 ms
 
-   {
+    {
       std::unique_ptr<Packet> fecPacket = packet->clone();
-       fecPacket->setFEC(false);
-      fecPacket->setReliable( false );
-      fecPacket->setPriority(  0 );
+      fecPacket->setFEC(false);
+      fecPacket->setReliable(false);
+      fecPacket->setPriority(0);
       sendList.emplace_back(nowMs + 10, std::move(fecPacket));
     }
 
-  {
+    {
       std::unique_ptr<Packet> fecPacket = packet->clone();
       fecPacket->setFEC(false);
-      fecPacket->setReliable( false );
-      fecPacket->setPriority(  0 );
+      fecPacket->setReliable(false);
+      fecPacket->setPriority(0);
       sendList.emplace_back(nowMs + 50, std::move(fecPacket));
     }
   }

@@ -25,7 +25,7 @@ public:
   ~UdpPipe() override;
 
   bool start(uint16_t serverPort, std::string serverName,
-                     PipeInterface *upStream) override;
+             PipeInterface *upStream) override;
   [[nodiscard]] bool ready() const override;
   void stop() override;
 

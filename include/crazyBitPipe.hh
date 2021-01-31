@@ -17,7 +17,8 @@ public:
   /// non blocking, return nullptr if no buffer
   std::unique_ptr<Packet> recv() override;
 
-  void updateRTT(uint16_t minRttMs, uint16_t maxRttMs) override; // tells downstream things the current RTT
+  void updateRTT(uint16_t minRttMs, uint16_t maxRttMs)
+      override; // tells downstream things the current RTT
 
 private:
   uint16_t rttMs;

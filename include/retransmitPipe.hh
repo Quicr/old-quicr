@@ -21,9 +21,9 @@ public:
 
   void ack(ShortName name) override;
 
-  void
-  updateRTT(uint16_t minRttMs,
-            uint16_t maxRttMs) override; // tells downstream things the current RTT
+  void updateRTT(
+      uint16_t minRttMs,
+      uint16_t maxRttMs) override; // tells downstream things the current RTT
 
 private:
   std::mutex rtxListMutex;
