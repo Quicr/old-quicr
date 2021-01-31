@@ -32,7 +32,7 @@ bool QuicRClient::ready() const { return firstPipe->ready(); }
 void QuicRClient::close() { firstPipe->stop(); }
 
 bool QuicRClient::publish(std::unique_ptr<Packet> packet) {
-  size_t payloadSize = packet->buffer.size() - packet->headerSize;
+  size_t payloadSize = packet->size();
   assert(payloadSize < 63 * 1200);
 
   // std::clog << "QuicR send packet size=" << payloadSize << std::endl;
@@ -118,7 +118,7 @@ std::unique_ptr<Packet> QuicRClient::createPacket(const ShortName &shortName,
   auto packet = std::make_unique<Packet>();
   assert(packet);
   packet->name = shortName;
-  packet->buffer.reserve(reservedPayloadSize + 20); // TODO - tune the 20
+  packet->reserve(reservedPayloadSize + 20); // TODO - tune the 20
 
   packet << PacketTag::headerMagicData;
   packet << shortName;

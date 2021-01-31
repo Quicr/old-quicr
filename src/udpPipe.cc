@@ -67,13 +67,13 @@ bool UdpPipe::send(std::unique_ptr<Packet> packet) {
   }
 
   IpAddr addr = serverAddr;
-  if (packet->dst.addrLen != 0) {
-    addr = packet->dst;
+  if (packet->getDst().addrLen != 0) {
+    addr = packet->getDst();
   }
   // std::clog << "Send to " << addr.toString() << std::endl;
 
-  int numSent = sendto(fd, (const char *)packet->buffer.data(),
-                       (int)packet->buffer.size(), 0 /*flags*/,
+  int numSent = sendto(fd, (const char *) &(packet->fullData()),
+                       (int)(packet->fullSize()), 0 /*flags*/,
                        (struct sockaddr *)&(addr.addr), addr.addrLen);
   if (numSent < 0) {
 #if defined(_WIN32)
@@ -93,7 +93,7 @@ bool UdpPipe::send(std::unique_ptr<Packet> packet) {
               << std::endl;
     assert(0); // TODO
 #endif
-  } else if (numSent != (int)packet->buffer.size()) {
+  } else if (numSent != (int)( packet->fullSize()) ) {
     assert(0); // TODO
   }
 
@@ -110,14 +110,14 @@ std::unique_ptr<Packet> UdpPipe::recv() {
   auto packet = std::make_unique<Packet>();
 
   const int dataSize = 1500;
-  packet->buffer.resize(dataSize);
+  packet->resizeFull(dataSize);
 
   IpAddr remoteAddr{};
   memset(&remoteAddr.addr, 0, sizeof(remoteAddr.addr));
   remoteAddr.addrLen = sizeof(remoteAddr.addr);
 
-  int rLen = recvfrom(fd, (char *)packet->buffer.data(),
-                      (int)packet->buffer.size(), 0 /*flags*/,
+  int rLen = recvfrom(fd, (char *) &(packet->fullData()),
+                      (int)packet->fullSize(), 0 /*flags*/,
                       (struct sockaddr *)&remoteAddr.addr, &remoteAddr.addrLen);
   if (rLen < 0) {
 #if defined(_WIN32)
@@ -157,8 +157,8 @@ std::unique_ptr<Packet> UdpPipe::recv() {
     return std::unique_ptr<Packet>(nullptr);
   }
 
-  packet->src = remoteAddr;
-  packet->buffer.resize(rLen);
+  packet->setSrc( remoteAddr) ;
+  packet->resizeFull(rLen);
 
   return packet;
 }

@@ -141,7 +141,7 @@ PacketTag MediaNet::nextTag(std::unique_ptr<Packet> &p) {
   if (p->fullSize() <= 0) {
     return PacketTag::none;
   }
-  uint8_t truncTag = p->buffer.back(); // TODO - support var int size tags
+  uint8_t truncTag = p->back(); // TODO - support var int size tags
   return nextTag(truncTag);
 }
 
@@ -526,4 +526,12 @@ std::ostream &MediaNet::operator<<(std::ostream &stream,  Packet &packet) {
 
 size_t Packet::size() const {
     return buffer.size() - headerSize;
+}
+
+uint8_t Packet::getPriority() const {
+    return priority;
+}
+
+void Packet::setPriority(uint8_t priority) {
+    Packet::priority = priority;
 }

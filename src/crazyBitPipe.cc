@@ -32,7 +32,7 @@ bool CrazyBitPipe::send(std::unique_ptr<Packet> packet) {
 
   if (spinBitVal) {
     assert(packet->fullSize() >= 1);
-    packet->buffer[0] |= 0x01; // set the spin bit
+    packet->fullData() |= 0x01; // set the spin bit
   }
 
   assert(downStream);
@@ -48,7 +48,7 @@ std::unique_ptr<Packet> CrazyBitPipe::recv() {
 
   // clear the spin bit in first byte of incoming packet
   assert(packet->fullSize() >= 1);
-  packet->buffer[0] &= 0xFE;
+  packet->fullData() &= 0xFE;
 
   return packet;
 }
