@@ -8,7 +8,7 @@
 
 using namespace MediaNet;
 
-PriorityPipe::PriorityPipe(PipeInterface *t) : PipeInterface(t) {}
+PriorityPipe::PriorityPipe(PipeInterface *t): PipeInterface(t) ,mtu(1200) {}
 
 bool PriorityPipe::send(std::unique_ptr<Packet> packet) {
   assert(downStream);
@@ -44,10 +44,10 @@ std::unique_ptr<Packet> PriorityPipe::toDownstream() {
         }
     }
 
+    // TODO - look at MTU and compbine multiple packets
+
   return packet;
 }
-
-
 
 
 std::unique_ptr<Packet> PriorityPipe::recv() {
@@ -72,4 +72,10 @@ bool PriorityPipe::fromDownstream(std::unique_ptr<Packet> packet) {
     // TODO - check Q not too deep
 
     return true;
+}
+
+void PriorityPipe::updateMTU(uint16_t val) {
+    mtu = val;
+
+    PipeInterface::updateMTU(val);
 }

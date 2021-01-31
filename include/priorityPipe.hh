@@ -21,6 +21,8 @@ public:
   std::unique_ptr<Packet> toDownstream() override;
   bool fromDownstream(std::unique_ptr<Packet>) override;
 
+    void updateMTU(uint16_t mtu) override;
+
 private:
     static const int maxPriority=10;
 
@@ -30,6 +32,7 @@ private:
     std::queue<std::unique_ptr<Packet>> recvQ;
     std::mutex recvQMutex;
 
+    uint16_t mtu;
 };
 
 } // namespace MediaNet
