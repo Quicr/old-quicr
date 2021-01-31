@@ -48,7 +48,7 @@ void RateCtrl::sendPacket(uint32_t seqNum, uint32_t sendTimeUs,
   PacketUpstreamStatus &rec = upstreamHistory.at(seqNum - upHistorySeqOffset);
 
   rec.seqNum = seqNum;
-  rec.sendTimeUs = sendTimeUs;
+  rec.localSendTimeUs = sendTimeUs;
   rec.sizeBits = sizeBits;
   rec.sendPhaseCount = cycleCount * numPhasePerCycle + phase;
   rec.notLost = false;
@@ -80,11 +80,11 @@ void RateCtrl::recvAck(uint32_t seqNum, uint32_t remoteAckTimeUs,
   assert(rec.seqNum == seqNum);
   rec.notLost = true;
   rec.remoteReceiveTimeUs = remoteAckTimeUs;
-  rec.localRecvAckTimeUs = localRecvAckTimeUs;
+  rec.localAckTimeUs = localRecvAckTimeUs;
 
-  uint32_t rtt = rec.localRecvAckTimeUs - rec.sendTimeUs;
+  uint32_t rtt = rec.localAckTimeUs - rec.localSendTimeUs;
   int32_t timeOffset =
-      (rec.localRecvAckTimeUs + rec.sendTimeUs) / 2 - rec.remoteReceiveTimeUs;
+          (rec.localAckTimeUs + rec.localSendTimeUs) / 2 - rec.remoteReceiveTimeUs;
   updateRTT(rtt, timeOffset);
 
   pacerPipe->ack(rec.shortName);
@@ -101,12 +101,12 @@ void RateCtrl::recvAck(uint32_t seqNum, uint32_t remoteAckTimeUs,
 
 #if 0
     std::cout << " seq:" << rec.seqNum;
-    std::cout << " dtx:" << float(rec.sendTimeUs - prev.sendTimeUs) / 1000.0;
+    std::cout << " dtx:" << float(rec.localSendTimeUs - prev.localSendTimeUs) / 1000.0;
     std::cout << " drx:"
               << float(rec.remoteReceiveTimeUs - prev.remoteReceiveTimeUs) / 1000.0;
     if ((rec.remoteReceiveTimeUs != 0) & (prev.remoteReceiveTimeUs != 0)) {
       std::cout << " rtt:"
-                << float(rec.localRecvAckTimeUs - rec.sendTimeUs) / 1000.0;
+                << float(rec.localAckTimeUs - rec.localSendTimeUs) / 1000.0;
     }
     std::cout << std::endl;
 #endif
