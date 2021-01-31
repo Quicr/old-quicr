@@ -87,6 +87,7 @@ int main(int argc, char *argv[]) {
 
     packet->setFEC(false);
     packet->setReliable(true);
+    packet->setPriority(3);
 
     qClient.publish(move(packet));
 
