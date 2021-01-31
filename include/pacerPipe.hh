@@ -45,6 +45,7 @@ private:
   uint32_t oldPhase;
 
   uint16_t mtu;
+  uint32_t targetPpsUp;
 };
 
 } // namespace MediaNet
