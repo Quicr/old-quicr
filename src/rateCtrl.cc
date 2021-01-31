@@ -369,7 +369,7 @@ void RateCtrl::recvPacket(uint32_t relaySeqNum, uint32_t remoteSendTimeMs,
       downstreamHistory.at(relaySeqNum - downHistorySeqOffset);
 
   rec.remoteSeqNum = relaySeqNum;
-  rec.receiveTimeUs = localRecvTimeUs;
+  rec.localReceiveTimeUs = localRecvTimeUs;
   rec.remoteSendTimeUs = remoteSendTimeMs;
   rec.sizeBits = sizeBits;
   rec.sendPhaseCount = cycleCount * numPhasePerCycle + phase;
@@ -415,7 +415,7 @@ void RateCtrl::estDownstreamBw() {
 
       if (i->sendPhaseCount > prevPhaseCount) {
         if (i->notLost) {
-          lastTime = i->receiveTimeUs;
+          lastTime = i->localReceiveTimeUs;
         }
 
         continue;
@@ -442,7 +442,7 @@ void RateCtrl::estDownstreamBw() {
 
     notLostCount++;
 
-    firstTime = i->receiveTimeUs;
+    firstTime = i->localReceiveTimeUs;
     bitsReceived += i->sizeBits;
   }
 
