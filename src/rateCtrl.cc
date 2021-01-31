@@ -15,7 +15,7 @@ using namespace MediaNet;
 
 RateCtrl::RateCtrl(PipeInterface *pacerPipeRef)
     : pacerPipe(pacerPipeRef), upHistorySeqOffset(0), downHistorySeqOffset(0),
-      phase(0), bitsSentThisPhase(0), cycleCount(0),
+      phaseCycleCount(0), bitsSentThisPhase(0),
       minCycleRTTUs(std::numeric_limits<uint32_t>::max()), maxCycleAckTimeUs(0),
       estRTTUs(100 * 1000), estAckTimeUs(100 * 1000), cycleRelayTimeOffsetUs(0),
       estRelayTimeOffsetUs(0), upstreamPacketLossRate(0), upstreamCycleMaxBw(0),
@@ -28,7 +28,6 @@ RateCtrl::RateCtrl(PipeInterface *pacerPipeRef)
   downstreamHistory.reserve(100); // TODO limit length of history
 
   startNewCycle();
-  cycleCount = 0;
 }
 
 void RateCtrl::sendPacket(uint32_t seqNum, uint32_t sendTimeUs,
@@ -50,7 +49,7 @@ void RateCtrl::sendPacket(uint32_t seqNum, uint32_t sendTimeUs,
   rec.seqNum = seqNum;
   rec.localSendTimeUs = sendTimeUs;
   rec.sizeBits = sizeBits;
-  rec.sendPhaseCount = cycleCount * numPhasePerCycle + phase;
+  rec.sendPhaseCount = phaseCycleCount;
   rec.notLost = false;
   rec.shortName = shortName;
 
@@ -59,6 +58,8 @@ void RateCtrl::sendPacket(uint32_t seqNum, uint32_t sendTimeUs,
 
 void RateCtrl::recvAck(uint32_t seqNum, uint32_t remoteAckTimeUs,
                        uint32_t localRecvAckTimeUs) {
+    updatePhase();
+
   if (seqNum < upHistorySeqOffset) {
     return;
   }
@@ -121,6 +122,7 @@ uint64_t RateCtrl::bwUpTarget() const // in bits per second
   return upstreamBwEst;
 #endif
 
+  int phase = phaseCycleCount % numPhasePerCycle;
   if (phase == 1) {
     return ((uint64_t)(upstreamBwEst)*5) / 4;
   }
@@ -140,6 +142,7 @@ uint64_t RateCtrl::bwDownTarget() const // in bits per second
   return (uint64_t)downstreamBwEst;
 #endif
 
+  int phase = phaseCycleCount % numPhasePerCycle;
   if (phase == 3) {
     return ((uint64_t)(downstreamBwEst)*5) / 4;
   }
@@ -158,13 +161,15 @@ void RateCtrl::updatePhase() {
           .count();
 
   uint32_t newPhase = cycleTimeUs / phaseTimeUs;
+  uint32_t oldPhase = phaseCycleCount % numPhasePerCycle;
+
   if (newPhase >= numPhasePerCycle) {
     startNewPhase();
     startNewCycle();
-    phase = 0;
-  } else if (phase != newPhase) {
+      phaseCycleCount++;
+  } else if ( newPhase > oldPhase ) {
     startNewPhase();
-    phase = newPhase;
+      phaseCycleCount += ( newPhase - oldPhase );
   }
 }
 
@@ -198,9 +203,9 @@ void RateCtrl::startNewCycle() {
   // pacerPipe->updateStat(PipeInterface::StatName::mtu, 1200 ); // TODO
 
 #if 1
-  if (cycleCount > 0) {
+  if (phaseCycleCount > 0) {
     std::clog << "Cycle"
-              << " cycle:" << cycleCount
+              << " cycle:" << phaseCycleCount / numPhasePerCycle
               << " estRtt(ms):" << float(estRTTUs) / 1e3
               << " maxAck(ms):" << float(estAckTimeUs) / 1e3
               << " upstreamBwEst(mbps):" << float(upstreamBwEst) / 1e6
@@ -218,7 +223,7 @@ void RateCtrl::startNewCycle() {
   downstreamCycleMaxBw = 0;
 
   cycleStartTime = std::chrono::steady_clock::now();
-  cycleCount++;
+  //cycleCount++;
 }
 
 void RateCtrl::updateRTT(uint32_t valUs, int32_t newRemoteTimeOffsetUs) {
@@ -361,7 +366,7 @@ void RateCtrl::recvPacket(uint32_t relaySeqNum, uint32_t remoteSendTimeMs,
   rec.localReceiveTimeUs = localRecvTimeUs;
   rec.remoteSendTimeUs = remoteSendTimeMs;
   rec.sizeBits = sizeBits;
-  rec.sendPhaseCount = cycleCount * numPhasePerCycle + phase;
+  rec.sendPhaseCount = phaseCycleCount;
   rec.notLost = true;
 
   // TODO - think about where NACK get sent

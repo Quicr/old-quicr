@@ -53,7 +53,7 @@ public:
                uint32_t localRecvAckTimeUs);
 
 
-  [[nodiscard]] uint32_t getPhase() const { return phase; }
+  [[nodiscard]] uint32_t getPhase() const { return (phaseCycleCount % numPhasePerCycle); }
 
   [[nodiscard]] uint64_t bwUpTarget() const;   // in bits per second
   [[nodiscard]] uint64_t bwDownTarget() const; // in bits per second
@@ -68,16 +68,15 @@ private:
   std::vector<PacketDownstreamStatus> downstreamHistory;
 
   void updatePhase();
-  const uint32_t phaseTimeUs = 33333 * 2; // 2 frames at  30 fps
-  const uint32_t numPhasePerCycle = 10;
+  static const uint32_t phaseTimeUs = 33333 / 2; // 0.5 frames at 30 fps
+  static const uint32_t numPhasePerCycle = 10;
 
   void startNewPhase();
-  uint32_t phase; // resets to zero with each new cycle
+  uint32_t phaseCycleCount; // does *not* reset to zero with each new cycle
   uint32_t bitsSentThisPhase;
 
   void startNewCycle();
   std::chrono::steady_clock::time_point cycleStartTime;
-  uint32_t cycleCount;
 
   void updateRTT(uint32_t valUs, int32_t remoteTimeOffsetUs);
   uint32_t minCycleRTTUs;
