@@ -528,10 +528,12 @@ size_t Packet::size() const {
     return buffer.size() - headerSize;
 }
 
-uint8_t Packet::getPriority() const {
+[[maybe_unused]] uint8_t Packet::getPriority() const {
     return priority;
 }
 
 void Packet::setPriority(uint8_t priority) {
     Packet::priority = priority;
 }
+
+bool Packet::getFEC() { return useFEC; }

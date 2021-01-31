@@ -24,7 +24,7 @@ bool SubscribePipe::subscribe(const ShortName &name) {
   packet << name;
   packet << PacketTag::subscribeReq;
 
-  packet->enableFEC(true);
+    packet->setFEC(true);
   packet->setReliable(true);
 
   downStream->send(move(packet));

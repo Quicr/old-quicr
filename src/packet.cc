@@ -34,7 +34,7 @@ Packet::Packet() : headerSize(0), priority(1), reliable(false), useFEC(false) {
 
 void Packet::setReliable(bool r) { Packet::reliable = r; }
 
-void Packet::enableFEC(bool doFec) { useFEC = doFec; }
+void Packet::setFEC(bool doFec) { useFEC = doFec; }
 
 const IpAddr &Packet::getSrc() const { return src; }
 

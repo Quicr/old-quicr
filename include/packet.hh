@@ -20,11 +20,7 @@
 
 namespace MediaNet {
 
-class UdpPipe;
-class FecPipe;
-
-class QuicRClient;
-class CrazyBitPipe;
+    class QuicRClient;
 class SubscribePipe;
 class FragmentPipe;
 
@@ -50,6 +46,7 @@ class Packet {
 public:
   Packet();
   void copy(const Packet &p);
+  [[nodiscard]] std::unique_ptr<Packet> clone() const;
 
   // void push( PacketTag tag, const std::vector<uint8_t> value );
   // PacketTag peek();
@@ -69,26 +66,24 @@ public:
   void setReliable(bool reliable = true);
   [[nodiscard]] bool isReliable() const;
 
-  void enableFEC(bool doFec = true);
-  bool FECenabled() { return useFEC; };
+  void setFEC(bool doFec = true);
+  bool getFEC();
 
   [[nodiscard]] const IpAddr &getSrc() const;
-
   [[maybe_unused]] void setSrc(const IpAddr &src);
-
   [[maybe_unused]] [[nodiscard]] const IpAddr &getDst() const;
   void setDst(const IpAddr &dst);
 
-  [[nodiscard]] std::unique_ptr<Packet> clone() const;
 
   [[nodiscard]] ShortName shortName() const { return name; };
+
   void setFragID(uint8_t fragmentID);
 
   void push_back(uint8_t t) { buffer.push_back(t); };
   void pop_back() { buffer.pop_back(); };
-    uint8_t back() { return buffer.back(); };
+  uint8_t back() { return buffer.back(); };
 
-    uint8_t getPriority() const;
+    [[maybe_unused]] [[nodiscard]] uint8_t getPriority() const;
     void setPriority(uint8_t priority);
 
 private:
@@ -101,7 +96,7 @@ private:
   // video, 4 important, 5 not important - make enum
   uint8_t priority;
 
-    bool reliable;
+  bool reliable;
   bool useFEC;
 
   MediaNet::IpAddr src;
