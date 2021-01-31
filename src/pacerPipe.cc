@@ -9,7 +9,7 @@
 using namespace MediaNet;
 
 PacerPipe::PacerPipe(PipeInterface *t)
-    : PipeInterface(t), rateCtrl(this), shutDown(false), oldPhase(0),mtu(1200) {
+    : PipeInterface(t), rateCtrl(this), shutDown(false), oldPhase(0),mtu(1200),targetPpsUp(500) {
   assert(downStream);
 }
 
@@ -146,7 +146,7 @@ void PacerPipe::runNetRecv() {
       nowUs = 0; // trash receive time for lost ACKs (all but first)
     }
 
-    // look for incoming relaySeqNum
+    // look for incoming remoteSeqNum
     if (nextTag(packet) == PacketTag::relaySeqNum) {
       NetRelaySeqNum relaySeqNum{};
       packet >> relaySeqNum;
@@ -170,6 +170,7 @@ uint64_t PacerPipe::getTargetUpstreamBitrate() { return rateCtrl.bwUpTarget(); }
 
 
 std::unique_ptr<Packet> PacerPipe::recv() {
+    // this should never be called
     assert(0);
     return std::unique_ptr<Packet>(nullptr);
 }

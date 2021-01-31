@@ -88,7 +88,7 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRelaySeqNum &msg) {
 
   if (nextTag(p) != PacketTag::relaySeqNum) {
-    std::cerr << "Did not find expected PacketTag::relaySeqNum" << std::endl;
+    std::cerr << "Did not find expected PacketTag::remoteSeqNum" << std::endl;
     return false;
   }
 
@@ -506,7 +506,7 @@ std::ostream &MediaNet::operator<<(std::ostream &stream, Packet &packet) {
       stream << " shortName";
       break;
     case PacketTag::relaySeqNum:
-      stream << " relaySeqNum";
+      stream << " remoteSeqNum";
       break;
     case PacketTag::appData:
       stream << " appData(" << len << ")";

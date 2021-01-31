@@ -108,7 +108,7 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet) {
     subData->setDst(addr);
 
     NetRelaySeqNum netRelaySeqNum;
-    netRelaySeqNum.relaySeqNum = con->relaySeqNum++;
+    netRelaySeqNum.relaySeqNum = con->remoteSeqNum++;
     netRelaySeqNum.remoteSendTimeMs = nowUs / 1000;
 
     subData << netRelaySeqNum;
