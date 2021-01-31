@@ -2,6 +2,8 @@
 
 #include <cstdint>
 #include <memory>
+#include <mutex>
+#include <queue>
 
 #include "packet.hh"
 #include "pipeInterface.hh"
@@ -14,7 +16,13 @@ public:
 
   bool send(std::unique_ptr<Packet> packet) override;
 
+  std::unique_ptr<Packet> toDownstream() override;
+
 private:
+    std::mutex sendQMutex;
+    std::queue<std::unique_ptr<Packet>> sendQ;
+
+
 };
 
 } // namespace MediaNet

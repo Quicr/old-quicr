@@ -70,13 +70,8 @@ std::unique_ptr<Packet> PacerPipe::recv() {
 }
 
 bool PacerPipe::send(std::unique_ptr<Packet> p) {
-  {
-    std::lock_guard<std::mutex> lock(sendQMutex);
-    // std::clog << "+";
-    sendQ.push(move(p));
-    // TODO - check Q not too deep
-  }
-
+    (void)p;
+    assert(0);
   return true;
 }
 
@@ -106,20 +101,14 @@ void PacerPipe::runNetSend() {
       downStream->send(move(packet));
     }
 
-    if (sendQ.empty()) {
+    std::unique_ptr<Packet> packet = upStream->toDownstream();
+
+    if ( !packet ) {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
       continue;
     }
 
     // TODO - watch bitrate and don't send until OK to send more data
-
-    // get packet to send from Q
-    std::unique_ptr<Packet> packet;
-    {
-      std::lock_guard<std::mutex> lock(sendQMutex);
-      packet = move(sendQ.front());
-      sendQ.pop();
-    }
 
     NetClientSeqNum seqTag{};
     static uint32_t nextSeqNum = 0; // TODO - add mutex etc

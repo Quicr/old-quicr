@@ -28,6 +28,7 @@ public:
   virtual std::unique_ptr<Packet> recv();
 
   virtual bool fromDownstream(std::unique_ptr<Packet>);
+  virtual std::unique_ptr<Packet> toDownstream();
 
   virtual void updateStat(StatName stat,
                           uint64_t value); // tells upstream things the stat

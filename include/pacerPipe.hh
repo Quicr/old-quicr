@@ -41,8 +41,6 @@ private:
   std::thread recvThread;
 
   void runNetSend();
-  std::queue<std::unique_ptr<Packet>> sendQ;
-  std::mutex sendQMutex;
   std::thread sendThread;
 
   uint32_t oldPhase;
