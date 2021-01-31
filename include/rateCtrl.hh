@@ -31,7 +31,8 @@ struct PacketDownstreamStatus {
   uint16_t sizeBits;
 
   uint32_t remoteSendTimeUs;
-  uint32_t receiveTimeUs;
+  uint32_t localReceiveTimeUs;
+  uint32_t remoteAckTimeUs;
 
   uint32_t sendPhaseCount; // cycleCount * numPhasePerCycle + phase
 
