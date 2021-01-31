@@ -14,9 +14,9 @@ struct PacketUpstreamStatus {
     uint32_t seqNum;
     uint16_t sizeBits;
 
-    uint32_t sendTimeUs;
+    uint32_t localSendTimeUs;
     uint32_t remoteReceiveTimeUs;
-    uint32_t localRecvAckTimeUs;
+    uint32_t localAckTimeUs;
 
     uint32_t sendPhaseCount; // cycleCount * numPhasePerCycle + phase
 
