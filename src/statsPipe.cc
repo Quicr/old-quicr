@@ -25,9 +25,8 @@ void StatsPipe::updateStat(PipeInterface::StatName stat, uint64_t value) {
     uint16_t bigRtt = stats.at(PipeInterface::StatName::bigRTTms);
     this->updateRTT(minRtt, bigRtt);
   }
-}
 
-void StatsPipe::ack(ShortName name) {
-  // this is here just to eat the ACKs and stop propagation up chain
-  (void)name;
+    if (stat == PipeInterface::StatName::mtu) {
+        this->updateMTU(value);
+    }
 }

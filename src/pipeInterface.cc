@@ -71,3 +71,9 @@ void PipeInterface::updateRTT(uint16_t minRtMs, uint16_t bigRtMs) {
 std::unique_ptr<Packet> PipeInterface::toDownstream() {
     return std::unique_ptr<Packet>(nullptr);
 }
+
+void PipeInterface::updateMTU(uint16_t mtu) {
+    if (downStream) {
+        downStream->updateMTU(mtu);
+    }
+}

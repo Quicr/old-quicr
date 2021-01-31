@@ -15,7 +15,6 @@ public:
 
   void updateStat(StatName stat,
                   uint64_t value) override; // tells upstream things the stat
-  void ack(ShortName name) override;
 
 private:
   std::map<PipeInterface::StatName, uint64_t> stats;
