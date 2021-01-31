@@ -3,7 +3,6 @@
 #include <cassert>
 #include <iostream>
 
-#include "encode.hh"
 #include "statsPipe.hh"
 
 using namespace MediaNet;
@@ -26,7 +25,23 @@ void StatsPipe::updateStat(PipeInterface::StatName stat, uint64_t value) {
     this->updateRTT(minRtt, bigRtt);
   }
 
-    if (stat == PipeInterface::StatName::mtu) {
-        this->updateMTU(value);
-    }
+  if (stat == PipeInterface::StatName::mtu) {
+      uint16_t mtu = stats.at(PipeInterface::StatName::mtu);
+      uint32_t pps = stats.at(PipeInterface::StatName::ppsTargetUp);
+      this->updateMTU(mtu,pps);
+  }
+}
+
+void StatsPipe::updateRTT(uint16_t minRttMs, uint16_t bigRttMs) {
+    stats.at(PipeInterface::StatName::minRTTms) = minRttMs;
+    stats.at(PipeInterface::StatName::bigRTTms) = bigRttMs;
+
+    PipeInterface::updateRTT(minRttMs, bigRttMs);
+}
+
+void StatsPipe::updateMTU(uint16_t mtu, uint32_t pps) {
+    stats.at(PipeInterface::StatName::mtu) = mtu;
+    stats.at(PipeInterface::StatName::ppsTargetUp) = pps;
+
+    PipeInterface::updateMTU(mtu, pps);
 }

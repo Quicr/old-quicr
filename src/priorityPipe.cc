@@ -74,8 +74,8 @@ bool PriorityPipe::fromDownstream(std::unique_ptr<Packet> packet) {
     return true;
 }
 
-void PriorityPipe::updateMTU(uint16_t val) {
+void PriorityPipe::updateMTU(uint16_t val,uint32_t pps) {
     mtu = val;
 
-    PipeInterface::updateMTU(val);
+    PipeInterface::updateMTU(val,pps);
 }

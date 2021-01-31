@@ -23,7 +23,11 @@ QuicRClient::QuicRClient()
       priorityPipe(&pacerPipe), retransmitPipe(&priorityPipe),
       fecPipe(&retransmitPipe), subscribePipe(&fecPipe),
       fragmentPipe(&subscribePipe), encryptPipe(&fragmentPipe),
-      statsPipe(&encryptPipe), firstPipe(&statsPipe) {}
+      statsPipe(&encryptPipe), firstPipe(&statsPipe) {
+    // TODO - get rid of all other places were defaults get set for mtu, rtt, pps
+    firstPipe->updateMTU(1200,500);
+    firstPipe->updateRTT(100,200);
+}
 
 QuicRClient::~QuicRClient() { firstPipe->stop(); }
 
