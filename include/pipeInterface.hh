@@ -30,13 +30,16 @@ public:
   virtual bool fromDownstream(std::unique_ptr<Packet>);
   virtual std::unique_ptr<Packet> toDownstream();
 
-  virtual void updateStat(StatName stat,
-                          uint64_t value); // tells upstream things the stat
-  virtual void
-  ack(MediaNet::ShortName name); // tells upstream things name was received
-  virtual void
-  updateRTT(uint16_t minRttMs,
-            uint16_t bitRttMs); // tells downstream things the current RTT
+  // tells upstream things the stat
+  virtual void updateStat(StatName stat, uint64_t value);
+
+  // tells upstream things name was received
+  virtual void ack(MediaNet::ShortName name);
+
+  // tells downstream things the current RTT
+  virtual void updateRTT(uint16_t minRttMs, uint16_t bitRttMs);
+
+  virtual void updateMTU(uint16_t mtu);
 
 protected:
   explicit PipeInterface(PipeInterface *downStream);
