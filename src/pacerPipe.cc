@@ -54,20 +54,7 @@ bool PacerPipe::ready() const {
   return downStream->ready();
 }
 
-std::unique_ptr<Packet> PacerPipe::recv() {
-  std::unique_ptr<Packet> ret = std::unique_ptr<Packet>(nullptr);
-  {
-    std::lock_guard<std::mutex> lock(recvQMutex);
-    if (!recvQ.empty()) {
-      ret = move(recvQ.front());
-      recvQ.pop();
 
-      // std::clog << "-";
-    }
-  }
-
-  return ret;
-}
 
 bool PacerPipe::send(std::unique_ptr<Packet> p) {
     (void)p;
@@ -173,14 +160,16 @@ void PacerPipe::runNetRecv() {
       nowUs = 0; // trash receive time for lost ACKs (all but first)
     }
 
-    {
-      std::lock_guard<std::mutex> lock(recvQMutex);
-      recvQ.push(move(packet));
-      // TODO - check Q not too deep
-    }
+    upStream->fromDownstream( move(packet) );
 
     // std::clog << "<";
   }
 }
 
 uint64_t PacerPipe::getTargetUpstreamBitrate() { return rateCtrl.bwUpTarget(); }
+
+
+std::unique_ptr<Packet> PacerPipe::recv() {
+    assert(0);
+    return std::unique_ptr<Packet>(nullptr);
+}

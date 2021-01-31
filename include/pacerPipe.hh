@@ -26,8 +26,6 @@ public:
   uint64_t getTargetUpstreamBitrate(); // in bps
 
   bool send(std::unique_ptr<Packet>) override;
-
-  /// non blocking, return nullptr if no buffer
   std::unique_ptr<Packet> recv() override;
 
 private:
@@ -36,8 +34,6 @@ private:
   bool shutDown;
 
   void runNetRecv();
-  std::queue<std::unique_ptr<Packet>> recvQ;
-  std::mutex recvQMutex;
   std::thread recvThread;
 
   void runNetSend();

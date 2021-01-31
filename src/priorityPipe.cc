@@ -15,26 +15,50 @@ bool PriorityPipe::send(std::unique_ptr<Packet> packet) {
 
   // TODO - implement priority Q that rate controller can use
 
-    {
-        std::lock_guard<std::mutex> lock(sendQMutex);
-        // std::clog << "+";
-        sendQ.push(move(packet));
+  {
+    std::lock_guard<std::mutex> lock(sendQMutex);
+    // std::clog << "+";
+    sendQ.push(move(packet));
 
-        // TODO - check Q not too deep
-    }
+    // TODO - check Q not too deep
+  }
 }
 
 std::unique_ptr<Packet> PriorityPipe::toDownstream() {
-    if (sendQ.empty()) {
-        return std::unique_ptr<Packet>(nullptr);
-    }
+  if (sendQ.empty()) {
+    return std::unique_ptr<Packet>(nullptr);
+  }
 
-    std::unique_ptr<Packet> packet;
-    {
-        std::lock_guard<std::mutex> lock(sendQMutex);
-        packet = move(sendQ.front());
-        sendQ.pop();
-    }
+  std::unique_ptr<Packet> packet;
+  {
+    std::lock_guard<std::mutex> lock(sendQMutex);
+    packet = move(sendQ.front());
+    sendQ.pop();
+  }
 
-    return packet;
+  return packet;
+}
+
+std::unique_ptr<Packet> PriorityPipe::recv() {
+  std::unique_ptr<Packet> ret = std::unique_ptr<Packet>(nullptr);
+
+  std::lock_guard<std::mutex> lock(recvQMutex);
+  if (!recvQ.empty()) {
+    ret = move(recvQ.front());
+    recvQ.pop();
+
+    // std::clog << "-";
+  }
+
+  return ret;
+}
+
+bool PriorityPipe::fromDownstream(std::unique_ptr<Packet> packet) {
+
+  std::lock_guard<std::mutex> lock(recvQMutex);
+  recvQ.push(move(packet));
+
+  // TODO - check Q not too deep
+
+  return true;
 }
