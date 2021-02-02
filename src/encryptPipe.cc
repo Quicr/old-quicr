@@ -8,7 +8,14 @@
 
 using namespace MediaNet;
 
-EncryptPipe::EncryptPipe(PipeInterface *t) : PipeInterface(t) {}
+// TODO fix this when we support crypto agility
+static const auto FIXED_CIPHER_SUITE = sframe::CipherSuite::AES_GCM_128_SHA256;
+static const size_t SFRAME_EPOCH_BITS = 8;
+
+
+EncryptPipe::EncryptPipe(PipeInterface *t):
+	PipeInterface(t),
+	mls_context(FIXED_CIPHER_SUITE, SFRAME_EPOCH_BITS){}
 
 bool EncryptPipe::send(std::unique_ptr<Packet> packet) {
 

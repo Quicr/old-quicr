@@ -103,7 +103,6 @@ bool QuicRClient::open(uint32_t clientID, const std::string relayName,
                        const uint16_t port, uint64_t token) {
   (void)clientID; // TODO
   (void)token;    // TODO
-
   connectionPipe.setAuthInfo(clientID, token);
 
   return firstPipe->start(port, relayName, nullptr);

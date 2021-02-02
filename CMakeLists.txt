@@ -21,6 +21,13 @@ endif()
 ###
 ### Dependencies
 ###
+include(FetchContent)
+FetchContent_Declare(   sframe
+        GIT_REPOSITORY      https://github.com/cisco/sframe.git
+        GIT_TAG             master)
+FetchContent_MakeAvailable(sframe)
+
+find_package(OpenSSL 1.1 REQUIRED)
 find_package(Threads REQUIRED) 
 
 
@@ -46,12 +53,13 @@ if(WIN32)
     target_link_libraries( quicr PRIVATE wsock32 ws2_32 )
 endif()
 
-target_link_libraries( quicr PRIVATE Threads::Threads)
+target_link_libraries( quicr PRIVATE Threads::Threads gsl sframe OpenSSL::Crypto)
 
 
 target_include_directories(${LIBRARY_NAME} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${LIBRARY_NAME}>
     $<INSTALL_INTERFACE:include/${LIBRARY_NAME}>
+    ${OPENSSL_INCLUDE_DIR}
 )
 
 target_include_directories(${LIBRARY_NAME} PUBLIC
