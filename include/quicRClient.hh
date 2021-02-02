@@ -31,10 +31,16 @@ public:
   virtual ~QuicRClient();
   virtual bool open(uint32_t clientID, std::string relayName, uint16_t port,
                     uint64_t token);
-  [[nodiscard]] virtual bool ready() const;
+  virtual bool ready() const;
   virtual void close();
 
-  /*
+	// Initialize sframe context with the base secret provided by MLS key
+	// exchange Note: This is hard coded secret until we bring in MLS
+	void setCryptoKey(sframe::MLSContext::EpochID epoch,
+									 const sframe::bytes &mls_epoch_secret);
+
+
+	/*
    * void setEncryptionKey(std::vector<uint8_t> salt, std::vector<uint8_t> key,
                         int authTagLen);
   void setDecryptionKey(uint32_t clientID, std::vector<uint8_t> salt,

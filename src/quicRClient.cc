@@ -31,6 +31,12 @@ bool QuicRClient::ready() const { return firstPipe->ready(); }
 
 void QuicRClient::close() { firstPipe->stop(); }
 
+void QuicRClient::setCryptoKey(sframe::MLSContext::EpochID epoch,
+									const sframe::bytes &mls_epoch_secret) {
+	encryptPipe.setCryptoKey(epoch, mls_epoch_secret);
+}
+
+
 bool QuicRClient::publish(std::unique_ptr<Packet> packet) {
   size_t payloadSize = packet->size();
   assert(payloadSize < 63 * 1200);

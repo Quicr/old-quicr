@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sys/types.h>
 
+
 #if defined(__linux__) || defined(__APPLE__)
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -23,6 +24,7 @@ namespace MediaNet {
 class QuicRClient;
 class SubscribePipe;
 class FragmentPipe;
+class EncryptPipe; // Needed to manipulate buffer directly
 
 struct IpAddr {
   struct sockaddr_in addr;
@@ -42,6 +44,7 @@ class Packet {
   friend QuicRClient;
   friend SubscribePipe;
   friend FragmentPipe;
+  friend EncryptPipe;
 
 public:
   Packet();
@@ -54,6 +57,7 @@ public:
 
   uint8_t &data() { return buffer.at(headerSize); }
   uint8_t &fullData() { return buffer.at(0); }
+
   //[[nodiscard]] const uint8_t &constData() const { return
   //buffer.at(headerSize); }
   [[nodiscard]] size_t size() const;
