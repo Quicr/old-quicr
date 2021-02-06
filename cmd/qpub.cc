@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
     assert(bytesPerPacket - headerBytes >= 1);
     packet->resize(bytesPerPacket - headerBytes);
 
-		uint8_t *buffer = &(packet->data());
+    uint8_t *buffer = &(packet->data());
     *buffer++ = 1;
 
     packet->setFEC(false);

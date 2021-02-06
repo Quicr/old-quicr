@@ -31,8 +31,7 @@ bool QuicRClient::ready() const { return firstPipe->ready(); }
 
 void QuicRClient::close() { firstPipe->stop(); }
 
-void QuicRClient::setCryptoKey(sframe::MLSContext::EpochID epoch,
-									const sframe::bytes &mls_epoch_secret) {
+void QuicRClient::setCryptoKey(sframe::MLSContext::EpochID epoch, const sframe::bytes &mls_epoch_secret) {
 	encryptPipe.setCryptoKey(epoch, mls_epoch_secret);
 }
 
@@ -40,10 +39,9 @@ void QuicRClient::setCryptoKey(sframe::MLSContext::EpochID epoch,
 bool QuicRClient::publish(std::unique_ptr<Packet> packet) {
   size_t payloadSize = packet->size();
   assert(payloadSize < 63 * 1200);
-
-	packet << (uint16_t)payloadSize;
-	packet << PacketTag::appData;
-	return firstPipe->send(move(packet));
+  packet << (uint16_t)payloadSize;
+  packet << PacketTag::appData;
+  return firstPipe->send(move(packet));
 }
 
 std::unique_ptr<Packet> QuicRClient::recv() {
@@ -123,9 +121,9 @@ std::unique_ptr<Packet> QuicRClient::createPacket(const ShortName &shortName,
   packet->name = shortName;
   packet->reserve(reservedPayloadSize + 20); // TODO - tune the 20
 
-	packet << PacketTag::headerMagicData;
-	packet << shortName;
-	// packet << PacketTag::extraMagicVer1;
+  packet << PacketTag::headerMagicData;
+  packet << shortName;
+  // packet << PacketTag::extraMagicVer1;
 
   packet->headerSize = (int)(packet->buffer.size());
 

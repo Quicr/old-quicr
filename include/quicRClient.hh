@@ -36,8 +36,7 @@ public:
 
 	// Initialize sframe context with the base secret provided by MLS key
 	// exchange Note: This is hard coded secret until we bring in MLS
-	void setCryptoKey(sframe::MLSContext::EpochID epoch,
-									 const sframe::bytes &mls_epoch_secret);
+	void setCryptoKey(sframe::MLSContext::EpochID epoch, const sframe::bytes &mls_epoch_secret);
 
 
 	/*

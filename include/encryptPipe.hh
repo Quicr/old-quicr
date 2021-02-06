@@ -21,8 +21,7 @@ public:
 
   // initialize sframe context for the given epoch and secret
   // Note: epocha and epoch_secret comes from MLS group context.
-	void setCryptoKey(sframe::MLSContext::EpochID epoch,
-									 const sframe::bytes &mls_epoch_secret);
+	void setCryptoKey(sframe::MLSContext::EpochID epoch, const sframe::bytes &mls_epoch_secret);
 
 private:
 
