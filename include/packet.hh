@@ -90,6 +90,8 @@ public:
   [[maybe_unused]] [[nodiscard]] uint8_t getPriority() const;
   void setPriority(uint8_t priority);
 
+  // Handy debugging function
+  std::string to_hex();
 private:
   std::vector<uint8_t> buffer; // TODO make private
   int headerSize;
