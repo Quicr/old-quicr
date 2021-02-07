@@ -3,7 +3,6 @@
 #include <iostream>
 #include <thread>
 
-
 #if defined(__linux) || defined(__APPLE__)
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -11,8 +10,8 @@
 #if defined(__linux__)
 #include <net/ethernet.h>
 #include <netpacket/packet.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 #elif defined(__APPLE__)
 #include <net/if_dl.h>
 #include <unistd.h>
@@ -263,6 +262,30 @@ bool UdpPipe::start(const uint16_t serverPort, const std::string serverName,
 
     std::cout << "UdpTransport: Client connect to " << serverName << ":"
               << serverPort << ", fd " << fd << std::endl;
+
+#if 0
+    // try setting DSCP on OSX
+    /* The doc claims this work on the right Cisco WiFI but I can not seem to
+     * get it to work. It compiles but does not look like it is setting
+     * anything. More info at https://developer.cisco.com/site/fast-lane/ */
+
+    /*
+     * NET_SERVICE_TYPE_BE  // “Best Effort"
+     * NET_SERVICE_TYPE_BK  // “Background”
+     * NET_SERVICE_TYPE_VI  // “Interactive Video”
+     * NET_SERVICE_TYPE_VO  // “Interactive Voice”
+     * NET_SERVICE_TYPE_RV  // “Responsive Multimedia Audio/Video”
+     * NET_SERVICE_TYPE_AV  // “Multimedia Audio/Video Streaming”
+     * NET_SERVICE_TYPE_OAM // “Operations, Administration, and Management”
+     * NET_SERVICE_TYPE_RD  // “Responsive Data”
+     */
+    auto optval = NET_SERVICE_TYPE_VO;
+    auto optlen = sizeof(optval);
+    if (setsockopt(fd, SOL_SOCKET, SO_NET_SERVICE_TYPE, &optval, optlen) < 0) {
+      perror("setsockopt problem setting up DSCP");
+      assert(0);
+    }
+#endif
   }
 
   return true;
