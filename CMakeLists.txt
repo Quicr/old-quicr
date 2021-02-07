@@ -1,4 +1,6 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.11)
+
+# you need cmake 3.11 to get FetchContent
 
 project( quicr
  VERSION 0.1
@@ -24,7 +26,7 @@ endif()
 include(FetchContent)
 FetchContent_Declare(   sframe
         GIT_REPOSITORY      https://github.com/cisco/sframe.git
-        GIT_TAG             master)
+        GIT_TAG             fixBuild1)
 FetchContent_MakeAvailable(sframe)
 
 find_package(OpenSSL 1.1 REQUIRED)
