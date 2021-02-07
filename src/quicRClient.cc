@@ -31,12 +31,14 @@ bool QuicRClient::ready() const { return firstPipe->ready(); }
 
 void QuicRClient::close() { firstPipe->stop(); }
 
+void QuicRClient::setCryptoKey(sframe::MLSContext::EpochID epoch, const sframe::bytes &mls_epoch_secret) {
+	encryptPipe.setCryptoKey(epoch, mls_epoch_secret);
+}
+
+
 bool QuicRClient::publish(std::unique_ptr<Packet> packet) {
   size_t payloadSize = packet->size();
   assert(payloadSize < 63 * 1200);
-
-  // std::clog << "QuicR send packet size=" << payloadSize << std::endl;
-
   packet << (uint16_t)payloadSize;
   packet << PacketTag::appData;
   return firstPipe->send(move(packet));
@@ -103,7 +105,6 @@ bool QuicRClient::open(uint32_t clientID, const std::string relayName,
                        const uint16_t port, uint64_t token) {
   (void)clientID; // TODO
   (void)token;    // TODO
-
   connectionPipe.setAuthInfo(clientID, token);
 
   return firstPipe->start(port, relayName, nullptr);

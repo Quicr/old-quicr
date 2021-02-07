@@ -24,6 +24,7 @@ int main(int argc, char *argv[]) {
     relayName = std::string(argv[1]);
   }
   QuicRClient qClient;
+  qClient.setCryptoKey(1, sframe::bytes(8, uint8_t(1)));
   qClient.open(1, relayName, 5004, 1);
 
   while (!qClient.ready()) {
@@ -41,9 +42,9 @@ int main(int argc, char *argv[]) {
   auto startTimePoint = std::chrono::steady_clock::now();
 
   ShortName name;
-  name.resourceID = 1;
-  name.sourceID = 1;
-  name.senderID = 1;
+  name.resourceID = 0xAAAAAAAAAAAAAAAA;
+  name.sourceID = 0XFF;
+  name.senderID = 0x1234;
   name.fragmentID = 0;
   name.mediaTime = packetCount;
 

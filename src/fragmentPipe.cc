@@ -96,6 +96,7 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
     if (!packet) {
       return packet;
     }
+
     if (nextTag(packet) != PacketTag::appDataFrag) {
       return packet;
     }

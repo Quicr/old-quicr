@@ -18,6 +18,8 @@
 #endif
 
 #include "packet.hh"
+#include <sstream>
+#include <iomanip>
 
 using namespace MediaNet;
 
@@ -54,6 +56,17 @@ void Packet::copy(const Packet &p) {
 
   src = p.src;
   dst = p.dst;
+}
+
+std::string
+Packet::to_hex()
+{
+	std::stringstream hex(std::ios_base::out);
+	hex.flags(std::ios::hex);
+	for (const auto& byte : buffer) {
+		hex << std::setw(2) << std::setfill('0') << int(byte);
+	}
+	return hex.str();
 }
 
 std::unique_ptr<Packet> Packet::clone() const {

@@ -23,6 +23,7 @@ int main(int argc, char *argv[]) {
     relayName = std::string(argv[1]);
   }
   QuicRClient qClient;
+  qClient.setCryptoKey(1, sframe::bytes(8, uint8_t(1)));
   qClient.open(1, relayName, 5004, 1);
 
   while (!qClient.ready()) {
@@ -43,7 +44,7 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
-    // std::clog << "bufSz=" << packet->buffer.size() << std::endl;
+    // std::clog << "bufSz=" << packet->size() << std::endl;
     numRecv++;
   } while (numRecv < 100 * 1000);
 
