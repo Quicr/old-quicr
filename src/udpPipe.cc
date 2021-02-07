@@ -3,6 +3,7 @@
 #include <iostream>
 #include <thread>
 
+
 #if defined(__linux) || defined(__APPLE__)
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -10,6 +11,8 @@
 #if defined(__linux__)
 #include <net/ethernet.h>
 #include <netpacket/packet.h>
+#include <unistd.h>
+#include <string.h>
 #elif defined(__APPLE__)
 #include <net/if_dl.h>
 #include <unistd.h>

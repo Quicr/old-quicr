@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
   qClient.open(1, relayName, 5004, 1);
 
   while (!qClient.ready()) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
   std::cout << "Transport is ready" << std::endl;
 
@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
   do {
     auto packet = qClient.recv();
     if (!packet) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
       continue;
     }
 

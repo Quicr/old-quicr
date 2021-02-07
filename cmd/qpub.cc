@@ -34,10 +34,10 @@ int main(int argc, char *argv[]) {
 
   // setup up sending rate and size
 
-  const int packetsPerSecond = 1000;
+  const int packetsPerSecond = 600;
   const int headerBytes = 65;
 
-  int numToSend = 5 * packetsPerSecond;
+  int numToSend = 20 * packetsPerSecond;
   int packetCount = 0;
   auto startTimePoint = std::chrono::steady_clock::now();
 
@@ -56,14 +56,15 @@ int main(int argc, char *argv[]) {
 
     uint64_t bitRate = qClient.getTargetUpstreamBitrate(); // in bps
 
-    const int maxBitRete = 3 * 1000 * 1000;
-    if (bitRate > maxBitRete) {
+    const int maxBitRate = 100*1000 * 1000;
+    if (bitRate > maxBitRate) {
       // limit bitRate
-      bitRate = maxBitRete;
+      bitRate = maxBitRate;
     }
 
-    uint64_t bytesPerPacket64 = (bitRate / packetsPerSecond) / 8;
-    uint32_t bytesPerPacket = (uint32_t)bytesPerPacket64;
+    uint64_t bytesPerPacket = (bitRate / packetsPerSecond) / 8;
+
+    bytesPerPacket = 500; // TODO - remove
 
     if (bytesPerPacket < headerBytes + 2) {
       bytesPerPacket = headerBytes + 2;
@@ -87,7 +88,7 @@ int main(int argc, char *argv[]) {
     *buffer++ = 1;
 
     packet->setFEC(false);
-    packet->setReliable(true);
+    packet->setReliable(false);
     packet->setPriority(3);
 
     qClient.publish(move(packet));
