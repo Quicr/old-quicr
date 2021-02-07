@@ -78,7 +78,7 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const NetRelaySeqNum &msg) {
 
   p << msg.relaySeqNum;
-  p << msg.remoteSendTimeMs;
+  p << msg.remoteSendTimeUs;
 
   p << PacketTag::relaySeqNum;
 
@@ -95,7 +95,7 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRelaySeqNum &msg) {
   PacketTag tag = PacketTag::none;
   bool ok = true;
   ok &= p >> tag;
-  ok &= p >> msg.remoteSendTimeMs;
+  ok &= p >> msg.remoteSendTimeUs;
   ok &= p >> msg.relaySeqNum;
 
   if (!ok) {

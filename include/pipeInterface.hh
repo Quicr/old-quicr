@@ -15,6 +15,12 @@ public:
     minRTTms,
     bigRTTms,
     ppsTargetUp,
+    lossPerMillionUp,
+    lossPerMillionDown,
+    bitrateUp,
+    bitrateDown,
+    jitterUpMs,
+    jitterDownMs,
     bad // must be last
   };
 

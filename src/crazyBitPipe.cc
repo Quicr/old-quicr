@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <chrono>
 
 #include "crazyBitPipe.hh"
 #include "packet.hh"

@@ -26,6 +26,9 @@ bool PriorityPipe::send(std::unique_ptr<Packet> packet) {
     sendQarray[priority].push(move(packet));
 
     // TODO - check Q not too deep
+    if ( sendQarray[priority].size() > 1000 ) {
+      sendQarray[priority].pop(); // this is wrong, should kill oldest data - TODO
+    }
   }
 
   return true;
