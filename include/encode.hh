@@ -40,7 +40,7 @@ constexpr uint16_t packetTagTrunc(MediaNet::PacketTag tag) {
 
 enum struct PacketTag : uint32_t {
   /*
-   * If you add a tag, remember to to update MediaNet::nextTag decoder
+   * If you add a tag, remember to to add MediaNet::nextTag decoder
    * A length of 255 in packerTagGen means variable length data
    * */
 
@@ -145,7 +145,7 @@ bool operator>>(std::unique_ptr<Packet> &p, NetClientSeqNum &msg);
 
 struct NetRelaySeqNum {
   uint32_t relaySeqNum;
-  uint32_t remoteSendTimeMs;
+  uint32_t remoteSendTimeUs;
 };
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const NetRelaySeqNum &msg);

@@ -23,12 +23,13 @@ public:
   [[nodiscard]] bool ready() const override;
   void stop() override;
 
-  uint64_t getTargetUpstreamBitrate(); // in bps
 
   bool send(std::unique_ptr<Packet>) override;
   std::unique_ptr<Packet> recv() override;
 
-    void updateMTU(uint16_t mtu) override;
+  uint64_t getTargetUpstreamBitrate(); // in bps
+
+  void updateMTU(uint16_t mtu,uint32_t pps) override;
 
 private:
   RateCtrl rateCtrl;
@@ -43,7 +44,8 @@ private:
 
   uint32_t oldPhase;
 
-    uint16_t mtu;
+  uint16_t mtu;
+  uint32_t targetPpsUp;
 };
 
 } // namespace MediaNet

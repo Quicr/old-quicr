@@ -72,8 +72,8 @@ std::unique_ptr<Packet> PipeInterface::toDownstream() {
     return std::unique_ptr<Packet>(nullptr);
 }
 
-void PipeInterface::updateMTU(uint16_t mtu) {
+void PipeInterface::updateMTU(uint16_t mtu,uint32_t pps) {
     if (downStream) {
-        downStream->updateMTU(mtu);
+        downStream->updateMTU(mtu,pps);
     }
 }

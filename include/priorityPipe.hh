@@ -21,7 +21,7 @@ public:
   std::unique_ptr<Packet> toDownstream() override;
   bool fromDownstream(std::unique_ptr<Packet>) override;
 
-    void updateMTU(uint16_t mtu) override;
+    void updateMTU(uint16_t mtu,uint32_t pps) override;
 
 private:
     static const int maxPriority=10;

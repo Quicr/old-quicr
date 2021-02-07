@@ -15,6 +15,13 @@ public:
     mtu,
     minRTTms,
     bigRTTms,
+    ppsTargetUp,
+    lossPerMillionUp,
+    lossPerMillionDown,
+    bitrateUp,
+    bitrateDown,
+    jitterUpMs,
+    jitterDownMs,
     bad // must be last
   };
 
@@ -40,7 +47,7 @@ public:
   // tells downstream things the current RTT
   virtual void updateRTT(uint16_t minRttMs, uint16_t bitRttMs);
 
-  virtual void updateMTU(uint16_t mtu);
+  virtual void updateMTU(uint16_t mtu, uint32_t pps);
 
 protected:
   explicit PipeInterface(PipeInterface *downStream);

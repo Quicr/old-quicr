@@ -196,8 +196,8 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
   }
 }
 
-void FragmentPipe::updateMTU(uint16_t val) {
+void FragmentPipe::updateMTU(uint16_t val,uint32_t pps) {
     mtu = val;
 
-    PipeInterface::updateMTU(val);
+    PipeInterface::updateMTU(val,pps);
 }
