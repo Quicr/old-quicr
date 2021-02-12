@@ -22,6 +22,7 @@ int main(int argc, char *argv[]) {
   if (argc == 2) {
     relayName = std::string(argv[1]);
   }
+
   QuicRClient qClient;
   qClient.setCryptoKey(1, sframe::bytes(8, uint8_t(1)));
   qClient.open(1, relayName, 5004, 1);
@@ -29,11 +30,13 @@ int main(int argc, char *argv[]) {
   while (!qClient.ready()) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
+
   std::cout << "Transport is ready" << std::endl;
 
   ShortName name{};
-  name.resourceID = 1;
-  qClient.subscribe(name);
+	name.resourceID = 0x1000000;
+
+	qClient.subscribe(name);
 
   int numRecv = 0;
   // empty the receive queue
@@ -43,7 +46,6 @@ int main(int argc, char *argv[]) {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
       continue;
     }
-
     // std::clog << "bufSz=" << packet->size() << std::endl;
     numRecv++;
   } while (numRecv < 100 * 1000);

@@ -32,7 +32,11 @@ void BroadcastRelay::process() {
     return;
   }
 
-  if (packet->fullData() == packetTagTrunc(PacketTag::headerMagicSyn)) {
+	auto tag = nextTag(packet);
+	auto tag2 = nextTag(packet);
+
+
+	if (packet->fullData() == packetTagTrunc(PacketTag::headerMagicSyn)) {
     processSyn(packet);
     return;
   }
@@ -66,12 +70,16 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet) {
       (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(dn)
           .count();
 
+  std::clog << packet->to_hex() << std::endl;
   NetClientSeqNum seqNumTag;
   packet >> seqNumTag;
 
+  auto tag = PacketTag::none;
+  packet >> tag;
+
   std::clog << ".";
 
-  // std::clog << int(seqNumTag.clientSeqNum);
+  std::clog << int(seqNumTag.clientSeqNum);
 
   auto ack = std::make_unique<Packet>();
   ack->setDst(packet->getSrc());

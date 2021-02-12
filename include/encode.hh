@@ -156,6 +156,7 @@ struct NetAck {
   uint32_t netAckSeqNum;
   uint32_t netRecvTimeUs;
 };
+
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const NetAck &msg);
 bool operator>>(std::unique_ptr<Packet> &p, NetAck &msg);
