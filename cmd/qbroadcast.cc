@@ -33,8 +33,6 @@ void BroadcastRelay::process() {
   }
 
 	auto tag = nextTag(packet);
-	auto tag2 = nextTag(packet);
-
 
 	if (packet->fullData() == packetTagTrunc(PacketTag::headerMagicSyn)) {
     processSyn(packet);

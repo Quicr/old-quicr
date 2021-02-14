@@ -4,12 +4,14 @@
 #include <random>
 #include "packet.hh"
 #include "udpPipe.hh"
+#include "fib.hh"
 
 class Connection {
 public:
 	Connection(uint32_t relaySeqNo);
 	uint32_t relaySeqNum;
 	std::chrono::time_point<std::chrono::steady_clock> lastSyn;
+
 };
 
 class Relay {
@@ -32,7 +34,7 @@ private:
 
 	MediaNet::UdpPipe& transport;
 	std::map<MediaNet::IpAddr, std::unique_ptr<Connection>> connectionMap;
-
+	std::unique_ptr<Fib> fib;
 	// TODO revisit this
 	std::mt19937 randomGen;
 	std::uniform_int_distribution<uint32_t> randomDist;

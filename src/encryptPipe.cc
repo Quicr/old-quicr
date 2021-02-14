@@ -30,8 +30,7 @@ bool EncryptPipe::send(std::unique_ptr<Packet> packet) {
 
   auto tag = PacketTag::badTag;
 	uint16_t payloadSize = 0;
-
-	// strip out tag and payload len
+	// strip out tag, name and payload len
 	packet >> tag;
 	packet >> payloadSize;
 

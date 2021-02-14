@@ -4,6 +4,7 @@
 #include <random>
 
 #include "../include/relay.hh"
+#include "../include/multimap_fib.hh"
 
 using namespace MediaNet;
 
@@ -14,7 +15,9 @@ using namespace MediaNet;
 Connection::Connection(uint32_t relaySeqNo) : relaySeqNum(relaySeqNo) {}
 
 
-Relay::Relay(uint16_t port): transport(* new UdpPipe) {
+Relay::Relay(uint16_t port)
+		: transport(* new UdpPipe)
+		  , fib(std::make_unique<MultimapFib>()) {
 	transport.start(port, "", nullptr);
 	std::random_device randDev;
 	randomGen.seed(randDev()); // TODO - should use crypto random
@@ -44,9 +47,6 @@ void Relay::process() {
 
 }
 
-void Relay::stop() {
-
-}
 
 ///
 /// Private Implementation
@@ -77,10 +77,9 @@ void Relay::processAppMessage(std::unique_ptr<MediaNet::Packet>& packet) {
 		return processPub(packet, seqNumTag);
 	} else if(tag  == PacketTag::subscribeReq) {
 		return processSub(packet, seqNumTag);
-	} else {
-		std::clog << "Bad App message:" << (int) tag << "\n";
 	}
 
+	std::clog << "Bad App message:" << (int) tag << "\n";
 }
 
 /// Subscribe Request
@@ -103,8 +102,8 @@ void Relay::processSub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
 	// save the subscription
   ShortName name;
   packet >> name;
-  std::clog << "Subscription for: " << name << std::endl;
-  // fib.onSubscrption(
+  std::clog << "Adding Subscription for: " << name << std::endl;
+  fib->addSubscription(name, SubscriberInfo{1, name, packet->getSrc()});
 }
 
 void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNum& clientSeqNumTag) {
@@ -115,6 +114,14 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
 									.count();
 
 	std::clog << ".";
+
+	uint16_t payloadSize;
+	packet >> payloadSize;
+	if (payloadSize > packet->size()) {
+		std::clog << "relay recv bad data size " << payloadSize << " "
+							<< packet->size() << std::endl;
+		return;
+	}
 
 	auto ack = std::make_unique<Packet>();
 	ack->setDst(packet->getSrc());
@@ -143,9 +150,6 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
 
 	// for each connection, make copy and forward
 	for (auto const &[addr, con] : connectionMap) {
-		// auto subData = std::make_unique<Packet>();
-		// subData->copy(*packet);
-
 		auto subData = packet->clone(); // TODO - just clone header stuff
 		// subData->resize(0);
 
