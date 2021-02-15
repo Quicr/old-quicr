@@ -6,6 +6,7 @@
 
 int main() {
 	auto relay = Relay{5004};
+	/*
 	Fib *fib = new MultimapFib();
 	MediaNet::ShortName subscription;
 	subscription.resourceID = 0x1234;
@@ -34,6 +35,7 @@ int main() {
 
 	fib->removeSubscription(subscription, info2);
 	std::clog <<"Num Subscriptions:" << result.size() << "\n";
+	 */
 	while(1) {
 		relay.process();
 	}

@@ -27,6 +27,7 @@ bool EncryptPipe::send(std::unique_ptr<Packet> packet) {
 
   //TODO: figure out right AAD bits
   assert(downStream);
+	 //return downStream->send(std::move(packet));
 
   auto tag = PacketTag::badTag;
 	uint16_t payloadSize = 0;
@@ -57,6 +58,8 @@ std::unique_ptr<Packet> EncryptPipe::recv() {
   // TODO check packet integrity and decrypt
 
   assert(downStream);
+  // return downStream->recv();
+
   auto packet = downStream->recv();
 	if(packet) {
 		auto tag = nextTag(packet);
@@ -66,6 +69,7 @@ std::unique_ptr<Packet> EncryptPipe::recv() {
 			packet >> tag;
 			packet >> name;
 			packet >> payloadSize;
+			assert(payloadSize);
 			packet->headerSize = packet->fullSize() - payloadSize - 22; // 22 - (2) payloadSize + (19) name +  (1) tag
 
 			auto decrypted = unprotect(packet, payloadSize);

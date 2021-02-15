@@ -115,7 +115,11 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
 
 	std::clog << ".";
 
-	uint16_t payloadSize;
+	// save the name for publish
+	ShortName name;
+	packet >> name;
+
+  uint16_t payloadSize;
 	packet >> payloadSize;
 	if (payloadSize > packet->size()) {
 		std::clog << "relay recv bad data size " << payloadSize << " "
@@ -123,6 +127,9 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
 		return;
 	}
 
+	// std::clog <<"publish for : " << name << "size " << payloadSize << "\n";
+
+	// TODO: refactor ack logic
 	auto ack = std::make_unique<Packet>();
 	ack->setDst(packet->getSrc());
 
@@ -146,22 +153,30 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
 	prevAckSeqNum = ackTag.netAckSeqNum;
 	prevRecvTimeUs = ackTag.netRecvTimeUs;
 
-	// TODO - loop over connections and remove ones with old last Syn time
 
-	// for each connection, make copy and forward
-	for (auto const &[addr, con] : connectionMap) {
+  // find the matching subscribers
+  auto subscribers = fib->lookupSubscription(name);
+
+  // std::clog << "Name:" << name << " has:" << subscribers.size() << " subscribers\n";
+
+  packet << payloadSize;
+  packet << name;
+  packet << PacketTag::appData;
+
+  for(auto const& subscriber : subscribers) {
 		auto subData = packet->clone(); // TODO - just clone header stuff
 		// subData->resize(0);
-
-		subData->setDst(addr);
+		auto con = connectionMap.find(subscriber.face);
+		assert(con != connectionMap.end());
+		subData->setDst(subscriber.face);
 
 		NetRelaySeqNum netRelaySeqNum;
-		netRelaySeqNum.relaySeqNum = con->relaySeqNum++;
+		netRelaySeqNum.relaySeqNum = con->second->relaySeqNum++;
 		netRelaySeqNum.remoteSendTimeUs = nowUs;
 
 		subData << netRelaySeqNum;
 
-		// std::clog << "Relay send: " << *subData << std::endl;
+		// std::clog << "Relay send: " << subData->size() << std::endl;
 
 		bool simLoss = false;
 
@@ -179,6 +194,7 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
 			std::clog << "-";
 		}
 	}
+
 }
 
 

@@ -89,7 +89,11 @@ std::unique_ptr<Packet> QuicRClient::recv() {
       continue;
     }
 
-    uint16_t payloadSize;
+    ShortName name;
+    packet >> name;
+		//std::clog << "quicr recv data from " << name << std::endl;
+
+		uint16_t payloadSize;
     packet >> payloadSize;
     if (payloadSize > packet->size()) {
       std::clog << "quicr recv bad data size " << payloadSize << " "
