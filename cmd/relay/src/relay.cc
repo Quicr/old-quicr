@@ -68,7 +68,7 @@ void Relay::processSyn(std::unique_ptr<MediaNet::Packet> &packet) {
 }
 
 void Relay::processAppMessage(std::unique_ptr<MediaNet::Packet>& packet) {
-	NetClientSeqNum seqNumTag;
+	NetClientSeqNum seqNumTag{};
 	packet >> seqNumTag;
 
 	//auto tag = PacketTag::none;
@@ -171,7 +171,7 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
 		assert(con != connectionMap.end());
 		subData->setDst(subscriber.face);
 
-		NetRelaySeqNum netRelaySeqNum;
+		NetRelaySeqNum netRelaySeqNum{};
 		netRelaySeqNum.relaySeqNum = con->second->relaySeqNum++;
 		netRelaySeqNum.remoteSendTimeUs = nowUs;
 
@@ -200,9 +200,14 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
 
 
 void Relay::processRateRequest(std::unique_ptr<MediaNet::Packet> &packet) {
-	NetRateReq rateReq;
+	NetRateReq rateReq{};
 	packet >> rateReq;
 	std::clog << std::endl
 						<< "ReqRate: " << float(rateReq.bitrateKbps) / 1000.0 << " mbps"
 						<< std::endl;
+}
+
+void Relay::stop() {
+  assert(0);
+  // TODO
 }

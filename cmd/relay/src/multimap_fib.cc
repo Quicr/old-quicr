@@ -2,7 +2,7 @@
 #include <iostream>
 
 void MultimapFib::addSubscription(const MediaNet::ShortName& name, SubscriberInfo subscriberInfo) {
-	fibStore.insert(std::make_pair(name, std::move(subscriberInfo)));
+	fibStore.insert(std::make_pair(name, subscriberInfo));
 	std::clog << name << " has " << fibStore.count(name) << " subscription \n";
 }
 
@@ -36,13 +36,13 @@ std::list<SubscriberInfo> MultimapFib::lookupSubscription(const MediaNet::ShortN
 
 	assert(name.resourceID);
 
-	lookup(MediaNet::ShortName{name.resourceID});
+	lookup(MediaNet::ShortName(name.resourceID) );
 
 	if(name.senderID)
-		lookup(MediaNet::ShortName{name.resourceID, name.senderID});
+		lookup(MediaNet::ShortName(name.resourceID, name.senderID) );
 
 	if(name.sourceID)
-		lookup(MediaNet::ShortName{name.resourceID, name.senderID, name.sourceID});
+		lookup(MediaNet::ShortName(name.resourceID, name.senderID, name.sourceID) );
 
 	return result;
 

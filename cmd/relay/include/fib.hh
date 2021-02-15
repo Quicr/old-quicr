@@ -8,14 +8,16 @@ using Face = MediaNet::IpAddr;
 
 struct SubscriberInfo {
 	MediaNet::ShortName name;
-	Face face;
+	Face face{};
 };
 
 
-struct Fib {
+class Fib {
 	public:
-	  virtual void addSubscription(const MediaNet::ShortName& name, SubscriberInfo subscriberInfo) = 0;
-	  virtual void removeSubscription(const MediaNet::ShortName& name, const SubscriberInfo& subscriberInfo) = 0;
-		virtual std::list<SubscriberInfo> lookupSubscription(const MediaNet::ShortName& name) const = 0;
+    [[maybe_unused]] virtual void addSubscription(const MediaNet::ShortName& name, SubscriberInfo subscriberInfo) = 0;
+    [[maybe_unused]] virtual void removeSubscription(const MediaNet::ShortName& name, const SubscriberInfo& subscriberInfo) = 0;
+		[[nodiscard]] virtual std::list<SubscriberInfo> lookupSubscription(const MediaNet::ShortName& name) const = 0;
+
+    virtual ~Fib() = default;
 };
 
