@@ -17,8 +17,9 @@ int main(int argc, char *argv[]) {
 
 	if (argc < 3) {
 		std::cerr << "Usage: " << argv[0] << " <hostname> <shortname>" << std::endl;
-		std::cerr << "<shortname>: qr://<resourceId>/<senderId>/<sourceId>;" << std::endl;
-		std::cerr << "resourceId, senderId, sourceId are integers." << std::endl;
+		std::cerr << "\t<shortname>: qr://<resourceId>/<senderId>/<sourceId>/" << std::endl;
+		std::cerr << "\t Example: qr://1234/12/1/" << std::endl;
+		std::cerr << "resourceId, senderId, sourceId are MANDATORY & integers." << std::endl;
 		return -1;
 	}
 

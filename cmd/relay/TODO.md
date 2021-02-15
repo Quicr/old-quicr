@@ -2,7 +2,4 @@
 . Implement packet cache
 . Make transport configurable 
 . Add Configuration support
-. Add metrics framework support
-. Move relay in to its own repo and add quicr as one of 
-  dependencies
-  
+. Add metrics framework support  

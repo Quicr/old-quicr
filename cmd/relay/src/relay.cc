@@ -71,8 +71,9 @@ void Relay::processAppMessage(std::unique_ptr<MediaNet::Packet>& packet) {
 	NetClientSeqNum seqNumTag;
 	packet >> seqNumTag;
 
-	auto tag = PacketTag::none;
-	packet >> tag;
+	//auto tag = PacketTag::none;
+	//packet >> tag;
+	auto tag = nextTag(packet);
 	if(tag == PacketTag::appData) {
 		return processPub(packet, seqNumTag);
 	} else if(tag  == PacketTag::subscribeReq) {
@@ -100,10 +101,12 @@ void Relay::processSub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
 	ack << ackTag;
 
 	// save the subscription
+	PacketTag tag;
+	packet >> tag;
   ShortName name;
   packet >> name;
   std::clog << "Adding Subscription for: " << name << std::endl;
-  fib->addSubscription(name, SubscriberInfo{1, name, packet->getSrc()});
+  fib->addSubscription(name, SubscriberInfo{name, packet->getSrc()});
 }
 
 void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNum& clientSeqNumTag) {
@@ -116,6 +119,8 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
 	std::clog << ".";
 
 	// save the name for publish
+	PacketTag tag;
+	packet >> tag;
 	ShortName name;
 	packet >> name;
 
@@ -126,8 +131,6 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
 							<< packet->size() << std::endl;
 		return;
 	}
-
-	// std::clog <<"publish for : " << name << "size " << payloadSize << "\n";
 
 	// TODO: refactor ack logic
 	auto ack = std::make_unique<Packet>();
@@ -153,7 +156,6 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
 	prevAckSeqNum = ackTag.netAckSeqNum;
 	prevRecvTimeUs = ackTag.netRecvTimeUs;
 
-
   // find the matching subscribers
   auto subscribers = fib->lookupSubscription(name);
 
@@ -161,11 +163,10 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
 
   packet << payloadSize;
   packet << name;
-  packet << PacketTag::appData;
+  packet << tag;
 
   for(auto const& subscriber : subscribers) {
 		auto subData = packet->clone(); // TODO - just clone header stuff
-		// subData->resize(0);
 		auto con = connectionMap.find(subscriber.face);
 		assert(con != connectionMap.end());
 		subData->setDst(subscriber.face);

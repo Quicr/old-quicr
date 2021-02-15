@@ -7,7 +7,6 @@
 using Face = MediaNet::IpAddr;
 
 struct SubscriberInfo {
-	uint32_t id;
 	MediaNet::ShortName name;
 	Face face;
 };

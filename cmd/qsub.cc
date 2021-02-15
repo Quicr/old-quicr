@@ -3,11 +3,7 @@
 #include <thread>
 
 #include "encode.hh"
-#include <pacerPipe.hh>
 #include <quicRClient.hh>
-#include <udpPipe.hh>
-#include <algorithm>
-#include <functional>
 
 using namespace MediaNet;
 
@@ -18,7 +14,8 @@ int main(int argc, char *argv[]) {
     std::cerr << "Usage: " << argv[0] << " <hostname> <shortname>" << std::endl;
     std::cerr << "<shortname>: qr://<resourceId>/<senderId>/<sourceId>;" << std::endl;
     std::cerr << "resourceId, senderId, sourceId, mediaTime are integers." << std::endl;
-    std::cerr << "senderId, sourceId, mediaTime optional" << std::endl;
+		std::cerr << "\t Example: qr://1234/" << std::endl;
+		std::cerr << "senderId, sourceId, mediaTime optional" << std::endl;
     return -1;
   }
 

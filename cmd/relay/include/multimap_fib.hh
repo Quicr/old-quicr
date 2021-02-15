@@ -5,6 +5,7 @@
 
 #include "fib.hh"
 
+// FibStore driven by std::multimap
 struct MultimapFib : public Fib {
 	public:
 	  virtual void addSubscription(const MediaNet::ShortName& name, SubscriberInfo subscriberInfo) override;

@@ -75,7 +75,7 @@ std::unique_ptr<Packet> EncryptPipe::recv() {
 			auto decrypted = unprotect(packet, payloadSize);
 			//std::cout << "Payload Original Size/Decrypted Size:" << payloadSize << "/" << decrypted.size() << "\n";
 
-			packet->resize(decrypted.size() + 21);
+			packet->resize(decrypted.size() + 22);
 			std::copy(decrypted.begin(), decrypted.end(), &packet->data());
 			packet << (uint16_t ) decrypted.size();
 			packet << name;

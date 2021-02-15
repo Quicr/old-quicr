@@ -20,17 +20,22 @@ std::ostream &MediaNet::operator<<(std::ostream &stream,
   return stream;
 }
 
-
+// Note: no parsing of fragment and mediaTime is supported
+// since they are calculated via code.
 ShortName ShortName::fromString(const std::string &name_str){
+	assert(!name_str.empty());
+
 	ShortName name;
 	const std::string proto = "qr://";
 	auto it = std::search(name_str.begin(), name_str.end(), proto.begin(), proto.end());
 	assert(it != name_str.end());
+
+	//move to end for qr://
 	std::advance(it, proto.length());
 
 	std::string resource_str;
 	std::string client_str;
-	std::string sender_str;
+	std::string source_str;
 
 	do {
 		auto slash = std::find(it, name_str.end(), '/');
@@ -49,6 +54,7 @@ ShortName ShortName::fromString(const std::string &name_str){
 		}
 
 		if(client_str.empty()) {
+			// parse client/sender id
 			client_str.reserve(distance(it, slash));
 			client_str.assign(it, slash);
 			std::advance(it, client_str.length());
@@ -57,11 +63,12 @@ ShortName ShortName::fromString(const std::string &name_str){
 			continue;
 		}
 
-		if(sender_str.empty()) {
-			sender_str.reserve(distance(it, slash));
-			sender_str.assign(it, slash);
-			std::advance(it, sender_str.length());
-			name.sourceID = stoi(sender_str, nullptr);
+		if(source_str.empty()) {
+			// parse sourceId
+			source_str.reserve(distance(it, slash));
+			source_str.assign(it, slash);
+			std::advance(it, source_str.length());
+			name.sourceID = stoi(source_str, nullptr);
 			it++;
 			continue;
 		}

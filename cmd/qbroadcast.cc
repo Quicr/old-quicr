@@ -32,8 +32,6 @@ void BroadcastRelay::process() {
     return;
   }
 
-	auto tag = nextTag(packet);
-
 	if (packet->fullData() == packetTagTrunc(PacketTag::headerMagicSyn)) {
     processSyn(packet);
     return;
@@ -70,9 +68,6 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet) {
 
   NetClientSeqNum seqNumTag;
   packet >> seqNumTag;
-
-  //auto tag = PacketTag::none;
-  //packet >> tag;
 
   std::clog << ".";
 

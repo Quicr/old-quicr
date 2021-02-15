@@ -3,7 +3,7 @@
 
 void MultimapFib::addSubscription(const MediaNet::ShortName& name, SubscriberInfo subscriberInfo) {
 	fibStore.insert(std::make_pair(name, std::move(subscriberInfo)));
-	std::clog << name << "-has-" << fibStore.count(name) << "\n";
+	std::clog << name << " has " << fibStore.count(name) << " subscription \n";
 }
 
 void MultimapFib::removeSubscription(const MediaNet::ShortName& name, const SubscriberInfo& subscriberInfo) {
@@ -24,7 +24,7 @@ void MultimapFib::removeSubscription(const MediaNet::ShortName& name, const Subs
 }
 
 std::list<SubscriberInfo> MultimapFib::lookupSubscription(const MediaNet::ShortName& name) const{
-	// this logic is too trivial, but starting here for now.
+	// this logic is trivial, but starting here for now.
 	auto result = std::list<SubscriberInfo>{};
 	auto lookup = [&](const MediaNet::ShortName& name) {
 		auto entries = fibStore.equal_range(name);
