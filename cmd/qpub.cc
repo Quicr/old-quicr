@@ -15,14 +15,15 @@ using namespace MediaNet;
 int main(int argc, char *argv[]) {
   std::string relayName("localhost");
 
-  if (argc > 2) {
-    std::cerr << "Usage: " << argv[0] << " <hostname>" << std::endl;
-    return -1;
-  }
+	if (argc < 3) {
+		std::cerr << "Usage: " << argv[0] << " <hostname> <shortname>" << std::endl;
+		std::cerr << "\t<shortname>: qr://<resourceId>/<senderId>/<sourceId>/" << std::endl;
+		std::cerr << "\t Example: qr://1234/12/1/" << std::endl;
+		std::cerr << "resourceId, senderId, sourceId are MANDATORY & integers." << std::endl;
+		return -1;
+	}
 
-  if (argc == 2) {
-    relayName = std::string(argv[1]);
-  }
+
   QuicRClient qClient;
   qClient.setCryptoKey(1, sframe::bytes(8, uint8_t(1)));
   qClient.open(1, relayName, 5004, 1);
@@ -35,16 +36,13 @@ int main(int argc, char *argv[]) {
   // setup up sending rate and size
 
   const int packetsPerSecond = 600;
-  const int headerBytes = 65;
+  const int transportHeaderBytes = 65;
 
   int numToSend = 20 * packetsPerSecond;
   int packetCount = 0;
   auto startTimePoint = std::chrono::steady_clock::now();
 
-  ShortName name;
-  name.resourceID = 0xAAAAAAAAAAAAAAAA;
-  name.sourceID = 0XFF;
-  name.senderID = 0x1234;
+  auto name = ShortName::fromString(argv[2]);
   name.fragmentID = 0;
   name.mediaTime = packetCount;
 
@@ -66,8 +64,8 @@ int main(int argc, char *argv[]) {
 
     bytesPerPacket = 500; // TODO - remove
 
-    if (bytesPerPacket < headerBytes + 2) {
-      bytesPerPacket = headerBytes + 2;
+    if (bytesPerPacket < transportHeaderBytes + 2) {
+      bytesPerPacket = transportHeaderBytes + 2;
       std::clog << "Warning bitrate too low for packet rate" << std::endl;
     }
     if (bytesPerPacket > 1200) {
@@ -81,8 +79,8 @@ int main(int argc, char *argv[]) {
     name.mediaTime = packetCount;
     auto packet = qClient.createPacket(name, 1200);
 
-    assert(bytesPerPacket - headerBytes >= 1);
-    packet->resize(bytesPerPacket - headerBytes);
+    assert(bytesPerPacket - transportHeaderBytes >= 1);
+    packet->resize(bytesPerPacket - transportHeaderBytes);
 
     uint8_t *buffer = &(packet->data());
     *buffer++ = 1;

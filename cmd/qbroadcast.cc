@@ -32,7 +32,7 @@ void BroadcastRelay::process() {
     return;
   }
 
-  if (packet->fullData() == packetTagTrunc(PacketTag::headerMagicSyn)) {
+	if (packet->fullData() == packetTagTrunc(PacketTag::headerMagicSyn)) {
     processSyn(packet);
     return;
   }

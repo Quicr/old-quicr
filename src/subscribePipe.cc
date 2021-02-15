@@ -24,6 +24,7 @@ bool SubscribePipe::subscribe(const ShortName &name) {
   packet << name;
   packet << PacketTag::subscribeReq;
 
+  std::cout << "Subscribe: " << packet->to_hex() << std::endl;
   packet->setFEC(true);
   packet->setReliable(true);
 

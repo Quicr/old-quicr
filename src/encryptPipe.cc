@@ -27,12 +27,14 @@ bool EncryptPipe::send(std::unique_ptr<Packet> packet) {
 
   //TODO: figure out right AAD bits
   assert(downStream);
+	 //return downStream->send(std::move(packet));
 
   auto tag = PacketTag::badTag;
 	uint16_t payloadSize = 0;
-
-	// strip out tag and payload len
+	ShortName name;
+	// strip out [tag, name, payload len]
 	packet >> tag;
+	packet >> name;
 	packet >> payloadSize;
 
 	auto encrypted = protect(packet, payloadSize);
@@ -40,9 +42,10 @@ bool EncryptPipe::send(std::unique_ptr<Packet> packet) {
 
 	// re-insert encrypted portion
 	uint8_t *dst = &(packet->data());
-	packet->resize(encrypted.size() + 3); // 3 - (2) for payloadSize + (1) tag
+	packet->resize(encrypted.size() + 22); // 22 - (2) for payloadSize + (19) name + (1) tag
 	std::copy(encrypted.begin(), encrypted.end(), dst);
 	packet << (uint16_t ) encrypted.size();
+	packet << name;
 	packet << tag;
 
 	//std::cout << "Full Encrypted Packet with header: "<< packet->size() << " bytes\n";
@@ -55,21 +58,27 @@ std::unique_ptr<Packet> EncryptPipe::recv() {
   // TODO check packet integrity and decrypt
 
   assert(downStream);
+  // return downStream->recv();
+
   auto packet = downStream->recv();
 	if(packet) {
 		auto tag = nextTag(packet);
 		if(tag == PacketTag::appData) {
-			packet >> tag;
+			ShortName name;
 			uint16_t payloadSize = 0;
+			packet >> tag;
+			packet >> name;
 			packet >> payloadSize;
-			packet->headerSize = packet->fullSize() - payloadSize - 3; // 3 - (2) payloadSize + (1) tag
+			assert(payloadSize);
+			packet->headerSize = packet->fullSize() - payloadSize - 22; // 22 - (2) payloadSize + (19) name +  (1) tag
 
 			auto decrypted = unprotect(packet, payloadSize);
 			//std::cout << "Payload Original Size/Decrypted Size:" << payloadSize << "/" << decrypted.size() << "\n";
 
-			packet->resize(decrypted.size() + 3);
+			packet->resize(decrypted.size() + 22);
 			std::copy(decrypted.begin(), decrypted.end(), &packet->data());
 			packet << (uint16_t ) decrypted.size();
+			packet << name;
 			packet << tag;
 			//std::cout << "Full Decrypted Packet with header: "<< packet->size() << " bytes\n";
 			return packet;
