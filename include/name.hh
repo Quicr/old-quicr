@@ -5,8 +5,14 @@
 
 namespace MediaNet {
 
-struct ShortName {
-  uint64_t resourceID;
+class ShortName {
+public:
+    ShortName();
+    ShortName(uint64_t resourceID);
+    ShortName(uint64_t resourceID,  uint32_t senderID );
+    ShortName(uint64_t resourceID,  uint32_t senderID,  uint8_t sourceID);
+
+    uint64_t resourceID;
   uint32_t senderID;
   uint8_t sourceID;
   uint32_t mediaTime;

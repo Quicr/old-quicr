@@ -3,6 +3,24 @@
 
 using namespace MediaNet;
 
+ShortName::ShortName(  ):
+    resourceID(0), senderID(0),sourceID(0),mediaTime(0),fragmentID(0)
+{}
+
+ShortName::ShortName( uint64_t rid ):
+    resourceID(rid), senderID(0),sourceID(0),mediaTime(0),fragmentID(0)
+{}
+
+
+ShortName::ShortName( uint64_t rid,  uint32_t sender):
+    resourceID(rid), senderID(sender),sourceID(0),mediaTime(0),fragmentID(0)
+{}
+
+ShortName::ShortName( uint64_t rid,  uint32_t sender,  uint8_t source ):
+  resourceID(rid), senderID(sender),sourceID(source),mediaTime(0),fragmentID(0)
+{}
+
+
 std::ostream &MediaNet::operator<<(std::ostream &stream,
                                    const ShortName &name) {
 
