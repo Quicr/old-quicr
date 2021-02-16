@@ -1,5 +1,8 @@
 
+#include <cassert>
+
 #include "name.hh"
+
 
 using namespace MediaNet;
 
