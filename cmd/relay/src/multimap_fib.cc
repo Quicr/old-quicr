@@ -1,6 +1,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <cassert>
 
 #include "../include/multimap_fib.hh"
 
