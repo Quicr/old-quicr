@@ -1,5 +1,9 @@
-#include "../include/multimap_fib.hh"
+
+#include <algorithm>
 #include <iostream>
+
+#include "../include/multimap_fib.hh"
+
 
 void MultimapFib::addSubscription(const MediaNet::ShortName& name, SubscriberInfo subscriberInfo) {
 	fibStore.insert(std::make_pair(name, subscriberInfo));
