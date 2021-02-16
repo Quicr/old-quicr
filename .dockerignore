@@ -1,0 +1,8 @@
+build
+cmake-build*
+.git
+.cache
+*.md
+.idea/
+*.iws
+.vs/
