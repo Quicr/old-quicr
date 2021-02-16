@@ -1,34 +1,31 @@
-FROM ubuntu:20.04 
-LABEL description="Build and test quicr"
+FROM alpine:latest as builder
+LABEL description="Build QuicR Relay"
 
-ENV TZ=America/Vancouver
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+RUN apk add --no-cache cmake alpine-sdk openssl-dev
 
-RUN apt-get update
-RUN apt-get install -y tzdata build-essential pkg-config wget tcsh git curl
-
-# Build CMake
-RUN apt-get install -y libssl-dev 
-WORKDIR /tmp 
-RUN wget  https://github.com/Kitware/CMake/releases/download/v3.19.4/cmake-3.19.4.tar.gz
-RUN tar xvfz cmake-3.19.4.tar.gz
-WORKDIR /tmp/cmake-3.19.4
-RUN ./bootstrap
-RUN make -j 8
-RUN make install
-
-
-WORKDIR /usr/src/quicr
+RUN mkdir -p /src/quicr
+WORKDIR /src/quicr
 COPY . .
+RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+WORKDIR /src/quicr/build
+RUN make -j 4
+RUN cp  cmd/relay/relay_app  /usr/local/bin/quicrRelay
+RUN ls -lh /usr/local/bin/quicrRelay
 
-RUN mkdir -p /tmp/build
-WORKDIR /tmp/build
-RUN cmake /usr/src/quicr
-RUN make -j 4 
-RUN cp cmd/qbroadcast /usr/local/bin/.
+#RUN apk add --no-cache tcsh bash
+#CMD /bin/tcsh
 
-#CMD /user/bin/tcsh
+FROM alpine:latest
+RUN apk add --no-cache libstdc++
+COPY --from=builder /usr/local/bin/quicrRelay /usr/local/bin/quicrRelay
 
+RUN addgroup -S quicr
+RUN adduser -D -S -S -G quicr quicr
+USER quicr
+WORKDIR /home/quicr
 EXPOSE 5004/udp
-CMD /usr/local/bin/qbroadcast
+CMD /usr/local/bin/quicrRelay
+
+#RUN apk add --no-cache bash tcsh
+#CMD /bin/tcsh
 
