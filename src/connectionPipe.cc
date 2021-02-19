@@ -15,19 +15,16 @@ ConnectionPipe::ConnectionPipe(PipeInterface *t)
 bool ConnectionPipe::start(const uint16_t port, const std::string server,
                            PipeInterface *upStrm) {
   bool ret = PipeInterface::start(port, server, upStrm);
-  open = true; // TODO - should wait for SynAck
-  state = SyncPending{};
+  state = ConnectionPending{};
   syncConnection();
   return ret;
 }
 
 bool ConnectionPipe::ready() const {
   // TODO - wail until we have a synAck
-
-	if (!open) {
+	if(!std::holds_alternative<Connected>(state)) {
 		return false;
 	}
-
   return PipeInterface::ready();
 }
 
@@ -48,11 +45,23 @@ void ConnectionPipe::stop() {
 }
 
 std::unique_ptr<Packet> ConnectionPipe::recv() {
-  if (!open) {
-    return std::unique_ptr<Packet>(nullptr);
-  }
-  // TODO check for SynAck or Rst
-  return PipeInterface::recv();
+	auto packet = PipeInterface::recv();
+	if(packet == nullptr) {
+		return packet;
+	}
+
+	// TODO: be careful when implementing the server side
+	auto tag = nextTag(packet);
+	if(tag != PacketTag::syncAck) {
+		return packet;
+	}
+
+	// got syncAck
+	state =  Connected{};
+	NetSyncAck syncAck{};
+	packet >> syncAck;
+	// don't need to report syncAck up in the chain
+	return nullptr;
 }
 
 void ConnectionPipe::setAuthInfo(uint32_t sender, uint64_t token_in) {

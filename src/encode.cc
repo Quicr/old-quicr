@@ -151,7 +151,6 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
   case packetTagTrunc(PacketTag::none):
     tag = PacketTag::none;
     break;
-
   case packetTagTrunc(PacketTag::appData):
     tag = PacketTag::appData;
     break;
@@ -164,10 +163,12 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
   case packetTagTrunc(PacketTag::ack):
     tag = PacketTag::ack;
     break;
-
   case packetTagTrunc(PacketTag::sync):
     tag = PacketTag::sync;
     break;
+	case packetTagTrunc(PacketTag::syncAck):
+		tag = PacketTag::syncAck;
+		break;
   case packetTagTrunc(PacketTag::shortName):
     tag = PacketTag::shortName;
     break;
@@ -177,11 +178,9 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
   case packetTagTrunc(PacketTag::relayRateReq):
     tag = PacketTag::relayRateReq;
     break;
-
   case packetTagTrunc(PacketTag::subscribeReq):
     tag = PacketTag::subscribeReq;
     break;
-
   case packetTagTrunc(PacketTag::headerMagicData):
     tag = PacketTag::headerMagicData;
     break;
@@ -200,6 +199,9 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
   case packetTagTrunc(PacketTag::headerMagicSynCrazy):
     tag = PacketTag::headerMagicSynCrazy;
     break;
+	case packetTagTrunc(PacketTag::headerMagicSynAckCrazy):
+		tag = PacketTag::headerMagicSynAckCrazy;
+		break;
   case packetTagTrunc(PacketTag::extraMagicVer1):
     tag = PacketTag::extraMagicVer1;
     break;
@@ -345,6 +347,35 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
 
   return p;
 }
+
+std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
+																							const NetSyncAck &msg) {
+  // TODO add other fields
+	p << msg.serverTimeMs;
+
+	p << PacketTag::syncAck;
+
+	return p;
+}
+
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetSyncAck &msg) {
+	if (nextTag(p) != PacketTag::syncAck) {
+		std::cerr << "Did not find expected PacketTag::syncAck" << std::endl;
+		return false;
+	}
+
+	PacketTag tag = PacketTag::none;
+	bool ok = true;
+	ok &= p >> tag;
+	ok &= p >> msg.serverTimeMs;
+	if (!ok) {
+		std::cerr << "problem parsing syncAck" << std::endl;
+	}
+
+	return ok;
+}
+
+
 
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const NetRateReq &msg) {
@@ -496,7 +527,11 @@ std::ostream &MediaNet::operator<<(std::ostream &stream, Packet &packet) {
     case PacketTag::headerMagicSynCrazy:
       stream << " magicSync";
       break;
-    case PacketTag::headerMagicRst:
+		case PacketTag::headerMagicSynAck:
+		case PacketTag::headerMagicSynAckCrazy:
+			stream << " magicSyncAck";
+			break;
+			case PacketTag::headerMagicRst:
     case PacketTag::headerMagicRstCrazy:
       stream << " magicReset";
       break;

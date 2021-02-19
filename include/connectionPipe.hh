@@ -28,10 +28,9 @@ class ConnectionPipe : public PipeInterface {
 public:
   explicit ConnectionPipe(PipeInterface *t);
   void setAuthInfo(uint32_t sender, uint64_t t);
-
   bool start(uint16_t port, std::string server,
              PipeInterface *upStream) override;
-  [[nodiscard]] bool ready() const override;
+  bool ready() const override;
   void stop() override;
 
   std::unique_ptr<Packet> recv() override;
@@ -39,20 +38,24 @@ public:
 private:
 	//             +------> Start
 	//             |          |
-	//        fail |          | sync
+	//       fail/ |          | sync
+	//       Rst   |          V
+	//             +---- ConnectionPending
+	//             |          |
+	//             |          | syncAck
 	//             |          V
-	//             +---- SyncPending
-	//             |          ^   |
-	//             |     Sync |   | SyncAck
-	//             |          |   V
-	//             +------ Connected
+	//             +------ Connected <----+
+	//  											|						| syn/synAck
+	//  											|						|
+	//  											+------------
 
 	struct Start {};
-	struct SyncPending {};
+	struct ConnectionPending {};
 	struct Connected {};
-	using State = std::variant<Start, SyncPending, Connected>;
+	using State = std::variant<Start, ConnectionPending, Connected>;
 
 	static constexpr int syn_timeout_msec = 1000;
+	static constexpr int max_connection_retry_cnt = 5;
 	void syncConnection();
 
 	uint32_t senderID;

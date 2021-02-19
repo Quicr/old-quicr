@@ -65,6 +65,15 @@ void Relay::processSyn(std::unique_ptr<MediaNet::Packet> &packet) {
 
 	std::unique_ptr<Connection> &con = connectionMap[packet->getSrc()];
 	con->lastSyn = std::chrono::steady_clock::now();
+
+	// send synAck
+	// TODO: use proper values
+	auto syncAck = NetSyncAck{0};
+	auto syncAckPkt = std::make_unique<Packet>();
+	syncAckPkt << PacketTag::headerMagicSynAck;
+	syncAckPkt << syncAck;
+	syncAckPkt->setDst(packet->getSrc());
+	transport.send(std::move(syncAckPkt));
 }
 
 void Relay::processAppMessage(std::unique_ptr<MediaNet::Packet>& packet) {
