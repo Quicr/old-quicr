@@ -6,6 +6,7 @@
 #include "qbroadcast.hh"
 
 using namespace MediaNet;
+bool dont_send_synack = true;
 
 Connection::Connection(uint32_t randNum) : relaySeqNum(randNum) {}
 
@@ -27,7 +28,7 @@ void BroadcastRelay::process() {
     return;
   }
 
-  if (packet->fullSize() <= 1) {
+  if (packet->fullSize() < 1) {
     // log bad packet
     return;
   }
@@ -36,6 +37,11 @@ void BroadcastRelay::process() {
     processSyn(packet);
     return;
   }
+
+	if (packet->fullData() == packetTagTrunc(PacketTag::headerMagicRst)) {
+		processRst(packet);
+		return;
+	}
 
   if (nextTag(packet) == PacketTag::clientSeqNum) {
     processPub(packet);
@@ -48,7 +54,7 @@ void BroadcastRelay::process() {
     return;
   }
 
-  std::clog << std::endl << "Got bad packet" << std::endl;
+  std::clog << std::endl << "Got bad packet" << packet->to_hex() << std::endl;
 }
 
 void BroadcastRelay::processRate(std::unique_ptr<MediaNet::Packet> &packet) {
@@ -147,6 +153,10 @@ void BroadcastRelay::processSyn(std::unique_ptr<MediaNet::Packet> &packet) {
 
   std::unique_ptr<Connection> &con = connectionMap[packet->getSrc()];
   con->lastSyn = std::chrono::steady_clock::now();
+
+  if (dont_send_synack) {
+  	return;
+  }
   // send synAck
   // TODO: use proper values
   auto syncAckPkt = std::make_unique<Packet>();
@@ -155,6 +165,16 @@ void BroadcastRelay::processSyn(std::unique_ptr<MediaNet::Packet> &packet) {
 	syncAckPkt << syncAck;
 	syncAckPkt->setDst(packet->getSrc());
 	transport.send(std::move(syncAckPkt));
+}
+
+void BroadcastRelay::processRst(std::unique_ptr<MediaNet::Packet> &packet) {
+	auto conIndex = connectionMap.find(packet->getSrc());
+	if (conIndex == connectionMap.end()) {
+		std::clog << "Reset recieved for unknown connection\n";
+		return;
+	}
+	connectionMap.erase(conIndex);
+	std::clog << "Reset recieved for connection: " << IpAddr::toString(packet->getSrc()) << "\n";
 }
 
 #ifdef __clang__

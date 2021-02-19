@@ -23,6 +23,7 @@ public:
   void processSyn(std::unique_ptr<MediaNet::Packet> &packet);
   void processPub(std::unique_ptr<MediaNet::Packet> &packet);
   void processRate(std::unique_ptr<MediaNet::Packet> &packet);
+	void processRst(std::unique_ptr<MediaNet::Packet> &packet);
 
 private:
   uint32_t prevAckSeqNum = 0;

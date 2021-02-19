@@ -58,9 +58,10 @@ private:
 	static constexpr int max_connection_retry_cnt = 5;
 	void syncConnection();
 
+	uint8_t syncs_awaiting_response = 0;
 	uint32_t senderID;
   uint64_t token;
-  bool open; // use state
+  bool open = false; // use state
   State state = State{};
 };
 

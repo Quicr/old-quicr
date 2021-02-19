@@ -15,7 +15,6 @@ ConnectionPipe::ConnectionPipe(PipeInterface *t)
 bool ConnectionPipe::start(const uint16_t port, const std::string server,
                            PipeInterface *upStrm) {
   bool ret = PipeInterface::start(port, server, upStrm);
-  state = ConnectionPending{};
   syncConnection();
   return ret;
 }
@@ -30,15 +29,12 @@ bool ConnectionPipe::ready() const {
 
 void ConnectionPipe::stop() {
   open = false;
+  state = Start{};
 
-  // TODO send a Rst
   auto packet = std::make_unique<Packet>();
   assert(packet);
-  // packet->buffer.reserve(20); // TODO - tune the 20
-
   packet << PacketTag::headerMagicRst;
-  // packet << PacketTag::extraMagicVer1;
-  // packet << PacketTag::extraMagicVer2;
+  std::clog << "Reset: " << packet->to_hex() << std::endl;
   send(move(packet));
 
   PipeInterface::stop();
@@ -74,7 +70,6 @@ void ConnectionPipe::syncConnection() {
 	auto packet = std::make_unique<Packet>();
 	assert(packet);
 	packet << PacketTag::headerMagicSyn;
-
 	NetSyncReq synReq{};
 	synReq.clientTimeMs = 0; // TODO
 	synReq.senderId = senderID;
@@ -82,10 +77,19 @@ void ConnectionPipe::syncConnection() {
 	packet << synReq;
 
 	send(move(packet));
+	state = ConnectionPending{};
 
 	// resync timer
 	auto resync_callback = [=]() {
 		// check status and send a resync event
+		if (std::holds_alternative<ConnectionPending>(state)) {
+			if(syncs_awaiting_response >= max_connection_retry_cnt) {
+				stop();
+				return;
+			}
+
+			syncs_awaiting_response++;
+		}
 		syncConnection();
 	};
 
