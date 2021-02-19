@@ -147,6 +147,8 @@ void BroadcastRelay::processSyn(std::unique_ptr<MediaNet::Packet> &packet) {
 
   std::unique_ptr<Connection> &con = connectionMap[packet->getSrc()];
   con->lastSyn = std::chrono::steady_clock::now();
+  // send synAck
+
 }
 
 #ifdef __clang__

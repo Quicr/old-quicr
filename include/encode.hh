@@ -61,10 +61,12 @@ enum struct PacketTag : uint32_t {
   // This block of headerMagic values selected to multiplex with STUN/DTLS/RTP
   headerMagicData = packetTagGen(16, 0, true),
   headerMagicSyn = packetTagGen(18, 0, true),
-  headerMagicRst = packetTagGen(22, 0, true),
+	headerMagicSynAck = packetTagGen(14, 0, true),
+	headerMagicRst = packetTagGen(22, 0, true),
   headerMagicDataCrazy = packetTagGen(17, 0, true),
   headerMagicSynCrazy = packetTagGen(19, 0, true),
-  headerMagicRstCrazy = packetTagGen(23, 0, true),
+	headerMagicSynAckCrazy = packetTagGen(15, 0, true),
+	headerMagicRstCrazy = packetTagGen(23, 0, true),
 
   extraMagicVer1 = packetTagGen(12538, 0, false),
 
@@ -91,9 +93,22 @@ struct NetSyncReq {
   uint32_t senderId;
   uint64_t clientTimeMs;
   uint64_t versionVec;
+  // todo: add origin, auth
 };
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const NetSyncReq &msg);
+bool operator>>(std::unique_ptr<Packet> &p, NetSyncReq &msg);
+
+
+/* SYN ACK */
+
+struct NetSyncAck {
+	uint32_t senderId;
+	uint32_t transactionId;
+
+};
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const NetSyncReq &msg);
 bool operator>>(std::unique_ptr<Packet> &p, NetSyncReq &msg);
 
 /* Rate Request */
