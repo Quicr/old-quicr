@@ -23,6 +23,7 @@ public:
 
 private:
 	void processSyn(std::unique_ptr<MediaNet::Packet>& packet);
+	void processRst(std::unique_ptr<MediaNet::Packet>& packet);
 	void processAppMessage(std::unique_ptr<MediaNet::Packet>& packet);
 	void processRateRequest(std::unique_ptr<MediaNet::Packet>& packet);
 	void processSub(std::unique_ptr<MediaNet::Packet>& packet, MediaNet::NetClientSeqNum& clientSeqNum);

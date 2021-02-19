@@ -76,6 +76,16 @@ void Relay::processSyn(std::unique_ptr<MediaNet::Packet> &packet) {
 	transport.send(std::move(syncAckPkt));
 }
 
+void Relay::processRst(std::unique_ptr<MediaNet::Packet> &packet) {
+	auto conIndex = connectionMap.find(packet->getSrc());
+	if (conIndex == connectionMap.end()) {
+		std::clog << "Reset recieved for unknown connection\n";
+		return;
+	}
+	connectionMap.erase(conIndex);
+	std::clog << "Reset recieved for connection: " << IpAddr::toString(packet->getSrc()) << "\n";
+}
+
 void Relay::processAppMessage(std::unique_ptr<MediaNet::Packet>& packet) {
 	NetClientSeqNum seqNumTag{};
 	packet >> seqNumTag;
