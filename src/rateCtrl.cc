@@ -117,16 +117,25 @@ uint64_t RateCtrl::bwUpTarget() const // in bits per second
 {
   assert(numPhasePerCycle >= 3);
 
-  int phase = phaseCycleCount % numPhasePerCycle;
+  uint64_t  target = upstreamBitrateTarget;
 
+  int phase = phaseCycleCount % numPhasePerCycle;
   if (phase == 1) {
-    return (upstreamBitrateTarget * 5) / 4;
+    target = (upstreamBitrateTarget * 5) / 4;
   }
   if (phase == 2) {
-    return (upstreamBitrateTarget * 3) / 4;
+    target =  (upstreamBitrateTarget * 3) / 4;
   }
 
-  return upstreamBitrateTarget;
+  if ( target > limitBitrateMaxUp) {
+    target = limitBitrateMaxUp;
+  }
+
+  if ( target < limitBitrateMinUp ) {
+    target = limitBitrateMinUp;
+  }
+
+  return target;
 }
 
 uint64_t RateCtrl::bwDownTarget() const // in bits per second
@@ -677,6 +686,8 @@ void RateCtrl::calcPhaseBitrateUp(int start, int end) {
     std::clog << " phase bitrateUp = " << (float)bitRate/1.0e6 << " mbps " << std::endl;
     std::clog << " phase bitrateLostUp = " << (float)bitLostRate/1.0e6 << " mbps " << std::endl;
     std::clog << " phase estBitRateUp = "<< (float)filterBitrateUp.estimate()/1e6 << " mbps " << std::endl;
+#else
+    (void)bitLostRate;
 #endif
   }
 
