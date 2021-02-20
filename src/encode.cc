@@ -348,11 +348,13 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   return p;
 }
 
+///
+/// SyncAck
+///
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
 																							const NetSyncAck &msg) {
   // TODO add other fields
 	p << msg.serverTimeMs;
-
 	p << PacketTag::syncAck;
 
 	return p;
@@ -375,6 +377,44 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetSyncAck &msg) {
 	return ok;
 }
 
+///
+/// NetReset and Types
+///
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const NetRstRetry &msg) {
+
+	p << msg.cookie;
+	p << PacketTag::rstRetry;
+	return p;
+}
+
+bool operator>>(std::unique_ptr<Packet> &p, NetRstRetry &msg) {
+	if (nextTag(p) != PacketTag::rstRetry) {
+		std::cerr << "Did not find expected PacketTag::RstRetry" << std::endl;
+		return false;
+	}
+
+	PacketTag tag = PacketTag::none;
+	bool ok = true;
+	ok &= p >> tag;
+	ok &= p >> msg.cookie;
+	if (!ok) {
+		std::cerr << "problem parsing RstRetry" << std::endl;
+	}
+
+	return ok;
+}
+
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const NetRstRedirect &msg) {
+	// TODO: implement
+	assert(0);
+}
+
+bool operator>>(std::unique_ptr<Packet> &p, NetRstRedirect &msg) {
+	// TODO: implement
+	assert(0);
+}
 
 
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,

@@ -6,7 +6,7 @@
 #include "qbroadcast.hh"
 
 using namespace MediaNet;
-bool dont_send_synack = true;
+bool dont_send_synack = false;
 
 Connection::Connection(uint32_t randNum) : relaySeqNum(randNum) {}
 
@@ -147,7 +147,7 @@ void BroadcastRelay::processSyn(std::unique_ptr<MediaNet::Packet> &packet) {
 
   auto conIndex = connectionMap.find(packet->getSrc());
   if (conIndex == connectionMap.end()) {
-    // new connection
+  	// new connection
     connectionMap[packet->getSrc()] = std::make_unique<Connection>(getRandom());
   }
 

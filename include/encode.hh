@@ -56,7 +56,8 @@ enum struct PacketTag : uint32_t {
   relayRateReq = packetTagGen(6, 4, true),
   subscribeReq = packetTagGen(8, 0, true),
 	syncAck = packetTagGen(10, 255, true),
-
+	rstRetry = packetTagGen(11, 255, true),
+	rstRedirect = packetTagGen(12, 255, true),
 
 	// TODO - Could add nextReservedCodePoints of various lengths and MTI
 
@@ -109,8 +110,24 @@ std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
 																		const NetSyncAck &msg);
 bool operator>>(std::unique_ptr<Packet> &p, NetSyncAck &msg);
 
-/* Rate Request */
 
+/* Reset*/
+struct NetReset {
+	uint32_t cookie;
+};
+
+// TODO: fill in the details
+struct NetRstRedirect: NetReset {};
+struct NetRstRetry: NetReset {};
+
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const NetRstRetry &msg);
+bool operator>>(std::unique_ptr<Packet> &p, NetRstRetry &msg);
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const NetRstRedirect &msg);
+bool operator>>(std::unique_ptr<Packet> &p, NetRstRedirect &msg);
+
+/* Rate Request */
 struct NetRateReq {
   uintVar_t bitrateKbps; // in kilo bits pers second
 };
