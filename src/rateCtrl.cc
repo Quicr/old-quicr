@@ -171,7 +171,7 @@ void RateCtrl::startNewPhase() {
 
 void RateCtrl::startNewCycle() {
 
-#if 1
+#if 0
   int64_t  estRTTUs = filterMinRTT.estimate();
   int64_t  estBigRTTUs = filterBigRTT.estimate();
   int64_t  upstreamBwEst = filterBitrateUp.estimate();
@@ -648,19 +648,20 @@ void RateCtrl::calcPhaseBitrateUp(int start, int end) {
 
   int64_t bitCount = 0;
   for (int i = start; i < end; i++) {
-    std::clog << " acked = " << bool( upstreamHistory.at(i).status == HistoryStatus::received ) << std::endl;
+    //std::clog << " acked = " << bool( upstreamHistory.at(i).status == HistoryStatus::ack ) << std::endl;
+    //std::clog << " revcd = " << bool( upstreamHistory.at(i).status == HistoryStatus::received ) << std::endl;
 
     if ((upstreamHistory.at(i).status == HistoryStatus::received) ||
         (upstreamHistory.at(i).status == HistoryStatus::ack)) {
       bitCount += upstreamHistory.at(i).sizeBits;
-      std::clog << " bits = " << upstreamHistory.at(i).sizeBits << " bits " << std::endl;
+      //std::clog << " bits = " << upstreamHistory.at(i).sizeBits << " bits " << std::endl;
     }
   }
 
   if (bitCount > 0) {
     int64_t bitRate = bitCount * 1000000 / phaseTimeUs;
     filterBitrateUp.add(bitRate);
-#if 1
+#if 0
     std::clog << "------------------------" << std::endl;
     std::clog << " phase target bitrateUp = " << (float)bwUpTarget()/1.0e6 << " mbps " << std::endl;
     std::clog << " phase bitrateUp = " << (float)bitRate/1.0e6 << " mbps " << std::endl;

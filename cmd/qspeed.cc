@@ -32,12 +32,12 @@ int main(int argc, char *argv[]) {
   // setup up sending rate and size
 
   const int maxSpeedUpBps = 25 * 1000 * 1000;
-  const int timeToSendUpSeconds = 10;
+  const int timeToSendUpSeconds = 30;
   const int packetsUpPerSecond = 240;
 
   qClient.setBitrateUp( 1e6, 10e6, maxSpeedUpBps );
   qClient.setRttEstimate( 50 );
-  qClient.setPacketsUp( packetsUpPerSecond );
+  qClient.setPacketsUp( 5000 );
 
   const int packetSizeByes = (maxSpeedUpBps / packetsUpPerSecond) / 8;
   assert( packetSizeByes < 32768 );
