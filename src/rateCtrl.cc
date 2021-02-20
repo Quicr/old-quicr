@@ -28,10 +28,10 @@ RateCtrl::RateCtrl(PipeInterface *pacerPipeRef)
       filterBitrateDown(1000000,1024,0,true)
       {
   upstreamHistory.clear();
-  upstreamHistory.reserve(100); // TODO limit length of history
+  upstreamHistory.reserve(5000); // TODO limit length of history
 
   downstreamHistory.clear();
-  downstreamHistory.reserve(100); // TODO limit length of history
+  downstreamHistory.reserve(5000); // TODO limit length of history
 
   startNewCycle();
 }
@@ -445,9 +445,6 @@ void RateCtrl::calcPhaseClockSkew(int start, int end) {
       int64_t lowerBoundUs =
           (int64_t)upstreamHistory.at(i).remoteReceiveTimeUs -
           (int64_t)upstreamHistory.at(i).localAckTimeUs;
-
-      // upperBoundUs -= -134518 * 1000l; lowerBoundUs -= -134518 * 1000l; //
-      // TODO remove
 
       if (noneFound) {
         noneFound = false;

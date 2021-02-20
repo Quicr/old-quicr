@@ -81,7 +81,7 @@ public:
 
   [[nodiscard]] ShortName shortName() const { return name; };
 
-  void setFragID(uint8_t fragmentID);
+  void setFragID(uint8_t fragmentID, bool lastFrag );
 
   void push_back(uint8_t t) { buffer.push_back(t); };
   void pop_back() { buffer.pop_back(); };

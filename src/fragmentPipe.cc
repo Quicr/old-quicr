@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <algorithm>
 
 #include "encode.hh"
 #include "fragmentPipe.hh"
@@ -26,9 +27,11 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
 
   // TODO  break packets larger than mtu bytes into equal size fragments less
 
-  int extraHeaderSize = 25; // TODO tune
+  const int extraHeaderSizeBytes = 25; // TODO tune and move
+  const int minPacketPayload = 56; // TODO move
 
-  if (packet->fullSize() + extraHeaderSize <= mtu) {
+  if (packet->fullSize() + extraHeaderSizeBytes <= mtu) {
+    //std::clog << "no fragment as size=" << packet->fullSize() << " mtu=" << mtu << std::endl;
     return downStream->send(move(packet));
   }
 
@@ -37,29 +40,30 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
 
   uint16_t payloadSize;
   PacketTag tag;
+  ShortName name;
 
   packet >> tag;
+  packet >> name;
   packet >> payloadSize;
+
+  //std::clog << "fragment input size: " << payloadSize << std::endl;
+
   uint16_t dataSize =
-      mtu - (extraHeaderSize + (packet->fullSize() - packet->size()));
-  if (dataSize < 56) {
-    dataSize = 56;
+      mtu - (extraHeaderSizeBytes + (packet->fullSize() - packet->size()));
+  if (dataSize < minPacketPayload) {
+    dataSize = minPacketPayload;
   }
   assert(dataSize > 1);
-  assert(payloadSize == packet->size());
+  //assert(payloadSize == packet->size()); TODO remove
 
   size_t numDone = 0;
   size_t numLeft = packet->size();
   uint8_t frag = 1;
 
   while (numLeft > 0) {
-    size_t numUse = dataSize;
-    if (numUse > numLeft) {
-      numUse = numLeft;
-    }
+    size_t numUse = std::min( size_t(dataSize),numLeft);
 
-    std::unique_ptr<Packet> fragPacket =
-        packet->clone(); // TODO - make a clone just base
+    std::unique_ptr<Packet> fragPacket = packet->clone();
 
     fragPacket->resize(numUse);
     std::copy(&(packet->data()) + numDone, &(packet->data()) + numDone + numUse,
@@ -67,10 +71,11 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
     numDone += numUse;
     numLeft -= numUse;
 
-    fragPacket << (uint16_t)numUse;
-    fragPacket << PacketTag::appDataFrag;
+    fragPacket->setFragID(frag, (numLeft == 0) );
 
-    fragPacket->setFragID(frag * 2 + ((numLeft > 0) ? 0 : 1));
+    fragPacket << (uint16_t)numUse;
+    fragPacket << packet->shortName();
+    fragPacket << PacketTag::appDataFrag;
 
     // std::clog << "Send Frag: " << *fragPacket << std::endl;
     // std::clog << "Frag Send:" << fragPacket->shortName() << std::endl;
@@ -101,12 +106,26 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
       return packet;
     }
 
-    ShortName name = packet->shortName();
+    while ( nextTag(packet) != PacketTag::appDataFrag)  {
+
+    auto packetCopy = packet->clone();
+
+      uint16_t payloadSize;
+      PacketTag tag;
+      ShortName name;
+
+      packet >> tag;
+      packet >> name;
+      packet >> payloadSize;
+      assert( packet->size() >= payloadSize );
+      packet->resize( packet->size() - payloadSize );
+
+      packetCopy->name = name;
+
     // std::clog << "Frag Recv:" << name << " size=" << packet->size() <<
     // *packet << std::endl;
 
-    auto p = std::pair<MediaNet::ShortName, std::unique_ptr<Packet>>(
-        packet->shortName(), move(packet));
+    auto p = std::pair<MediaNet::ShortName, std::unique_ptr<Packet>>( name, move(packetCopy));
     {
       std::lock_guard<std::mutex> lock(fragListMutex);
       fragList.insert(move(p));
@@ -152,12 +171,14 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
         fragList.erase(fragPair);
 
         uint16_t dataSize;
+        ShortName fragName;
         PacketTag tag;
 
         // std::clog << "Adding fragment Name: " << fragPacket->shortName() <<
         // std::endl;
 
         fragPacket >> tag;
+        fragPacket >> fragName;
         fragPacket >> dataSize;
 
         assert(fragPacket);
@@ -169,15 +190,15 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
         if (i == 1) {
           // use the first fragment as the result packet
           result = move(fragPacket);
-          result->setFragID(0);
+          result->setFragID(0, true);
           assert(dataSize <= result->fullSize());
-          result->headerSize = (int)(result->fullSize()) - dataSize;
+          result->headerSize = (int) (result->fullSize()) - dataSize;
           continue;
         }
 
         assert(result);
         assert(fragPacket);
-        result->resize((int)(result->size()) + dataSize);
+        result->resize((int) (result->size()) + dataSize);
 
         uint8_t *src = &(fragPacket->data()) + fragPacket->size() - dataSize;
         uint8_t *end = &(fragPacket->data()) + fragPacket->size();
@@ -187,11 +208,17 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
       }
 
       assert(result);
+      name.fragmentID = 0;
       uint16_t payloadSize = result->size();
       result << payloadSize;
+      result << name;
       result << PacketTag::appData;
 
+      result->name = name;
+      result->setFragID(0,true);
+
       return result;
+    }
     }
   }
 }
@@ -201,3 +228,6 @@ void FragmentPipe::updateMTU(uint16_t val,uint32_t pps) {
 
     PipeInterface::updateMTU(val,pps);
 }
+
+// TODO - need unit test for de-fragment
+

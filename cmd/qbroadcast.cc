@@ -48,7 +48,7 @@ void BroadcastRelay::process() {
     return;
   }
 
-  std::clog << std::endl << "Got bad packet" << std::endl;
+  std::clog << std::endl << "Got bad packet nextTag=" << int(nextTag(packet))/256  << std::endl;
 }
 
 void BroadcastRelay::processRate(std::unique_ptr<MediaNet::Packet> &packet) {

@@ -34,6 +34,7 @@ bool EncryptPipe::send(std::unique_ptr<Packet> packet) {
 	ShortName name;
 	// strip out [tag, name, payload len]
 	packet >> tag;
+  assert( tag == PacketTag::appData );
 	packet >> name;
 	packet >> payloadSize;
 
@@ -46,7 +47,7 @@ bool EncryptPipe::send(std::unique_ptr<Packet> packet) {
 	std::copy(encrypted.begin(), encrypted.end(), dst);
 	packet << (uint16_t ) encrypted.size();
 	packet << name;
-	packet << tag;
+	packet << tag; // TODO - chance to  PacketTag::appDataEncrypted
 
 	//std::cout << "Full Encrypted Packet with header: "<< packet->size() << " bytes\n";
 
@@ -70,6 +71,8 @@ std::unique_ptr<Packet> EncryptPipe::recv() {
 			packet >> name;
 			packet >> payloadSize;
 			assert(payloadSize);
+
+			// TDOO - Cullen look at this seems wrong
 			packet->headerSize = packet->fullSize() - payloadSize - 22; // 22 - (2) payloadSize + (19) name +  (1) tag
 
 			auto decrypted = unprotect(packet, payloadSize);

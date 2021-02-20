@@ -6,6 +6,7 @@
 #include <queue>
 #include <string>
 #include <thread>
+#include <atomic>
 
 #include "packet.hh"
 #include "pipeInterface.hh"
@@ -42,10 +43,17 @@ private:
   void runNetSend();
   std::thread sendThread;
 
+  void sendRateCommand();
+
   uint32_t oldPhase;
+  std::chrono::steady_clock::time_point phaseStartTime;
+  uint32_t packetsSentThisPhase;
 
   uint16_t mtu;
   uint32_t targetPpsUp;
+  bool useConstantPacketRate;
+
+  std::atomic<uint32_t> nextSeqNum; // TODO - may not need atomic here
 };
 
 } // namespace MediaNet
