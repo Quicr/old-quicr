@@ -35,6 +35,10 @@ int main(int argc, char *argv[]) {
   const int timeToSendUpSeconds = 10;
   const int packetsUpPerSecond = 240;
 
+  qClient.setBitrateUp( 1e6, 10e6, maxSpeedUpBps );
+  qClient.setRttEstimate( 50 );
+  qClient.setPacketsUp( packetsUpPerSecond );
+
   const int packetSizeByes = (maxSpeedUpBps / packetsUpPerSecond) / 8;
   assert( packetSizeByes < 32768 );
 
@@ -83,7 +87,7 @@ int main(int argc, char *argv[]) {
       break;
     }
 
-    if ( durationMs > lastPrintTime+100 ) {
+    if ( durationMs > lastPrintTime+500 ) {
       lastPrintTime = durationMs;
 
       uint64_t bitRate = qClient.getTargetUpstreamBitrate(); // in bps

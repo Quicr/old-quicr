@@ -77,3 +77,9 @@ void PipeInterface::updateMTU(uint16_t mtu,uint32_t pps) {
         downStream->updateMTU(mtu,pps);
     }
 }
+
+void PipeInterface::updateBitrateUp(uint64_t minBps, uint64_t startBps, uint64_t maxBps) {
+  if (downStream) {
+    downStream->updateBitrateUp( minBps,  startBps,  maxBps);
+  }
+}

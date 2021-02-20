@@ -201,5 +201,22 @@ void PacerPipe::updateMTU(uint16_t val,uint32_t pps) {
     mtu = val;
     targetPpsUp = pps;
 
+    useConstantPacketRate = bool( targetPpsUp > 0 );
+
+    rateCtrl.overrideMtu(mtu,pps);
+
     PipeInterface::updateMTU(val,pps);
+}
+
+void PacerPipe::updateBitrateUp(uint64_t minBps, uint64_t startBps, uint64_t maxBps) {
+
+  rateCtrl.overrideBitrateUp(minBps,startBps,maxBps);
+
+  PipeInterface::updateBitrateUp(minBps, startBps, maxBps);
+}
+
+void PacerPipe::updateRTT(uint16_t minRttMs, uint16_t bigRttMs) {
+   rateCtrl.overrideRTT(minRttMs,bigRttMs);
+
+  PipeInterface::updateRTT(minRttMs, bigRttMs);
 }

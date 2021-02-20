@@ -144,3 +144,25 @@ std::unique_ptr<Packet> QuicRClient::createPacket(const ShortName &shortName,
 bool QuicRClient::subscribe(ShortName name) {
   return subscribePipe.subscribe(name);
 }
+
+void QuicRClient::setPacketsUp(uint16_t pps, uint16_t mtu) {
+  assert(firstPipe);
+  assert( pps >= 10 );
+  assert( mtu >= 56 );
+  firstPipe->updateMTU(mtu,pps);
+}
+
+void QuicRClient::setRttEstimate(uint32_t minRttMs, uint32_t bigRttMs) {
+  assert(firstPipe);
+  if ( bigRttMs == 0 ) {
+    bigRttMs = minRttMs * 3 / 2;
+  }
+  assert( minRttMs > 0 );
+  assert( bigRttMs > 0 );
+  firstPipe->updateRTT(minRttMs,bigRttMs);
+}
+
+void QuicRClient::setBitrateUp(uint64_t minBps, uint64_t startBps, uint64_t maxBps) {
+  assert(firstPipe);
+  firstPipe->updateBitrateUp( minBps, startBps, maxBps );
+}

@@ -31,6 +31,9 @@ public:
   uint64_t getTargetUpstreamBitrate(); // in bps
 
   void updateMTU(uint16_t mtu,uint32_t pps) override;
+  void updateBitrateUp( uint64_t minBps, uint64_t startBps, uint64_t maxBps ) override;
+  void updateRTT(uint16_t minRttMs, uint16_t bigRttMs) override;
+
 
 private:
   RateCtrl rateCtrl;

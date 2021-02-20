@@ -24,8 +24,10 @@ RateCtrl::RateCtrl(PipeInterface *pacerPipeRef)
       filterJitterDown(1, 1024, 102, true),
       filterLossRatePerMillionUp(0, 102, 102),
       filterLossRatePerMillionDown(0, 102, 102),
-      filterBitrateUp(1000000,1024,0,true),
-      filterBitrateDown(1000000,1024,0,true)
+      filterBitrateUp(1e6,1024,0,true),
+      limitBitrateMinUp(0),
+      limitBitrateMaxUp(100e9),
+      filterBitrateDown(1e6,1024,0,true)
       {
   upstreamHistory.clear();
   upstreamHistory.reserve(5000); // TODO limit length of history
@@ -721,3 +723,23 @@ void RateCtrl::cycleUpdateDownstreamTarget() {
     downstreamBitrateTarget = bitrateDown;
   }
 }
+
+void RateCtrl::overrideMtu(uint16_t mtu, uint32_t pps) {
+  (void)mtu;
+  (void)pps;
+}
+
+void RateCtrl::overrideRTT(uint16_t minRttMs, uint16_t bigRttMs) {
+  filterMinRTT.override(minRttMs*1000);
+  filterBigRTT.override(bigRttMs*1000);
+}
+
+void RateCtrl::overrideBitrateUp(uint64_t minBps, uint64_t startBps, uint64_t maxBps) {
+
+  filterBitrateUp.override(startBps);
+  upstreamBitrateTarget = startBps;
+
+  limitBitrateMinUp=minBps;
+  limitBitrateMaxUp=maxBps;
+}
+
