@@ -182,15 +182,15 @@ void RateCtrl::startNewCycle() {
   if (phaseCycleCount > 0) {
     std::clog << "Cycle"
               << " cycle: " << phaseCycleCount / numPhasePerCycle
-         << " estRtt: " << float(estRTTUs) / 1e3 << " ms "
+              << " estRtt: " << float(estRTTUs) / 1e3 << " ms "
               << " bigRTT: " << float(estBigRTTUs) / 1e3 << " ms "
-        << std::endl;
-    std::clog << " Up   bitrate: " << float(upstreamBwEst  ) / 1e6 << " mbps "
-      << " jitter:" << (float)jitterUpUs/1e3 << " ms "
-      << " lossRate: " << (float)upstreamLossRate/10000.0 << " %"  << std::endl;
+              << std::endl;
+    std::clog << " Up   bitrate: " << float(upstreamBwEst) / 1e6 << " mbps "
+              << " jitter:" << (float)jitterUpUs/1e3 << " ms "
+              << " lossRate: " << (float)upstreamLossRate/10000.0 << " %"  << std::endl;
     std::clog << " Down bitrate: " << float(downstreamBwEst) / 1e6 << " mbps "
-        << " jitter:" << (float)jitterDownUs/1e3 << " ms "
-        << " lossRate: " << (float)downstreamLossRate/10000.0 << " %"  << std::endl;
+              << " jitter:" << (float)jitterDownUs/1e3 << " ms "
+              << " lossRate: " << (float)downstreamLossRate/10000.0 << " %"  << std::endl;
   }
 #endif
 
@@ -649,17 +649,19 @@ void RateCtrl::calcPhaseBitrateUp(int start, int end) {
 
   int64_t bitCount = 0;
   for (int i = start; i < end; i++) {
+    std::clog << " acked = " << bool( upstreamHistory.at(i).status == HistoryStatus::received ) << std::endl;
+
     if ((upstreamHistory.at(i).status == HistoryStatus::received) ||
         (upstreamHistory.at(i).status == HistoryStatus::ack)) {
       bitCount += upstreamHistory.at(i).sizeBits;
-      //std::clog << " bits = " << upstreamHistory.at(i).sizeBits << " bits " << std::endl;
+      std::clog << " bits = " << upstreamHistory.at(i).sizeBits << " bits " << std::endl;
     }
   }
 
   if (bitCount > 0) {
     int64_t bitRate = bitCount * 1000000 / phaseTimeUs;
     filterBitrateUp.add(bitRate);
-#if 0
+#if 1
     std::clog << "------------------------" << std::endl;
     std::clog << " phase target bitrateUp = " << (float)bwUpTarget()/1.0e6 << " mbps " << std::endl;
     std::clog << " phase bitrateUp = " << (float)bitRate/1.0e6 << " mbps " << std::endl;
