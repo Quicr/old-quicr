@@ -115,7 +115,7 @@ void RateCtrl::recvAck(uint32_t seqNum, uint32_t remoteAckTimeUs,
 
 uint64_t RateCtrl::bwUpTarget() const // in bits per second
 {
-  assert(numPhasePerCycle > 2);
+  assert(numPhasePerCycle >= 3);
 
   int phase = phaseCycleCount % numPhasePerCycle;
 
@@ -131,14 +131,14 @@ uint64_t RateCtrl::bwUpTarget() const // in bits per second
 
 uint64_t RateCtrl::bwDownTarget() const // in bits per second
 {
-  assert(numPhasePerCycle > 4);
+  assert(numPhasePerCycle >= 4);
 
   int phase = phaseCycleCount % numPhasePerCycle;
 
-  if (phase == 3) {
+  if (phase == 2) {
     return (downstreamBitrateTarget * 5) / 4;
   }
-  if (phase == 4) {
+  if (phase == 3) {
     return (downstreamBitrateTarget * 3) / 4;
   }
 
@@ -646,7 +646,14 @@ void RateCtrl::calcPhaseLossRateDown(int start, int end) {
 
 void RateCtrl::calcPhaseBitrateUp(int start, int end) {
 
+  for (int i = start; i < end; i++) {
+    if (upstreamHistory.at(i).status == HistoryStatus::sent) {
+      upstreamHistory.at(i).status = HistoryStatus::lost;
+    }
+  }
+
   int64_t bitCount = 0;
+  int64_t bitLostCount = 0;
   for (int i = start; i < end; i++) {
     //std::clog << " acked = " << bool( upstreamHistory.at(i).status == HistoryStatus::ack ) << std::endl;
     //std::clog << " revcd = " << bool( upstreamHistory.at(i).status == HistoryStatus::received ) << std::endl;
@@ -655,23 +662,35 @@ void RateCtrl::calcPhaseBitrateUp(int start, int end) {
         (upstreamHistory.at(i).status == HistoryStatus::ack)) {
       bitCount += upstreamHistory.at(i).sizeBits;
       //std::clog << " bits = " << upstreamHistory.at(i).sizeBits << " bits " << std::endl;
+    } else {
+      bitLostCount += upstreamHistory.at(i).sizeBits;
     }
   }
 
   if (bitCount > 0) {
     int64_t bitRate = bitCount * 1000000 / phaseTimeUs;
+    int64_t bitLostRate = bitLostCount * 1000000 / phaseTimeUs;
     filterBitrateUp.add(bitRate);
 #if 0
     std::clog << "------------------------" << std::endl;
     std::clog << " phase target bitrateUp = " << (float)bwUpTarget()/1.0e6 << " mbps " << std::endl;
     std::clog << " phase bitrateUp = " << (float)bitRate/1.0e6 << " mbps " << std::endl;
-   std::clog << " phase estBitRateUp = "<< (float)filterBitrateUp.estimate()/1e6 << " mbps " << std::endl;
+    std::clog << " phase bitrateLostUp = " << (float)bitLostRate/1.0e6 << " mbps " << std::endl;
+    std::clog << " phase estBitRateUp = "<< (float)filterBitrateUp.estimate()/1e6 << " mbps " << std::endl;
 #endif
   }
 
 }
 
 void RateCtrl::calcPhaseBitrateDown(int start, int end) {
+
+  for (int i = start; i < end; i++) {
+    if ((downstreamHistory.at(i).status != HistoryStatus::received) &&
+        (downstreamHistory.at(i).status != HistoryStatus::congested))
+    {
+      downstreamHistory.at(i).status = HistoryStatus::lost;
+    }
+  }
 
   int64_t bitCount = 0;
   for (int i = start; i < end; i++) {
@@ -706,7 +725,7 @@ void RateCtrl::cycleUpdateUpstreamTarget() {
     // TODO - consider packet size and delay info in decision
 
     // move to max bitrate that worked
-    upstreamBitrateTarget = bitrateUp;
+    upstreamBitrateTarget = std::min( bitrateUp , prevTargetUp * 3 / 2 ); // TODO - mirror in download
   }
 }
 

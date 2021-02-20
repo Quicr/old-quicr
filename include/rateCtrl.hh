@@ -95,7 +95,7 @@ private:
   std::vector<PacketDownstreamStatus> downstreamHistory;
 
   void updatePhase();
-  static const uint32_t phaseTimeUs = 33333 * 2; // 0.5 frames at 30 fps
+  static const uint32_t phaseTimeUs = 33333 * 2 ; // 0.5 frames at 30 fps
   static const uint32_t numPhasePerCycle = 5;
 
   void startNewPhase();
