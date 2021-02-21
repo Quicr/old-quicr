@@ -153,6 +153,11 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetCl
 
   // TODO - loop over connections and remove ones with old last Syn time
 
+  // TODO: push this into server class
+	packet << payloadSize;
+	packet << name;
+	packet << tag;
+
   // for each connection, make copy and forward
   for (auto const &[addr, con] : connectionMap) {
     auto subData = packet->clone(); // TODO - just clone header stuff

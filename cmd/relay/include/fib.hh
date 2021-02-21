@@ -9,6 +9,7 @@ using Face = MediaNet::IpAddr;
 struct SubscriberInfo {
 	MediaNet::ShortName name;
 	Face face{};
+	uint32_t relaySeqNum;
 };
 
 

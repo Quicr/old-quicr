@@ -8,26 +8,18 @@
 
 using namespace MediaNet;
 
-///
-/// Connection
-///
-
-Connection::Connection(uint32_t relaySeq, uint64_t cookie_in)
-				: relaySeqNum(relaySeq)
-				, cookie(cookie_in) {}
-
 
 Relay::Relay(uint16_t port)
-		: transport(* new UdpPipe)
+		: qServer()
 		  , fib(std::make_unique<MultimapFib>()) {
-	transport.start(port, "", nullptr);
+	qServer.open(port);
 	std::random_device randDev;
 	randomGen.seed(randDev()); // TODO - should use crypto random
 	getRandom = std::bind(randomDist, randomGen);
 }
 
 void Relay::process() {
-	auto packet = transport.recv();
+	auto packet = qServer.recv();
 
 	if(!packet) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -37,8 +29,6 @@ void Relay::process() {
 	auto tag = nextTag(packet);
 
 	switch (tag) {
-		case PacketTag::sync:
-			return processSyn(packet);
 		case PacketTag::clientSeqNum:
 			return processAppMessage(packet);
 		case PacketTag::relayRateReq:
@@ -54,73 +44,6 @@ void Relay::process() {
 /// Private Implementation
 ///
 
-void Relay::processSyn(std::unique_ptr<MediaNet::Packet> &packet) {
-	std::clog << "Got a Syn"
-						<< " from=" << IpAddr::toString(packet->getSrc())
-						<< " len=" << packet->fullSize() << std::endl;
-
-	NetSyncReq sync = {};
-	packet >> sync;
-
-	auto conIndex = connectionMap.find(packet->getSrc());
-	if(conIndex != connectionMap.end()) {
-		// existing connection
-		std::unique_ptr<Connection> &con = connectionMap[packet->getSrc()];
-		con->lastSyn = std::chrono::steady_clock::now();
-		std::clog << "existing connection\n";
-		sendSyncRequest(packet->getSrc(), sync.authSecret);
-		return;
-	}
-
-	// new connection or retry with cookie
-	auto it = cookies.find(packet->getSrc());
-	if (it == cookies.end()) {
-		// send a reset with retry cookie
-		auto cookie = random();
-		cookies.emplace(packet->getSrc(),
-										std::make_tuple(std::chrono::steady_clock::now(), cookie));
-
-		auto rstPkt = std::make_unique<Packet>();
-		NetRstRetry rstRetry{};
-		rstRetry.cookie = cookie;
-		rstPkt << PacketTag::headerMagicRst;
-		rstPkt << rstRetry;
-		rstPkt->setDst(packet->getSrc());
-		transport.send(std::move(rstPkt));
-		std::clog << "new connection attempt, generate cookie:" << cookie << std::endl;
-		return;
-	}
-
-	// cookie exists, verify it matches
-	auto& [when, cookie] = it->second;
-	// TODO: verify now() - when is within in acceptable limits
-	if (sync.cookie != cookie) {
-		// bad cookie, reset the connection
-		auto rstPkt = std::make_unique<Packet>();
-		rstPkt << PacketTag::headerMagicRst;
-		rstPkt->setDst(packet->getSrc());
-		transport.send(std::move(rstPkt));
-		std::clog << "incorrect cookie: found:" << sync.cookie << ", expected:" << cookie<< std::endl;
-		return;
-	}
-
-	// good sync new connection
-	connectionMap[packet->getSrc()] = std::make_unique<Connection>(getRandom(), cookie);
-	cookies.erase(it);
-	std::clog << "Added connection\n";
-	sendSyncRequest(packet->getSrc(), sync.authSecret);
-
-}
-
-void Relay::processRst(std::unique_ptr<MediaNet::Packet> &packet) {
-	auto conIndex = connectionMap.find(packet->getSrc());
-	if (conIndex == connectionMap.end()) {
-		std::clog << "Reset recieved for unknown connection\n";
-		return;
-	}
-	connectionMap.erase(conIndex);
-	std::clog << "Reset recieved for connection: " << IpAddr::toString(packet->getSrc()) << "\n";
-}
 
 void Relay::processAppMessage(std::unique_ptr<MediaNet::Packet>& packet) {
 	NetClientSeqNum seqNumTag{};
@@ -161,7 +84,7 @@ void Relay::processSub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
   ShortName name;
   packet >> name;
   std::clog << "Adding Subscription for: " << name << std::endl;
-  fib->addSubscription(name, SubscriberInfo{name, packet->getSrc()});
+  fib->addSubscription(name, SubscriberInfo{name, packet->getSrc(), getRandom()});
 }
 
 void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNum& clientSeqNumTag) {
@@ -206,7 +129,7 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
 	ackTag.netRecvTimeUs = nowUs;
 	ack << ackTag;
 
-	transport.send(move(ack));
+	qServer.send(move(ack));
 
 	prevAckSeqNum = ackTag.netAckSeqNum;
 	prevRecvTimeUs = ackTag.netRecvTimeUs;
@@ -220,14 +143,12 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
   packet << name;
   packet << tag;
 
-  for(auto const& subscriber : subscribers) {
+  for(auto& subscriber : subscribers) {
 		auto subData = packet->clone(); // TODO - just clone header stuff
-		auto con = connectionMap.find(subscriber.face);
-		assert(con != connectionMap.end());
 		subData->setDst(subscriber.face);
 
 		NetRelaySeqNum netRelaySeqNum{};
-		netRelaySeqNum.relaySeqNum = con->second->relaySeqNum++;
+		netRelaySeqNum.relaySeqNum = subscriber.relaySeqNum++;
 		netRelaySeqNum.remoteSendTimeUs = nowUs;
 
 		subData << netRelaySeqNum;
@@ -244,7 +165,7 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
 		}
 
 		if (!simLoss) {
-			transport.send(move(subData));
+			qServer.send(move(subData));
 			std::clog << "*";
 		} else {
 			std::clog << "-";
@@ -264,18 +185,4 @@ void Relay::processRateRequest(std::unique_ptr<MediaNet::Packet> &packet) {
 void Relay::stop() {
   assert(0);
   // TODO
-}
-
-// TODO: make it static ?
-void Relay::sendSyncRequest(const MediaNet::IpAddr& to, uint64_t authSecret) {
-	auto syncAckPkt = std::make_unique<Packet>();
-	auto syncAck = NetSyncAck{};
-	const auto now = std::chrono::system_clock::now();
-	const auto duration = now.time_since_epoch();
-	syncAck.serverTimeMs = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-	syncAck.authSecret = authSecret;
-	syncAckPkt << PacketTag::headerMagicSynAck;
-	syncAckPkt << syncAck;
-	syncAckPkt->setDst(to);
-	transport.send(std::move(syncAckPkt));
 }
