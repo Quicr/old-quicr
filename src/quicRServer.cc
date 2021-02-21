@@ -14,7 +14,6 @@ QuicRServer::QuicRServer()
     : udpPipe(), fakeLossPipe(&udpPipe),
       connectionPipe(&fakeLossPipe), firstPipe(&connectionPipe) {
     firstPipe->updateMTU(1200,500);
-    firstPipe->updateRTT(100,200);
 }
 
 QuicRServer::~QuicRServer() { firstPipe->stop(); }
@@ -41,7 +40,6 @@ std::unique_ptr<Packet> QuicRServer::recv() {
       std::clog << "quicr recv very bad size = " << packet->size() << std::endl;
       continue;
     }
-
 
     bad = false;
   }

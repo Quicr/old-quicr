@@ -27,7 +27,7 @@ private:
 	uint32_t prevAckSeqNum = 0;
 	uint32_t prevRecvTimeUs = 0;
 
-	QuicRServer qServer;
+	MediaNet::QuicRServer qServer;
 	std::unique_ptr<Fib> fib;
 
 	std::mt19937 randomGen;

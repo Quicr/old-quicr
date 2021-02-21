@@ -26,6 +26,9 @@ struct Timer {
 	}
 };
 
+///
+/// ConnectionPipe
+///
 class ConnectionPipe : public PipeInterface {
 public:
   explicit ConnectionPipe(PipeInterface *t);
@@ -51,13 +54,13 @@ protected:
 	struct Connected {};
 	using State = std::variant<Start, ConnectionPending, Connected>;
 
-	static constexpr int syn_timeout_msec = 1000;
-	static constexpr int max_connection_retry_cnt = 5;
-
-  bool open = false; // use state
   State state = Start{};
 };
 
+
+///
+/// ClientConnectionPipe
+///
 class ClientConnectionPipe : public ConnectionPipe {
 public:
 	explicit ClientConnectionPipe(PipeInterface *t);
@@ -68,9 +71,12 @@ public:
 	std::unique_ptr<Packet> recv() override;
 
 private:
+	static constexpr int syn_timeout_msec = 1000;
+	static constexpr int max_connection_retry_cnt = 5;
 
 	void runSyncLoop();
 	void sendSync();
+
 
 	uint8_t syncs_awaiting_response = 0;
 	uint32_t senderID;
@@ -80,6 +86,11 @@ private:
 };
 
 
+///
+/// ServerConnectionPipe
+///
+
+// TODO: Add client connection status loop
 class ServerConnectionPipe : public ConnectionPipe {
 	using timepoint = std::chrono::time_point<std::chrono::steady_clock>;
 public:
@@ -100,7 +111,6 @@ private:
 
 	void processSyn(std::unique_ptr<MediaNet::Packet>& packet);
 	void processRst(std::unique_ptr<MediaNet::Packet>& packet);
-
 	void sendSyncAck(const MediaNet::IpAddr& to, uint64_t authSecret);
 
 	// TODO: need to timeout on the entries in this map to
@@ -108,9 +118,7 @@ private:
 	std::map<MediaNet::IpAddr, std::tuple<timepoint, uint32_t>> cookies;
 	std::map<MediaNet::IpAddr, std::unique_ptr<Connection>> connectionMap;
 
-	uint64_t cookie = 0;
-
-	// TODO revisit this
+	// TODO revisit this (use cryptographic random)
 	std::mt19937 randomGen;
 	std::uniform_int_distribution<uint32_t> randomDist;
 	std::function<uint32_t()> getRandom;

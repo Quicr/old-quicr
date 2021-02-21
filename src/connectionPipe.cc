@@ -1,5 +1,3 @@
-
-
 #include <cassert>
 #include <thread>
 #include <random>
@@ -11,7 +9,7 @@
 using namespace MediaNet;
 
 ConnectionPipe::ConnectionPipe(PipeInterface *t)
-    : PipeInterface(t), open(false){}
+    : PipeInterface(t) {}
 
 bool ConnectionPipe::start(const uint16_t port, const std::string server,
                            PipeInterface *upStrm) {
@@ -26,7 +24,6 @@ bool ConnectionPipe::ready() const {
 }
 
 void ConnectionPipe::stop() {
-	open = false;
 	state = Start{};
 	auto packet = std::make_unique<Packet>();
 	assert(packet);
@@ -61,9 +58,9 @@ std::unique_ptr<Packet> ClientConnectionPipe::recv() {
 	}
 
 	auto tag = nextTag(packet);
+
 	if (tag == PacketTag::syncAck) {
-		std::clog << "ConnectionPipe: Got syncAck" << std::endl;
-		state = Connected{};
+		//std::clog << "ConnectionPipe: Got syncAck" << std::endl;
 
 		NetSyncAck syncAck{};
 		packet >> syncAck;
@@ -79,13 +76,13 @@ std::unique_ptr<Packet> ClientConnectionPipe::recv() {
 			runSyncLoop();
 			syncLoopRunning = true;
 		}
-
+		state = Connected{};
 		// don't need to report syncAck up in the chain
 		return nullptr;
 	} else if (tag == PacketTag::rstRetry) {
 		NetRstRetry rstRetry{};
 		packet >> rstRetry;
-		std::clog << "ConnectionPipe: Got rstRetry: cookie " << rstRetry.cookie << std::endl;
+		//std::clog << "ConnectionPipe: Got rstRetry: cookie " << rstRetry.cookie << std::endl;
 		cookie = rstRetry.cookie;
 		sendSync();
 		return nullptr;
@@ -117,9 +114,9 @@ void ClientConnectionPipe::sendSync() {
 	synReq.versionVec = 1;
 	synReq.cookie = cookie;
 	synReq.authSecret = token;
-	std::clog << "syncConnection: cookie:" << synReq.cookie << std::endl;
+	//std::clog << "syncConnection: cookie:" << synReq.cookie << std::endl;
 	packet << synReq;
-	std::clog <<"sync Packet" << packet->to_hex() << std::endl;
+	//std::clog <<"sync Packet" << packet->to_hex() << std::endl;
 	send(move(packet));
 	state = ConnectionPending{};
 }
@@ -157,7 +154,6 @@ ServerConnectionPipe::ServerConnectionPipe(PipeInterface *t)
 	randomGen.seed(randDev()); // TODO - should use crypto random
 	getRandom = std::bind(randomDist, randomGen);
 }
-
 
 bool ServerConnectionPipe::start(uint16_t port, std::string server, PipeInterface *upStream) {
 	bool ret = ConnectionPipe::start(port, server, upStream);
@@ -201,7 +197,7 @@ void ServerConnectionPipe::processSyn(std::unique_ptr<MediaNet::Packet> &packet)
 		// existing connection
 		std::unique_ptr<Connection> &con = connectionMap[packet->getSrc()];
 		con->lastSyn = std::chrono::steady_clock::now();
-		std::clog << "existing connection\n";
+		//std::clog << "existing connection\n";
 		sendSyncAck(packet->getSrc(), sync.authSecret);
 		return;
 	}
@@ -241,7 +237,7 @@ void ServerConnectionPipe::processSyn(std::unique_ptr<MediaNet::Packet> &packet)
 	// good sync new connection
 	connectionMap[packet->getSrc()] = std::make_unique<Connection>(getRandom(), cookie);
 	cookies.erase(it);
-	std::clog << "Added connection\n";
+	std::clog << "Added connection:" << MediaNet::IpAddr::toString(packet->getSrc()) << std::endl;
 	sendSyncAck(packet->getSrc(), sync.authSecret);
 }
 

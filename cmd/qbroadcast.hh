@@ -23,14 +23,14 @@ public:
   explicit BroadcastRelay(uint16_t port);
   void process();
 	void processAppMessage(std::unique_ptr<MediaNet::Packet>& packet);
-	void processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNum& clientSeqNumTa);
+	void processPub(std::unique_ptr<MediaNet::Packet> &packet, MediaNet::NetClientSeqNum& clientSeqNumTa);
 	void processSub(std::unique_ptr<MediaNet::Packet>& packet, MediaNet::NetClientSeqNum& clientSeqNum);
 	void processRate(std::unique_ptr<MediaNet::Packet> &packet);
 
 private:
   uint32_t prevAckSeqNum = 0;
   uint32_t prevRecvTimeUs = 0;
-  QuicRServer qServer;
+  MediaNet::QuicRServer qServer;
 	std::map<MediaNet::ShortName, std::unique_ptr<Connection>> connectionMap;
 
 	std::mt19937 randomGen;
