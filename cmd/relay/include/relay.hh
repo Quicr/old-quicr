@@ -31,7 +31,7 @@ private:
 	void processSub(std::unique_ptr<MediaNet::Packet>& packet, MediaNet::NetClientSeqNum& clientSeqNum);
 	void processPub(std::unique_ptr<MediaNet::Packet>& packet, MediaNet::NetClientSeqNum& clientSeqNum);
 
-	void sendSyncRequest(const MediaNet::IpAddr& to, uint64_t serverTimeMs);
+	void sendSyncRequest(const MediaNet::IpAddr& to, uint64_t serverTimeMs, uint64_t authSecret);
 
 	uint32_t prevAckSeqNum = 0;
 	uint32_t prevRecvTimeUs = 0;

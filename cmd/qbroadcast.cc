@@ -147,6 +147,9 @@ void BroadcastRelay::processSyn(std::unique_ptr<MediaNet::Packet> &packet) {
             << " from=" << IpAddr::toString(packet->getSrc())
             << " len=" << packet->fullSize() << std::endl;
 
+	NetSyncReq sync = {};
+	packet >> sync;
+
 	auto conIndex = connectionMap.find(packet->getSrc());
 	if(conIndex != connectionMap.end()) {
 		// existing connection
@@ -159,7 +162,9 @@ void BroadcastRelay::processSyn(std::unique_ptr<MediaNet::Packet> &packet) {
 		// send synAck
 		// TODO: use proper values
 		auto syncAckPkt = std::make_unique<Packet>();
-		auto syncAck = NetSyncAck{0};
+		auto syncAck = NetSyncAck{};
+		syncAck.serverTimeMs = 0; // TODO fix this
+		syncAck.authSecret = sync.authSecret; // TODO: this needs to set OOB, not copied
 		syncAckPkt << PacketTag::headerMagicSynAck;
 		syncAckPkt << syncAck;
 		syncAckPkt->setDst(packet->getSrc());
@@ -188,9 +193,7 @@ void BroadcastRelay::processSyn(std::unique_ptr<MediaNet::Packet> &packet) {
   // cookie exists, verify it matches
   auto& [when, cookie] = it->second;
   // TODO: verify now() - when is within in acceptable limits
-	NetSyncReq sync = {};
-	packet >> sync;
-	std::clog << "Cookie:" << sync.cookie << ", Version:" << sync.versionVec << std::endl;
+ 	std::clog << "Cookie:" << sync.cookie << ", Version:" << sync.versionVec << std::endl;
 	if (sync.cookie != cookie) {
 		// bad cookie, reset the connection
 		auto rstPkt = std::make_unique<Packet>();
@@ -206,7 +209,9 @@ void BroadcastRelay::processSyn(std::unique_ptr<MediaNet::Packet> &packet) {
 	cookies.erase(it);
 	std::clog << "Added connection\n";
 	auto syncAckPkt = std::make_unique<Packet>();
-	auto syncAck = NetSyncAck{0};
+	auto syncAck = NetSyncAck{};
+	syncAck.serverTimeMs = 0; // TODO fix this
+	syncAck.authSecret = sync.authSecret;
 	syncAckPkt << PacketTag::headerMagicSynAck;
 	syncAckPkt << syncAck;
 	syncAckPkt->setDst(packet->getSrc());
@@ -220,7 +225,7 @@ void BroadcastRelay::processRst(std::unique_ptr<MediaNet::Packet> &packet) {
 		return;
 	}
 	connectionMap.erase(conIndex);
-	std::clog << "Reset recieved for connection: " << IpAddr::toString(packet->getSrc()) << "\n";
+	std::clog << "Reset received for connection: " << IpAddr::toString(packet->getSrc()) << "\n";
 }
 
 #ifdef __clang__

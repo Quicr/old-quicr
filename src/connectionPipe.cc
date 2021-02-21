@@ -54,13 +54,21 @@ std::unique_ptr<Packet> ConnectionPipe::recv() {
 				state =  Connected{};
 				NetSyncAck syncAck{};
 				packet >> syncAck;
+
+				if (token != syncAck.authSecret) {
+					std::clog << "Auth token mismatch\n";
+					stop();
+					return nullptr;
+				}
+
 				// kickoff periodic sync flow
 				if (!syncLoopRunning) {
 					runSyncLoop();
 					syncLoopRunning = true;
 				}
-			// don't need to report syncAck up in the chain
-			return nullptr;
+
+				// don't need to report syncAck up in the chain
+				return nullptr;
 			}
 		case PacketTag::rstRetry:
 			NetRstRetry rstRetry{};
@@ -71,7 +79,12 @@ std::unique_ptr<Packet> ConnectionPipe::recv() {
 			return nullptr;
 	}
 
-	return packet;
+	if (std::holds_alternative<Connected>(state)) {
+		return packet;
+	}
+
+	return nullptr;
+
 }
 
 void ConnectionPipe::setAuthInfo(uint32_t sender, uint64_t token_in) {
@@ -89,6 +102,7 @@ void ConnectionPipe::sendSync() {
 	synReq.senderId = senderID;
 	synReq.versionVec = 1;
 	synReq.cookie = cookie;
+	synReq.authSecret = token;
 	std::clog << "syncConnection: cookie:" << synReq.cookie << std::endl;
 	packet << synReq;
 	std::clog <<"sync Packet" << packet->to_hex() << std::endl;

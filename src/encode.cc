@@ -349,6 +349,7 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   p << msg.clientTimeMs;
   p << msg.versionVec;
   p << msg.cookie;
+	p << msg.authSecret;
 
   p << PacketTag::sync;
 
@@ -364,6 +365,7 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetSyncReq &msg) {
 	PacketTag tag = PacketTag::none;
 	bool ok = true;
 	ok &= p >> tag;
+	ok &= p >> msg.authSecret;
 	ok &= p >> msg.cookie;
 	ok &= p >> msg.versionVec;
 	ok &= p >> msg.clientTimeMs;
@@ -383,6 +385,8 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
 																							const NetSyncAck &msg) {
   // TODO add other fields
 	p << msg.serverTimeMs;
+	p << msg.authSecret;
+
 	p << PacketTag::syncAck;
 
 	return p;
@@ -397,6 +401,7 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetSyncAck &msg) {
 	PacketTag tag = PacketTag::none;
 	bool ok = true;
 	ok &= p >> tag;
+	ok &= p >> msg.authSecret;
 	ok &= p >> msg.serverTimeMs;
 	if (!ok) {
 		std::cerr << "problem parsing syncAck" << std::endl;

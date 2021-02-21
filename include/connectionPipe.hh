@@ -58,6 +58,7 @@ private:
 	static constexpr int syn_timeout_msec = 1000;
 	static constexpr int connection_setup_timeout_msec = 5000;
 	static constexpr int max_connection_retry_cnt = 5;
+
 	void runSyncLoop();
 	void sendSync();
 

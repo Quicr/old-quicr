@@ -96,6 +96,7 @@ struct NetSyncReq {
   uint64_t clientTimeMs;
   uint64_t versionVec;
   uint64_t cookie;
+  uint64_t authSecret;
   // todo: add origin, auth-info
 };
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
@@ -106,7 +107,9 @@ bool operator>>(std::unique_ptr<Packet> &p, NetSyncReq &msg);
 /* SYN ACK */
 struct NetSyncAck {
 	uint64_t serverTimeMs;
+	uint64_t authSecret;
 };
+
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
 																		const NetSyncAck &msg);
 bool operator>>(std::unique_ptr<Packet> &p, NetSyncAck &msg);
