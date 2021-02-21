@@ -2,12 +2,13 @@
 
 #include <cstdint>
 #include <memory>
-#include <mutex>
-#include <queue>
 #include <string>
 #include <thread>
 #include <variant>
 #include <optional>
+#include <functional>
+#include <random>
+#include <map>
 
 #include "packet.hh"
 #include "pipeInterface.hh"
@@ -28,27 +29,22 @@ struct Timer {
 class ConnectionPipe : public PipeInterface {
 public:
   explicit ConnectionPipe(PipeInterface *t);
-  void setAuthInfo(uint32_t sender, uint64_t t);
-  bool start(uint16_t port, std::string server,
+	bool ready() const override;
+	void stop() override;
+	virtual bool start(uint16_t port, std::string server,
              PipeInterface *upStream) override;
-  bool ready() const override;
-  void stop() override;
 
-  std::unique_ptr<Packet> recv() override;
-
-private:
+protected:
 	//             +------> Start
 	//             |          |
 	//       fail/ |          | sync
 	//       Rst   |          V
 	//             +---- ConnectionPending
-	//             |          |
-	//             |          | syncAck
-	//             |          V
-	//             +------ Connected <----+
-	//  											|						| syn/synAck
-	//  											|						|
-	//  											+------------
+	//             |         ^    |
+	//             |    syn  |    | syncAck
+	//             |         |    V
+	//             +------ Connected
+	//
 
 	struct Start {};
 	struct ConnectionPending {};
@@ -56,19 +52,69 @@ private:
 	using State = std::variant<Start, ConnectionPending, Connected>;
 
 	static constexpr int syn_timeout_msec = 1000;
-	static constexpr int connection_setup_timeout_msec = 5000;
 	static constexpr int max_connection_retry_cnt = 5;
+
+  bool open = false; // use state
+  State state = Start{};
+};
+
+class ClientConnectionPipe : public ConnectionPipe {
+public:
+	explicit ClientConnectionPipe(PipeInterface *t);
+	void setAuthInfo(uint32_t sender, uint64_t t);
+	bool start(uint16_t port, std::string server,
+										 PipeInterface *upStream) override;
+
+	std::unique_ptr<Packet> recv() override;
+
+private:
 
 	void runSyncLoop();
 	void sendSync();
 
 	uint8_t syncs_awaiting_response = 0;
 	uint32_t senderID;
-  uint64_t token;
-  uint64_t cookie = 0;
-  bool open = false; // use state
-  State state = State{};
-  bool syncLoopRunning = false;
+	uint64_t token;
+	uint64_t cookie = 0;
+	bool syncLoopRunning = false;
 };
+
+
+class ServerConnectionPipe : public ConnectionPipe {
+	using timepoint = std::chrono::time_point<std::chrono::steady_clock>;
+public:
+	class Connection {
+	public:
+		Connection(uint32_t relaySeq, uint64_t cookie_in);
+		uint32_t relaySeqNum;
+		uint64_t  cookie;
+		timepoint lastSyn;
+	};
+
+	explicit ServerConnectionPipe(PipeInterface *t);
+	bool start(uint16_t port, std::string server,
+						 PipeInterface *upStream) override;
+	std::unique_ptr<Packet> recv() override;
+
+private:
+
+	void processSyn(std::unique_ptr<MediaNet::Packet>& packet);
+	void processRst(std::unique_ptr<MediaNet::Packet>& packet);
+
+	void sendSyncAck(const MediaNet::IpAddr& to, uint64_t authSecret);
+
+	// TODO: need to timeout on the entries in this map to
+	// avoid DOS attacks
+	std::map<MediaNet::IpAddr, std::tuple<timepoint, uint32_t>> cookies;
+	std::map<MediaNet::IpAddr, std::unique_ptr<Connection>> connectionMap;
+
+	uint64_t cookie = 0;
+
+	// TODO revisit this
+	std::mt19937 randomGen;
+	std::uniform_int_distribution<uint32_t> randomDist;
+	std::function<uint32_t()> getRandom;
+};
+
 
 } // namespace MediaNet

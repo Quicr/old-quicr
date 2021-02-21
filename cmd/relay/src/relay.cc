@@ -68,7 +68,7 @@ void Relay::processSyn(std::unique_ptr<MediaNet::Packet> &packet) {
 		std::unique_ptr<Connection> &con = connectionMap[packet->getSrc()];
 		con->lastSyn = std::chrono::steady_clock::now();
 		std::clog << "existing connection\n";
-		sendSyncRequest(packet->getSrc(), 0, sync.authSecret);
+		sendSyncRequest(packet->getSrc(), sync.authSecret);
 		return;
 	}
 
@@ -108,7 +108,7 @@ void Relay::processSyn(std::unique_ptr<MediaNet::Packet> &packet) {
 	connectionMap[packet->getSrc()] = std::make_unique<Connection>(getRandom(), cookie);
 	cookies.erase(it);
 	std::clog << "Added connection\n";
-	sendSyncRequest(packet->getSrc(), 0, sync.authSecret);
+	sendSyncRequest(packet->getSrc(), sync.authSecret);
 
 }
 
@@ -267,10 +267,12 @@ void Relay::stop() {
 }
 
 // TODO: make it static ?
-void Relay::sendSyncRequest(const MediaNet::IpAddr& to, uint64_t serverTimeMs, uint64_t authSecret) {
+void Relay::sendSyncRequest(const MediaNet::IpAddr& to, uint64_t authSecret) {
 	auto syncAckPkt = std::make_unique<Packet>();
 	auto syncAck = NetSyncAck{};
-	syncAck.serverTimeMs = serverTimeMs;
+	const auto now = std::chrono::system_clock::now();
+	const auto duration = now.time_since_epoch();
+	syncAck.serverTimeMs = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
 	syncAck.authSecret = authSecret;
 	syncAckPkt << PacketTag::headerMagicSynAck;
 	syncAckPkt << syncAck;

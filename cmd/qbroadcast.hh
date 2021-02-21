@@ -7,39 +7,33 @@
 
 #include "packet.hh"
 #include "udpPipe.hh"
+#include "quicRServer.hh"
 
 class Connection {
 public:
-  Connection(uint32_t relaySeq, uint64_t cookie_in);
-  // const MediaNet::IpAddr remoteAddr; // get from map
-  uint32_t relaySeqNum;
-  uint64_t  cookie;
-  std::chrono::time_point<std::chrono::steady_clock> lastSyn;
+	Connection(uint32_t relaySeq, const MediaNet::IpAddr& addr);
+	uint32_t relaySeqNum;
+	MediaNet::IpAddr address;
+	std::chrono::time_point<std::chrono::steady_clock> lastSyn;
 };
 
 class BroadcastRelay {
 public:
-  using timepoint = std::chrono::time_point<std::chrono::steady_clock>;
 
   explicit BroadcastRelay(uint16_t port);
   void process();
-  void processSyn(std::unique_ptr<MediaNet::Packet> &packet);
-  void processPub(std::unique_ptr<MediaNet::Packet> &packet);
-  void processRate(std::unique_ptr<MediaNet::Packet> &packet);
-	void processRst(std::unique_ptr<MediaNet::Packet> &packet);
+	void processAppMessage(std::unique_ptr<MediaNet::Packet>& packet);
+	void processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNum& clientSeqNumTa);
+	void processSub(std::unique_ptr<MediaNet::Packet>& packet, MediaNet::NetClientSeqNum& clientSeqNum);
+	void processRate(std::unique_ptr<MediaNet::Packet> &packet);
 
 private:
   uint32_t prevAckSeqNum = 0;
   uint32_t prevRecvTimeUs = 0;
-  MediaNet::UdpPipe &transport;
-
-  std::map<MediaNet::IpAddr, std::unique_ptr<Connection>> connectionMap;
-
-  // TODO: need to timeout on the entries in this map to
-	// avoid DOS attacks
-	std::map<MediaNet::IpAddr, std::tuple<timepoint, uint32_t>> cookies;
+  QuicRServer qServer;
+	std::map<MediaNet::ShortName, std::unique_ptr<Connection>> connectionMap;
 
 	std::mt19937 randomGen;
-  std::uniform_int_distribution<uint32_t> randomDist;
-  std::function<uint32_t()> getRandom;
+	std::uniform_int_distribution<uint32_t> randomDist;
+	std::function<uint32_t()> getRandom;
 };

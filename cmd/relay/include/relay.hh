@@ -11,7 +11,7 @@ public:
 	Connection(uint32_t relaySeq, uint64_t cookie_in);
 	// const MediaNet::IpAddr remoteAddr; // get from map
 	uint32_t relaySeqNum;
-	uint64_t  cookie;
+	uint64_t cookie;
 	std::chrono::time_point<std::chrono::steady_clock> lastSyn;
 };
 
@@ -31,7 +31,7 @@ private:
 	void processSub(std::unique_ptr<MediaNet::Packet>& packet, MediaNet::NetClientSeqNum& clientSeqNum);
 	void processPub(std::unique_ptr<MediaNet::Packet>& packet, MediaNet::NetClientSeqNum& clientSeqNum);
 
-	void sendSyncRequest(const MediaNet::IpAddr& to, uint64_t serverTimeMs, uint64_t authSecret);
+	void sendSyncRequest(const MediaNet::IpAddr& to, uint64_t authSecret);
 
 	uint32_t prevAckSeqNum = 0;
 	uint32_t prevRecvTimeUs = 0;
