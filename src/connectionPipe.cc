@@ -47,6 +47,7 @@ bool ClientConnectionPipe::start(uint16_t port, std::string server, PipeInterfac
 	bool ret = ConnectionPipe::start(port, server, upStream);
 	if (ret) {
 		sendSync();
+		runSyncLoop();
 	}
 	return ret;
 }
@@ -60,7 +61,7 @@ std::unique_ptr<Packet> ClientConnectionPipe::recv() {
 	auto tag = nextTag(packet);
 
 	if (tag == PacketTag::syncAck) {
-		//std::clog << "ConnectionPipe: Got syncAck" << std::endl;
+		std::clog << "ConnectionPipe: Got syncAck" << std::endl;
 
 		NetSyncAck syncAck{};
 		packet >> syncAck;
@@ -82,7 +83,7 @@ std::unique_ptr<Packet> ClientConnectionPipe::recv() {
 	} else if (tag == PacketTag::rstRetry) {
 		NetRstRetry rstRetry{};
 		packet >> rstRetry;
-		//std::clog << "ConnectionPipe: Got rstRetry: cookie " << rstRetry.cookie << std::endl;
+		std::clog << "ConnectionPipe: Got rstRetry: cookie " << rstRetry.cookie << std::endl;
 		cookie = rstRetry.cookie;
 		sendSync();
 		return nullptr;
@@ -122,6 +123,10 @@ void ClientConnectionPipe::sendSync() {
 }
 
 void ClientConnectionPipe::runSyncLoop() {
+	if (!syncLoopRunning) {
+		syncLoopRunning = true;
+	}
+
 	auto resync_callback = [=]() {
 		// check status and send a resync event
 		if (std::holds_alternative<ConnectionPending>(state)) {
@@ -142,6 +147,7 @@ void ClientConnectionPipe::runSyncLoop() {
 ///
 /// ServerConnectionPipe
 ///
+bool dont_send_sync_ack = false;
 
 ServerConnectionPipe::Connection::Connection(uint32_t relaySeq, uint64_t cookie_in)
 				: relaySeqNum(relaySeq)
@@ -252,6 +258,10 @@ void ServerConnectionPipe::processRst(std::unique_ptr<MediaNet::Packet> &packet)
 }
 
 void ServerConnectionPipe::sendSyncAck(const MediaNet::IpAddr &to, uint64_t authSecret) {
+	if(dont_send_sync_ack) {
+		std::clog << "Server not sending syn-ack\n";
+		return;
+	}
 	auto syncAckPkt = std::make_unique<Packet>();
 	auto syncAck = NetSyncAck{};
 	const auto now = std::chrono::system_clock::now();
