@@ -8,7 +8,9 @@
 using namespace MediaNet;
 bool dont_send_synack = false;
 
-Connection::Connection(uint32_t randNum) : relaySeqNum(randNum) {}
+Connection::Connection(uint32_t relaySeq, uint64_t cookie_in)
+: relaySeqNum(relaySeq)
+ ,cookie(cookie_in) {}
 
 BroadcastRelay::BroadcastRelay(uint16_t port) : transport(*new UdpPipe) {
   transport.start(port, "", nullptr);
@@ -54,7 +56,7 @@ void BroadcastRelay::process() {
     return;
   }
 
-  std::clog << std::endl << "Got bad packet" << packet->to_hex() << std::endl;
+  std::clog << std::endl << "Got bad packet: Tag" << int(nextTag(packet)) << std::endl;
 }
 
 void BroadcastRelay::processRate(std::unique_ptr<MediaNet::Packet> &packet) {
@@ -145,21 +147,65 @@ void BroadcastRelay::processSyn(std::unique_ptr<MediaNet::Packet> &packet) {
             << " from=" << IpAddr::toString(packet->getSrc())
             << " len=" << packet->fullSize() << std::endl;
 
-  auto conIndex = connectionMap.find(packet->getSrc());
-  if (conIndex == connectionMap.end()) {
-  	// new connection
-    connectionMap[packet->getSrc()] = std::make_unique<Connection>(getRandom());
-  }
+	auto conIndex = connectionMap.find(packet->getSrc());
+	if(conIndex != connectionMap.end()) {
+		// existing connection
+		std::unique_ptr<Connection> &con = connectionMap[packet->getSrc()];
+		con->lastSyn = std::chrono::steady_clock::now();
+		if (dont_send_synack) {
+			return;
+		}
+		std::clog << "existing connection\n";
+		// send synAck
+		// TODO: use proper values
+		auto syncAckPkt = std::make_unique<Packet>();
+		auto syncAck = NetSyncAck{0};
+		syncAckPkt << PacketTag::headerMagicSynAck;
+		syncAckPkt << syncAck;
+		syncAckPkt->setDst(packet->getSrc());
+		transport.send(std::move(syncAckPkt));
+		return;
+	}
 
-  std::unique_ptr<Connection> &con = connectionMap[packet->getSrc()];
-  con->lastSyn = std::chrono::steady_clock::now();
+	// new connection or retry with cookie
+  auto it = cookies.find(packet->getSrc());
+  if (it == cookies.end()) {
+  	// send a reset with retry cookie
+  	auto cookie = random();
+  	cookies.emplace(packet->getSrc(),
+									 std::make_tuple(std::chrono::steady_clock::now(), cookie));
 
-  if (dont_send_synack) {
-  	return;
+  	auto rstPkt = std::make_unique<Packet>();
+		NetRstRetry rstRetry{};
+		rstRetry.cookie = cookie;
+		rstPkt << PacketTag::headerMagicRst;
+		rstPkt << rstRetry;
+		rstPkt->setDst(packet->getSrc());
+		transport.send(std::move(rstPkt));
+		std::clog << "new connection attempt, generate cookie:" << cookie << std::endl;
+		return;
   }
-  // send synAck
-  // TODO: use proper values
-  auto syncAckPkt = std::make_unique<Packet>();
+  // cookie exists, verify it matches
+  auto& [when, cookie] = it->second;
+  // TODO: verify now() - when is within in acceptable limits
+	NetSyncReq sync = {};
+	packet >> sync;
+	std::clog << "Cookie:" << sync.cookie << ", Version:" << sync.versionVec << std::endl;
+	if (sync.cookie != cookie) {
+		// bad cookie, reset the connection
+		auto rstPkt = std::make_unique<Packet>();
+		rstPkt << PacketTag::headerMagicRst;
+		rstPkt->setDst(packet->getSrc());
+		transport.send(std::move(rstPkt));
+		std::clog << "incorrect cookie: found:" << sync.cookie << ", expected:" << cookie<< std::endl;
+		return;
+	}
+
+	// good sync new connection
+	connectionMap[packet->getSrc()] = std::make_unique<Connection>(getRandom(), cookie);
+	cookies.erase(it);
+	std::clog << "Added connection\n";
+	auto syncAckPkt = std::make_unique<Packet>();
 	auto syncAck = NetSyncAck{0};
 	syncAckPkt << PacketTag::headerMagicSynAck;
 	syncAckPkt << syncAck;

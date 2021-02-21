@@ -190,10 +190,16 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
   case packetTagTrunc(PacketTag::headerMagicRst):
     tag = PacketTag::headerMagicRst;
     break;
-  case packetTagTrunc(PacketTag::headerMagicDataCrazy):
-    tag = PacketTag::headerMagicDataCrazy;
-    break;
-  case packetTagTrunc(PacketTag::headerMagicRstCrazy):
+	case packetTagTrunc(PacketTag::rstRetry):
+		tag = PacketTag::rstRetry;
+		break;
+	case packetTagTrunc(PacketTag::rstRedirect):
+		tag = PacketTag::rstRedirect;
+		break;
+	case packetTagTrunc(PacketTag::headerMagicDataCrazy):
+		tag = PacketTag::headerMagicDataCrazy;
+		break;
+	case packetTagTrunc(PacketTag::headerMagicRstCrazy):
     tag = PacketTag::headerMagicRstCrazy;
     break;
   case packetTagTrunc(PacketTag::headerMagicSynCrazy):
@@ -342,10 +348,32 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   p << msg.senderId;
   p << msg.clientTimeMs;
   p << msg.versionVec;
+  p << msg.cookie;
 
   p << PacketTag::sync;
 
   return p;
+}
+
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetSyncReq &msg) {
+	if (nextTag(p) != PacketTag::sync) {
+		std::cerr << "Did not find expected PacketTag::sync" << std::endl;
+		return false;
+	}
+
+	PacketTag tag = PacketTag::none;
+	bool ok = true;
+	ok &= p >> tag;
+	ok &= p >> msg.cookie;
+	ok &= p >> msg.versionVec;
+	ok &= p >> msg.clientTimeMs;
+	ok &= p >> msg.senderId;
+
+	if (!ok) {
+		std::cerr << "problem parsing sync" << std::endl;
+	}
+
+	return ok;
 }
 
 ///
@@ -380,7 +408,7 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetSyncAck &msg) {
 ///
 /// NetReset and Types
 ///
-std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
 																		const NetRstRetry &msg) {
 
 	p << msg.cookie;
@@ -388,7 +416,7 @@ std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
 	return p;
 }
 
-bool operator>>(std::unique_ptr<Packet> &p, NetRstRetry &msg) {
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRstRetry &msg) {
 	if (nextTag(p) != PacketTag::rstRetry) {
 		std::cerr << "Did not find expected PacketTag::RstRetry" << std::endl;
 		return false;
@@ -405,13 +433,13 @@ bool operator>>(std::unique_ptr<Packet> &p, NetRstRetry &msg) {
 	return ok;
 }
 
-std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
 																		const NetRstRedirect &msg) {
 	// TODO: implement
 	assert(0);
 }
 
-bool operator>>(std::unique_ptr<Packet> &p, NetRstRedirect &msg) {
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRstRedirect &msg) {
 	// TODO: implement
 	assert(0);
 }

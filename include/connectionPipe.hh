@@ -7,6 +7,7 @@
 #include <string>
 #include <thread>
 #include <variant>
+#include <optional>
 
 #include "packet.hh"
 #include "pipeInterface.hh"
@@ -55,14 +56,18 @@ private:
 	using State = std::variant<Start, ConnectionPending, Connected>;
 
 	static constexpr int syn_timeout_msec = 1000;
+	static constexpr int connection_setup_timeout_msec = 5000;
 	static constexpr int max_connection_retry_cnt = 5;
-	void syncConnection();
+	void runSyncLoop();
+	void sendSync();
 
 	uint8_t syncs_awaiting_response = 0;
 	uint32_t senderID;
   uint64_t token;
+  uint64_t cookie = 0;
   bool open = false; // use state
   State state = State{};
+  bool syncLoopRunning = false;
 };
 
 } // namespace MediaNet

@@ -95,6 +95,7 @@ struct NetSyncReq {
   uint32_t senderId;
   uint64_t clientTimeMs;
   uint64_t versionVec;
+  uint64_t cookie;
   // todo: add origin, auth-info
 };
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
@@ -113,7 +114,7 @@ bool operator>>(std::unique_ptr<Packet> &p, NetSyncAck &msg);
 
 /* Reset*/
 struct NetReset {
-	uint32_t cookie;
+	uint64_t cookie;
 };
 
 // TODO: fill in the details

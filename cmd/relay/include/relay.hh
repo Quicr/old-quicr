@@ -5,12 +5,12 @@
 #include "packet.hh"
 #include "udpPipe.hh"
 #include "fib.hh"
-
+using time_point = std::chrono::time_point<std::chrono::steady_clock>;
 class Connection {
 public:
 	Connection(uint32_t relaySeqNo);
 	uint32_t relaySeqNum;
-	std::chrono::time_point<std::chrono::steady_clock> lastSyn;
+	time_point lastSyn;
 
 };
 
@@ -35,6 +35,7 @@ private:
 
 	MediaNet::UdpPipe& transport;
 	std::map<MediaNet::IpAddr, std::unique_ptr<Connection>> connectionMap;
+
 	std::unique_ptr<Fib> fib;
 	// TODO revisit this
 	std::mt19937 randomGen;

@@ -15,7 +15,7 @@ ConnectionPipe::ConnectionPipe(PipeInterface *t)
 bool ConnectionPipe::start(const uint16_t port, const std::string server,
                            PipeInterface *upStrm) {
   bool ret = PipeInterface::start(port, server, upStrm);
-  syncConnection();
+  sendSync();
   return ret;
 }
 
@@ -30,7 +30,7 @@ bool ConnectionPipe::ready() const {
 void ConnectionPipe::stop() {
   open = false;
   state = Start{};
-
+	syncLoopRunning = false;
   auto packet = std::make_unique<Packet>();
   assert(packet);
   packet << PacketTag::headerMagicRst;
@@ -48,16 +48,30 @@ std::unique_ptr<Packet> ConnectionPipe::recv() {
 
 	// TODO: be careful when implementing the server side
 	auto tag = nextTag(packet);
-	if(tag != PacketTag::syncAck) {
-		return packet;
+	switch (tag) {
+		case PacketTag::syncAck: {
+				std::clog << "ConnectionPipe: Got syncAck" << std::endl;
+				state =  Connected{};
+				NetSyncAck syncAck{};
+				packet >> syncAck;
+				// kickoff periodic sync flow
+				if (!syncLoopRunning) {
+					runSyncLoop();
+					syncLoopRunning = true;
+				}
+			// don't need to report syncAck up in the chain
+			return nullptr;
+			}
+		case PacketTag::rstRetry:
+			NetRstRetry rstRetry{};
+			packet >> rstRetry;
+			std::clog << "ConnectionPipe: Got rstRetry: cookie " << rstRetry.cookie << std::endl;
+			cookie = rstRetry.cookie;
+			sendSync();
+			return nullptr;
 	}
 
-	// got syncAck
-	state =  Connected{};
-	NetSyncAck syncAck{};
-	packet >> syncAck;
-	// don't need to report syncAck up in the chain
-	return nullptr;
+	return packet;
 }
 
 void ConnectionPipe::setAuthInfo(uint32_t sender, uint64_t token_in) {
@@ -66,7 +80,7 @@ void ConnectionPipe::setAuthInfo(uint32_t sender, uint64_t token_in) {
   token = token_in;
 }
 
-void ConnectionPipe::syncConnection() {
+void ConnectionPipe::sendSync() {
 	auto packet = std::make_unique<Packet>();
 	assert(packet);
 	packet << PacketTag::headerMagicSyn;
@@ -74,12 +88,15 @@ void ConnectionPipe::syncConnection() {
 	synReq.clientTimeMs = 0; // TODO
 	synReq.senderId = senderID;
 	synReq.versionVec = 1;
+	synReq.cookie = cookie;
+	std::clog << "syncConnection: cookie:" << synReq.cookie << std::endl;
 	packet << synReq;
-
+	std::clog <<"sync Packet" << packet->to_hex() << std::endl;
 	send(move(packet));
 	state = ConnectionPending{};
+}
 
-	// resync timer
+void ConnectionPipe::runSyncLoop() {
 	auto resync_callback = [=]() {
 		// check status and send a resync event
 		if (std::holds_alternative<ConnectionPending>(state)) {
@@ -87,11 +104,13 @@ void ConnectionPipe::syncConnection() {
 				stop();
 				return;
 			}
-
 			syncs_awaiting_response++;
 		}
-		syncConnection();
+		runSyncLoop();
 	};
+
+
+	sendSync();
 
 	Timer::wait(syn_timeout_msec, std::move(resync_callback));
 }
