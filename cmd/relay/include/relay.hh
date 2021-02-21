@@ -2,10 +2,23 @@
 
 #include <map>
 #include <random>
+#include <functional>
+#include <chrono>
+#include <memory>
+
 #include "packet.hh"
-#include "udpPipe.hh"
 #include "fib.hh"
 #include "quicRServer.hh"
+
+
+class Connection {
+public:
+	Connection(uint32_t relaySeqNo);
+	uint32_t relaySeqNum;
+	std::chrono::time_point<std::chrono::steady_clock> lastSyn;
+
+};
+>>>>>>> 85487b98cea0dd2044c9acda28a7316a912928c7
 
 class Relay {
 

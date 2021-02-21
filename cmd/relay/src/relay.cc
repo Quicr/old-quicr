@@ -2,6 +2,9 @@
 #include <chrono>
 #include <thread>
 #include <random>
+#include <functional>
+#include <cassert>
+
 
 #include "../include/relay.hh"
 #include "../include/multimap_fib.hh"
