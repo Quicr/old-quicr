@@ -88,13 +88,8 @@ std::unique_ptr<Packet> ClientConnectionPipe::recv() {
 		sendSync();
 		return nullptr;
 	}
-
-	if (std::holds_alternative<Connected>(state)) {
-		return packet;
-	}
-
-	return nullptr;
-
+  // TODO support servr rst/redirect
+	return packet;
 }
 
 void ClientConnectionPipe::setAuthInfo(uint32_t sender, uint64_t token_in) {
