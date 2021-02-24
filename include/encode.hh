@@ -50,11 +50,11 @@ enum struct PacketTag : uint32_t {
 
   appData = packetTagGen(1, 255, true),
   appDataFrag = packetTagGen(9, 255, true),
-  clientSeqNum = packetTagGen(2, 4, true), // make part of appData ???
+  clientData = packetTagGen(2, 4, true), // make part of appData ???
   ack = packetTagGen(3, 255, true),
   sync = packetTagGen(4, 255, true),
   shortName = packetTagGen(5, 18, true),
-  relaySeqNum = packetTagGen(7, 8, true),
+  relayData = packetTagGen(7, 8, true),
   relayRateReq = packetTagGen(6, 4, true),
   subscribeReq = packetTagGen(8, 0, true),
 	syncAck = packetTagGen(10, 255, true),
@@ -86,7 +86,6 @@ bool operator>>(std::unique_ptr<Packet> &p, PacketTag &tag);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, PacketTag tag);
 
 /* ShortName */
-
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const ShortName &msg);
 
@@ -174,20 +173,20 @@ struct NetRedirect4RResp {
 };
 */
 
-struct NetClientSeqNum {
+struct ClientData {
   uint32_t clientSeqNum;
 };
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
-                                    const NetClientSeqNum &msg);
-bool operator>>(std::unique_ptr<Packet> &p, NetClientSeqNum &msg);
+                                    const ClientData &msg);
+bool operator>>(std::unique_ptr<Packet> &p, ClientData &msg);
 
-struct NetRelaySeqNum {
+struct RelayData {
   uint32_t relaySeqNum;
-  uint32_t remoteSendTimeUs;
+	uint32_t remoteSendTimeUs;
 };
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
-                                    const NetRelaySeqNum &msg);
-bool operator>>(std::unique_ptr<Packet> &p, NetRelaySeqNum &msg);
+                                    const RelayData &msg);
+bool operator>>(std::unique_ptr<Packet> &p, RelayData &msg);
 
 /* NetAck */
 struct NetAck {

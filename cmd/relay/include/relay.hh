@@ -30,8 +30,8 @@ private:
 	void processSyn(std::unique_ptr<MediaNet::Packet>& packet);
 	void processAppMessage(std::unique_ptr<MediaNet::Packet>& packet);
 	void processRateRequest(std::unique_ptr<MediaNet::Packet>& packet);
-	void processSub(std::unique_ptr<MediaNet::Packet>& packet, MediaNet::NetClientSeqNum& clientSeqNum);
-	void processPub(std::unique_ptr<MediaNet::Packet>& packet, MediaNet::NetClientSeqNum& clientSeqNum);
+	void processSub(std::unique_ptr<MediaNet::Packet>& packet, MediaNet::ClientData& clientSeqNum);
+	void processPub(std::unique_ptr<MediaNet::Packet>& packet, MediaNet::ClientData& clientSeqNum);
 
 
 	uint32_t prevAckSeqNum = 0;

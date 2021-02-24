@@ -37,7 +37,7 @@ void BroadcastRelay::process() {
     return;
   }
 
-  if (nextTag(packet) == PacketTag::clientSeqNum) {
+  if (nextTag(packet) == PacketTag::clientData) {
     processPub(packet);
     return;
   }
@@ -66,7 +66,7 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet) {
       (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(dn)
           .count();
 
-  NetClientSeqNum seqNumTag;
+	ClientData seqNumTag;
   packet >> seqNumTag;
 
   std::clog << ".";
@@ -108,7 +108,7 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet) {
 
     subData->setDst(addr);
 
-    NetRelaySeqNum netRelaySeqNum;
+    RelayData netRelaySeqNum;
     netRelaySeqNum.relaySeqNum = con->relaySeqNum++;
     netRelaySeqNum.remoteSendTimeUs = nowUs;
 

@@ -10,12 +10,14 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const ShortName &msg) {
 
   int startSize = p->size();
-  p << msg.resourceID; // size = 8
-  p << msg.senderID;   // size = 4
-  p << msg.sourceID;   // size = 1
-  p << msg.mediaTime;  // size = 4
+
   p << msg.fragmentID; // size = 1
-  int endSize = p->size();
+	p << msg.mediaTime;  // size = 4
+	p << msg.sourceID;   // size = 1
+	p << msg.senderID;   // size = 4
+	p << msg.resourceID; // size = 8
+
+	int endSize = p->size();
 
   assert((endSize - startSize) == 18);
 
@@ -33,11 +35,11 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, ShortName &msg) {
   PacketTag tag = PacketTag::none;
   bool ok = true;
   ok &= p >> tag;
-  ok &= p >> msg.fragmentID;
-  ok &= p >> msg.mediaTime;
-  ok &= p >> msg.sourceID;
-  ok &= p >> msg.senderID;
-  ok &= p >> msg.resourceID;
+	ok &= p >> msg.resourceID;
+	ok &= p >> msg.senderID;
+	ok &= p >> msg.sourceID;
+	ok &= p >> msg.mediaTime;
+	ok &= p >> msg.fragmentID;
 
   if (!ok) {
     std::cerr << "problem parsing shortName" << std::endl;
@@ -47,16 +49,16 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, ShortName &msg) {
 }
 
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const NetClientSeqNum &msg) {
+                                              const ClientData &msg) {
   p << msg.clientSeqNum;
-  p << PacketTag::clientSeqNum;
+  p << PacketTag::clientData;
 
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetClientSeqNum &msg) {
-  if (nextTag(p) != PacketTag::clientSeqNum) {
-    std::cerr << "Did not find expected PacketTag::clientSeqNum" << std::endl;
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p, ClientData &msg) {
+  if (nextTag(p) != PacketTag::clientData) {
+    std::cerr << "Did not find expected PacketTag::ClientData" << std::endl;
     return false;
   }
 
@@ -66,7 +68,7 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetClientSeqNum &msg) {
   ok &= p >> msg.clientSeqNum;
 
   if (!ok) {
-    std::cerr << "problem parsing NetClientSeqNum" << std::endl;
+    std::cerr << "problem parsing ClientData" << std::endl;
   }
 
   return ok;
@@ -75,19 +77,19 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetClientSeqNum &msg) {
 /********* RelaySeqNum TAG ********/
 
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const NetRelaySeqNum &msg) {
+                                              const RelayData &msg) {
 
-  p << msg.relaySeqNum;
   p << msg.remoteSendTimeUs;
+	p << msg.relaySeqNum;
 
-  p << PacketTag::relaySeqNum;
+  p << PacketTag::relayData;
 
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRelaySeqNum &msg) {
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p, RelayData &msg) {
 
-  if (nextTag(p) != PacketTag::relaySeqNum) {
+  if (nextTag(p) != PacketTag::relayData) {
     std::cerr << "Did not find expected PacketTag::remoteSeqNum" << std::endl;
     return false;
   }
@@ -95,11 +97,11 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRelaySeqNum &msg) {
   PacketTag tag = PacketTag::none;
   bool ok = true;
   ok &= p >> tag;
-  ok &= p >> msg.remoteSendTimeUs;
   ok &= p >> msg.relaySeqNum;
+	ok &= p >> msg.remoteSendTimeUs;
 
-  if (!ok) {
-    std::cerr << "problem parsing NetRelaySeqNum" << std::endl;
+	if (!ok) {
+    std::cerr << "problem parsing RelayData" << std::endl;
   }
 
   return ok;
@@ -156,14 +158,14 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
   case packetTagTrunc(PacketTag::none):
     tag = PacketTag::none;
     break;
-  case packetTagTrunc(PacketTag::appData):
+	case packetTagTrunc(PacketTag::appData):
     tag = PacketTag::appData;
     break;
   case packetTagTrunc(PacketTag::appDataFrag):
     tag = PacketTag::appDataFrag;
     break;
-  case packetTagTrunc(PacketTag::clientSeqNum):
-    tag = PacketTag::clientSeqNum;
+  case packetTagTrunc(PacketTag::clientData):
+    tag = PacketTag::clientData;
     break;
   case packetTagTrunc(PacketTag::ack):
     tag = PacketTag::ack;
@@ -177,8 +179,8 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
   case packetTagTrunc(PacketTag::shortName):
     tag = PacketTag::shortName;
     break;
-  case packetTagTrunc(PacketTag::relaySeqNum):
-    tag = PacketTag::relaySeqNum;
+  case packetTagTrunc(PacketTag::relayData):
+    tag = PacketTag::relayData;
     break;
   case packetTagTrunc(PacketTag::relayRateReq):
     tag = PacketTag::relayRateReq;
@@ -682,16 +684,19 @@ std::ostream &MediaNet::operator<<(std::ostream &stream, Packet &packet) {
 		case PacketTag::shortName:
 			stream << " shortName";
 			break;
-    case PacketTag::relaySeqNum:
-      stream << " remoteSeqNum";
-      break;
     case PacketTag::appData:
       stream << " appData(" << len << ")";
       break;
     case PacketTag::appDataFrag:
       stream << " appDataFrag(" << len << ")";
       break;
-    default:
+		case PacketTag::clientData:
+			stream << " clientData";
+			break;
+    	case PacketTag::relayData:
+			stream << " relayData";
+			break;
+		default:
       stream << " tag:" << (((uint16_t)tag) >> 8) << "(" << len << ")";
     }
     if (((uint16_t)tag) == 0) {

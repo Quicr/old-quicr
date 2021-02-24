@@ -14,12 +14,63 @@ using namespace MediaNet;
 TEST_CASE("string encode/decode") {
 	std::string origin_in = "This is a string with : , * () + - !";
 	auto packet = std::make_unique<Packet>();
-  std::cout << packet->to_hex() << std::endl;
   std::string origin_out;
   packet >> origin_out;
   CHECK_EQ(origin_in, origin_in);
 }
 
+TEST_CASE("ShortName encode/decode") {
+	ShortName name{};
+	name.resourceID = 0xAA;
+	name.senderID = 0xBB;
+	name.sourceID = 0xCC;
+	name.mediaTime = 0xDD;
+	name.fragmentID = 0xEE;
+
+	auto packet = std::make_unique<Packet>();
+	packet << name;
+
+	ShortName name_out{};
+	packet >> name_out;
+
+	CHECK_EQ(name.resourceID, name_out.resourceID);
+	CHECK_EQ(name.senderID, name_out.senderID);
+	CHECK_EQ(name.sourceID, name_out.sourceID);
+	CHECK_EQ(name.mediaTime, name_out.mediaTime);
+	CHECK_EQ(name.fragmentID, name_out.fragmentID);
+}
+
+
+TEST_CASE("RelayData encode/decode") {
+	auto packet = std::make_unique<Packet>();
+
+	RelayData data_in{};
+	data_in.relaySeqNum = 0x1000;
+	data_in.remoteSendTimeUs  = 0;
+
+	packet << data_in;
+
+	RelayData data_out{};
+	packet >> data_out;
+
+	CHECK_EQ(data_in.remoteSendTimeUs, data_out.remoteSendTimeUs);
+	CHECK_EQ(data_in.relaySeqNum, data_out.relaySeqNum);
+}
+
+
+TEST_CASE("ClientData encode/decode") {
+	auto packet = std::make_unique<Packet>();
+
+	ClientData data_in{};
+	data_in.clientSeqNum = 0x1000;
+
+	packet << data_in;
+
+	ClientData data_out{};
+	packet >> data_out;
+
+	CHECK_EQ(data_in.clientSeqNum, data_out.clientSeqNum);
+}
 
 ///
 /// Protocol messages encode/decode

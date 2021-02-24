@@ -40,7 +40,7 @@ void Relay::process() {
 	switch (tag) {
 		case PacketTag::sync:
 			return processSyn(packet);
-		case PacketTag::clientSeqNum:
+		case PacketTag::relayData:
 			return processAppMessage(packet);
 		case PacketTag::relayRateReq:
 			return processRateRequest(packet);
@@ -71,7 +71,7 @@ void Relay::processSyn(std::unique_ptr<MediaNet::Packet> &packet) {
 }
 
 void Relay::processAppMessage(std::unique_ptr<MediaNet::Packet>& packet) {
-	NetClientSeqNum seqNumTag{};
+	ClientData seqNumTag{};
 	packet >> seqNumTag;
 
 	//auto tag = PacketTag::none;
@@ -87,7 +87,7 @@ void Relay::processAppMessage(std::unique_ptr<MediaNet::Packet>& packet) {
 }
 
 /// Subscribe Request
-void Relay::processSub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNum& clientSeqNumTag) {
+void Relay::processSub(std::unique_ptr<MediaNet::Packet> &packet, ClientData& clientSeqNumTag) {
 	std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
 	std::chrono::steady_clock::duration dn = tp.time_since_epoch();
 	uint32_t nowUs =
@@ -112,7 +112,7 @@ void Relay::processSub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
   fib->addSubscription(name, SubscriberInfo{name, packet->getSrc()});
 }
 
-void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNum& clientSeqNumTag) {
+void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, ClientData& clientSeqNumTag) {
 	std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
 	std::chrono::steady_clock::duration dn = tp.time_since_epoch();
 	uint32_t nowUs =
@@ -174,7 +174,7 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
 		assert(con != connectionMap.end());
 		subData->setDst(subscriber.face);
 
-		NetRelaySeqNum netRelaySeqNum{};
+		RelayData netRelaySeqNum{};
 		netRelaySeqNum.relaySeqNum = con->second->relaySeqNum++;
 		netRelaySeqNum.remoteSendTimeUs = nowUs;
 

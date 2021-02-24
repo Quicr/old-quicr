@@ -95,7 +95,7 @@ void PacerPipe::runNetSend() {
       continue;
     }
 
-    NetClientSeqNum seqTag{};
+		ClientData seqTag{};
     static uint32_t nextSeqNum = 0; // TODO - add mutex etc
     seqTag.clientSeqNum = (nextSeqNum++);
     packet << seqTag;
@@ -157,8 +157,8 @@ void PacerPipe::runNetRecv() {
     }
 
     // look for incoming remoteSeqNum
-    if (nextTag(packet) == PacketTag::relaySeqNum) {
-      NetRelaySeqNum relaySeqNum{};
+    if (nextTag(packet) == PacketTag::relayData) {
+      RelayData relaySeqNum{};
       packet >> relaySeqNum;
 
       uint16_t bits = (uint16_t)packet->fullSize() * 8 +
