@@ -158,11 +158,11 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
   case packetTagTrunc(PacketTag::none):
     tag = PacketTag::none;
     break;
-	case packetTagTrunc(PacketTag::appData):
-    tag = PacketTag::appData;
+	case packetTagTrunc(PacketTag::pubData):
+    tag = PacketTag::pubData;
     break;
-  case packetTagTrunc(PacketTag::appDataFrag):
-    tag = PacketTag::appDataFrag;
+  case packetTagTrunc(PacketTag::pubDataFrag):
+    tag = PacketTag::pubDataFrag;
     break;
   case packetTagTrunc(PacketTag::clientData):
     tag = PacketTag::clientData;
@@ -307,6 +307,13 @@ std::unique_ptr<Packet>& MediaNet::operator<<(std::unique_ptr<Packet> &p,
 	return p;
 }
 
+std::unique_ptr<Packet>& MediaNet::operator<<(std::unique_ptr<Packet>& p,
+																							const std::vector<uint8_t>&  val) {
+	p->push_back(val);
+	p->push_back(val.size());
+	return p;
+}
+
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p, uint64_t &val) {
   uint8_t byte[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -376,6 +383,22 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, std::string& val) {
 	auto vecData = p->back(vecSize);
 	val.resize(vecSize);
 	val.assign(vecData.begin(), vecData.end());
+	return true;
+}
+
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p, std::vector<uint8_t>& val) {
+	if (p->fullSize() == 0) {
+		return false;
+	}
+
+	uint8_t vecSize = 0;
+	p >> vecSize;
+	if(vecSize == 0) {
+		return false;
+	}
+
+	val.resize(vecSize);
+	val = p->back(vecSize);
 	return true;
 }
 
@@ -539,6 +562,69 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRateReq &msg) {
   return ok;
 }
 
+///
+/// NetMsgPublish
+///
+
+std::unique_ptr<Packet>& MediaNet::operator<<(std::unique_ptr<Packet> &p,
+																							const EncryptedDataBlock &data) {
+
+	p << data.cipherText;
+	p << data.authTagLen;
+
+	return p;
+}
+
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p, EncryptedDataBlock &data) {
+
+	bool ok = true;
+	ok &= p >> data.authTagLen;
+	ok &= p >> data.cipherText;
+
+	if (!ok) {
+		std::cerr << "problem parsing EncryptedDataBlock" << std::endl;
+	}
+
+	return ok;
+}
+
+std::unique_ptr<Packet>& MediaNet::operator<<(std::unique_ptr<Packet> &p,
+																		const NetMsgPublish &msg) {
+
+	p << msg.encryptedDataBlock;
+	p << msg.lifetime;
+	p << msg.name;
+	p << PacketTag::pubData;
+
+	return p;
+}
+
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetMsgPublish &msg) {
+	if (nextTag(p) != PacketTag::pubData) {
+		std::clog << "Did not find expected PacketTag::netMsgPublish" << std::endl;
+		return false;
+	}
+
+	PacketTag tag = PacketTag::none;
+	bool ok = true;
+
+	ok &= p >> tag;
+	ok &= p >> msg.name;
+	ok &= p >> msg.lifetime;
+	ok &= p >> msg.encryptedDataBlock;
+
+	if (!ok) {
+		std::cerr << "problem parsing netMsgPublish" << std::endl;
+	}
+
+	return ok;
+}
+
+
+///
+/// var-ints
+///
+
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               uintVar_t v) {
   uint64_t val = fromVarInt(v);
@@ -684,11 +770,11 @@ std::ostream &MediaNet::operator<<(std::ostream &stream, Packet &packet) {
 		case PacketTag::shortName:
 			stream << " shortName";
 			break;
-    case PacketTag::appData:
-      stream << " appData(" << len << ")";
+    case PacketTag::pubData:
+      stream << " pubData(" << len << ")";
       break;
-    case PacketTag::appDataFrag:
-      stream << " appDataFrag(" << len << ")";
+    case PacketTag::pubDataFrag:
+      stream << " pubDataFrag(" << len << ")";
       break;
 		case PacketTag::clientData:
 			stream << " clientData";

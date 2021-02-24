@@ -77,7 +77,7 @@ void Relay::processAppMessage(std::unique_ptr<MediaNet::Packet>& packet) {
 	//auto tag = PacketTag::none;
 	//packet >> tag;
 	auto tag = nextTag(packet);
-	if(tag == PacketTag::appData) {
+	if(tag == PacketTag::pubData) {
 		return processPub(packet, seqNumTag);
 	} else if(tag  == PacketTag::subscribeReq) {
 		return processSub(packet, seqNumTag);

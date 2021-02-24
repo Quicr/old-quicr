@@ -23,5 +23,6 @@ public:
 };
 
 std::ostream &operator<<(std::ostream &stream, const ShortName &name);
+bool operator==(const ShortName&, const ShortName&);
 
 } // namespace MediaNet

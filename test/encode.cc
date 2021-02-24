@@ -1,7 +1,7 @@
 #include <doctest/doctest.h>
 #include <memory>
-#include <iostream>
 
+#include "name.hh"
 #include "encode.hh"
 #include "packet.hh"
 
@@ -175,5 +175,21 @@ TEST_CASE("NetAck encode/decode") {
 	CHECK_EQ(ack_in.netAckSeqNum, ack_out.netAckSeqNum);
 }
 
+TEST_CASE("NetMsgPublish encode/decode") {
+	auto cipherText = std::vector<uint8_t>{0x1, 0x2, 0x3, 0x4, 0x5, 0xA};
+	NetMsgPublish msg_in;
+	msg_in.name = ShortName(1, 2, 3);
+	msg_in.lifetime = toVarInt(0x1000);
+	msg_in.encryptedDataBlock = EncryptedDataBlock{1, cipherText};
 
+	auto packet = std::make_unique<Packet>();
+	packet << msg_in;
+
+	NetMsgPublish msg_out{};
+	packet >> msg_out;
+
+	CHECK(msg_in.name == msg_out.name);
+	CHECK_EQ(msg_in.lifetime, msg_out.lifetime);
+	CHECK_EQ(msg_in.encryptedDataBlock.cipherText, msg_out.encryptedDataBlock.cipherText);
+}
 

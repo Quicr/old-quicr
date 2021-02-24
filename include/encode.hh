@@ -2,7 +2,7 @@
 
 #include <cstdint>
 #include <memory>
-
+#include <vector>
 #include "name.hh"
 
 namespace MediaNet {
@@ -14,12 +14,14 @@ std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint32_t val);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint16_t val);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint8_t val);
 std::unique_ptr<Packet>& operator<<(std::unique_ptr<Packet> &p, const std::string& val);
+std::unique_ptr<Packet>& operator<<(std::unique_ptr<Packet>& p, const std::vector<uint8_t>& val);
 
 bool operator>>(std::unique_ptr<Packet> &p, uint64_t &val);
 bool operator>>(std::unique_ptr<Packet> &p, uint32_t &val);
 bool operator>>(std::unique_ptr<Packet> &p, uint16_t &val);
 bool operator>>(std::unique_ptr<Packet> &p, uint8_t &val);
 bool operator>>(std::unique_ptr<Packet> &p, std::string &val);
+bool operator>>(std::unique_ptr<Packet> &p, std::vector<uint8_t>& val);
 
 enum class uintVar_t : uint64_t {};
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uintVar_t val);
@@ -48,8 +50,8 @@ enum struct PacketTag : uint32_t {
 
   none = packetTagGen(0, 0, true), // must be smallest tag
 
-  appData = packetTagGen(1, 255, true),
-  appDataFrag = packetTagGen(9, 255, true),
+  pubData = packetTagGen(1, 255, true),
+  pubDataFrag = packetTagGen(9, 255, true),
   clientData = packetTagGen(2, 4, true), // make part of appData ???
   ack = packetTagGen(3, 255, true),
   sync = packetTagGen(4, 255, true),
@@ -199,6 +201,27 @@ struct NetAck {
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const NetAck &msg);
 bool operator>>(std::unique_ptr<Packet> &p, NetAck &msg);
+
+/* EncDataBlock */
+struct EncryptedDataBlock {
+	uint8_t authTagLen;
+	std::vector<uint8_t> cipherText; // enc + auth
+};
+std::unique_ptr<Packet>& operator<<(std::unique_ptr<Packet> &p, const EncryptedDataBlock &data);
+bool operator>>(std::unique_ptr<Packet> &p, EncryptedDataBlock &msg);
+
+/* NetMsgPublish */
+struct NetMsgPublish {
+	ShortName name;
+	uintVar_t lifetime;
+	EncryptedDataBlock encryptedDataBlock;
+};
+
+
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const NetMsgPublish &msg);
+bool operator>>(std::unique_ptr<Packet> &p, NetMsgPublish &msg);
+
 
 /*
 struct NetMsgSubReq {
