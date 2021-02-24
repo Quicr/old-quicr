@@ -105,11 +105,14 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRelaySeqNum &msg) {
   return ok;
 }
 
-/********* ACK TAG ***************/
-
+///
+/// NetAck
+///
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const NetAck &msg) {
-  p << msg.netAckSeqNum;
+  p << msg.ecnVec;
+	p << msg.ackVec;
+	p << msg.netAckSeqNum;
   p << msg.netRecvTimeUs;
   p << PacketTag::ack;
 
@@ -118,7 +121,7 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
 
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetAck &msg) {
   if (nextTag(p) != PacketTag::ack) {
-    // std::clog << "Did not find expected PacketTag::ack" << std::endl;
+    std::clog << "Did not find expected PacketTag::ack" << std::endl;
     return false;
   }
 
@@ -127,8 +130,10 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetAck &msg) {
   ok &= p >> tag;
   ok &= p >> msg.netRecvTimeUs;
   ok &= p >> msg.netAckSeqNum;
+	ok &= p >> msg.ackVec;
+	ok &= p >> msg.ecnVec;
 
-  if (!ok) {
+	if (!ok) {
     std::cerr << "problem parsing NetAck" << std::endl;
   }
 
@@ -501,6 +506,9 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRstRedirect &msg) {
 	return ok;
 }
 
+///
+/// NetRateReq
+///
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const NetRateReq &msg) {
   p << msg.bitrateKbps;
@@ -651,13 +659,29 @@ std::ostream &MediaNet::operator<<(std::ostream &stream, Packet &packet) {
     case PacketTag::headerMagicSynCrazy:
       stream << " magicSync";
       break;
-    case PacketTag::headerMagicRst:
+		case PacketTag::headerMagicSynAck:
+		case PacketTag::headerMagicSynAckCrazy:
+			stream << " magicSyncAck";
+			break;
+		case PacketTag::headerMagicRst:
     case PacketTag::headerMagicRstCrazy:
       stream << " magicReset";
       break;
-    case PacketTag::shortName:
-      stream << " shortName";
-      break;
+		case PacketTag::sync:
+			stream << " sync";
+			break;
+		case PacketTag::syncAck:
+			stream << " syncAck";
+			break;
+		case PacketTag::rstRetry:
+			stream << " rstRetry";
+			break;
+		case PacketTag::rstRedirect:
+			stream << " rstRedirect";
+			break;
+		case PacketTag::shortName:
+			stream << " shortName";
+			break;
     case PacketTag::relaySeqNum:
       stream << " remoteSeqNum";
       break;

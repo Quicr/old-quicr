@@ -91,3 +91,38 @@ TEST_CASE("NetRstRedirect encode/decode") {
 	CHECK_EQ(redirect_in.origin, redirect_out.origin);
 	CHECK_EQ(redirect_in.port, redirect_out.port);
 }
+
+TEST_CASE("NetRateReq encode/decode") {
+	NetRateReq req_in;
+	req_in.bitrateKbps = toVarInt(0x1000);
+
+	auto packet = std::make_unique<Packet>();
+	packet << req_in;
+
+	NetRateReq req_out;
+	packet >> req_out;
+
+	CHECK_EQ(req_in.bitrateKbps, req_out.bitrateKbps);
+}
+
+TEST_CASE("NetAck encode/decode") {
+	NetAck ack_in;
+	ack_in.ecnVec = 0x1;
+	ack_in.ackVec = 0x4;
+	ack_in.netAckSeqNum = 0x1000;
+	ack_in.netRecvTimeUs = 0x2000;
+
+	auto packet = std::make_unique<Packet>();
+	packet << ack_in;
+
+	NetAck ack_out;
+	packet >> ack_out;
+
+	CHECK_EQ(ack_in.ecnVec, ack_out.ecnVec);
+	CHECK_EQ(ack_in.ackVec, ack_out.ackVec);
+	CHECK_EQ(ack_in.netRecvTimeUs, ack_out.netRecvTimeUs);
+	CHECK_EQ(ack_in.netAckSeqNum, ack_out.netAckSeqNum);
+}
+
+
+

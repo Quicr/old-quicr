@@ -136,7 +136,6 @@ bool operator>>(std::unique_ptr<Packet> &p, NetRstRedirect &msg);
 
 
 /* Rate Request */
-
 struct NetRateReq {
   uintVar_t bitrateKbps; // in kilo bits pers second
 };
@@ -190,8 +189,10 @@ std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const NetRelaySeqNum &msg);
 bool operator>>(std::unique_ptr<Packet> &p, NetRelaySeqNum &msg);
 
+/* NetAck */
 struct NetAck {
-  // todo - add ack and ECN vectors
+	uint32_t ackVec;
+	uint32_t ecnVec;
   uint32_t netAckSeqNum;
   uint32_t netRecvTimeUs;
 };
