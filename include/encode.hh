@@ -13,11 +13,13 @@ std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint64_t val);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint32_t val);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint16_t val);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint8_t val);
+std::unique_ptr<Packet>& operator<<(std::unique_ptr<Packet> &p, const std::string& val);
 
 bool operator>>(std::unique_ptr<Packet> &p, uint64_t &val);
 bool operator>>(std::unique_ptr<Packet> &p, uint32_t &val);
 bool operator>>(std::unique_ptr<Packet> &p, uint16_t &val);
 bool operator>>(std::unique_ptr<Packet> &p, uint8_t &val);
+bool operator>>(std::unique_ptr<Packet> &p, std::string &val);
 
 enum class uintVar_t : uint64_t {};
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uintVar_t val);
@@ -55,15 +57,20 @@ enum struct PacketTag : uint32_t {
   relaySeqNum = packetTagGen(7, 8, true),
   relayRateReq = packetTagGen(6, 4, true),
   subscribeReq = packetTagGen(8, 0, true),
+	syncAck = packetTagGen(10, 255, true),
+	rstRetry = packetTagGen(11, 255, true),
+	rstRedirect = packetTagGen(12, 255, true),
 
   // TODO - Could add nextReservedCodePoints of various lengths and MTI
 
   // This block of headerMagic values selected to multiplex with STUN/DTLS/RTP
   headerMagicData = packetTagGen(16, 0, true),
   headerMagicSyn = packetTagGen(18, 0, true),
-  headerMagicRst = packetTagGen(22, 0, true),
+	headerMagicSynAck = packetTagGen(20, 0, true),
+	headerMagicRst = packetTagGen(22, 0, true),
   headerMagicDataCrazy = packetTagGen(17, 0, true),
   headerMagicSynCrazy = packetTagGen(19, 0, true),
+	headerMagicSynAckCrazy = packetTagGen(21, 0, true),
   headerMagicRstCrazy = packetTagGen(23, 0, true),
 
   extraMagicVer1 = packetTagGen(12538, 0, false),
@@ -86,15 +93,47 @@ std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
 bool operator>>(std::unique_ptr<Packet> &p, ShortName &msg);
 
 /* SYNC Request */
-
 struct NetSyncReq {
+	uint32_t cookie;
+	std::string origin;
   uint32_t senderId;
   uint64_t clientTimeMs;
-  uint64_t versionVec;
+  uint64_t supportedFeaturesVec;
 };
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const NetSyncReq &msg);
 bool operator>>(std::unique_ptr<Packet> &p, NetSyncReq &msg);
+
+/* NetSyncAck */
+struct NetSyncAck {
+	uint64_t serverTimeMs;
+	uint64_t useFeaturesVec;
+};
+
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const NetSyncAck &msg);
+bool operator>>(std::unique_ptr<Packet> &p, NetSyncAck &msg);
+
+
+/* NetReset*/
+struct NetReset {
+	uint64_t cookie;
+};
+
+struct NetRstRetry: NetReset {};
+
+struct NetRstRedirect: NetReset {
+	std::string origin;
+	uint16_t port;
+};
+
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const NetRstRetry &msg);
+bool operator>>(std::unique_ptr<Packet> &p, NetRstRetry &msg);
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const NetRstRedirect &msg);
+bool operator>>(std::unique_ptr<Packet> &p, NetRstRedirect &msg);
+
 
 /* Rate Request */
 

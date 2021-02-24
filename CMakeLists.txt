@@ -20,7 +20,7 @@ elseif(MSVC)
     add_compile_options(/W4 /WX)
 endif()
 
-option(TESTING    "Build tests" OFF)
+option(TESTING    "Build tests" ON)
 
 ###
 ### Dependencies
