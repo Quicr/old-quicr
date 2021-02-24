@@ -15,6 +15,9 @@ all: ${BUILD_DIR}
 ${BUILD_DIR}: CMakeLists.txt
 	cmake -B${BUILD_DIR} -DCMAKE_BUILD_TYPE=Debug .
 
+test: ${BUILD_DIR} test/*
+	cmake --build ${BUILD_DIR} -DTESTING=ON --target quicr_test
+
 clean:
 	cmake --build ${BUILD_DIR} --target clean
 

@@ -20,6 +20,8 @@ elseif(MSVC)
     add_compile_options(/W4 /WX)
 endif()
 
+option(TESTING    "Build tests" OFF)
+
 ###
 ### Dependencies
 ###
@@ -75,3 +77,12 @@ target_include_directories(${LIBRARY_NAME} PUBLIC
 ###
 
 add_subdirectory(cmd)
+
+
+###
+### Tests
+###
+if(TESTING)
+    enable_testing()
+    add_subdirectory(test)
+endif()
