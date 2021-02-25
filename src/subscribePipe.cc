@@ -20,9 +20,10 @@ bool SubscribePipe::subscribe(const ShortName &name) {
   auto packet = std::make_unique<Packet>();
   packet->reserve(100); // TODO tune
 
+  auto subReq = Subscribe{name};
+  // TODO: moving setting header magic into a function
   packet << PacketTag::headerMagicData;
-  packet << name;
-  packet << PacketTag::subscribeReq;
+  packet << subReq;
 
   std::cout << "Subscribe: " << packet->to_hex() << std::endl;
   packet->setFEC(true);

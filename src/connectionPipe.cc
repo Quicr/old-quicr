@@ -30,7 +30,7 @@ bool ConnectionPipe::start(const uint16_t port, const std::string server,
   NetSyncReq synReq{};
   synReq.clientTimeMs = 0; // TODO
   synReq.senderId = senderID;
-  synReq.versionVec = 1;
+  synReq.supportedFeaturesVec = 1;
   packet << synReq;
 
   send(move(packet));

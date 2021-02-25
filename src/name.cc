@@ -42,6 +42,12 @@ std::ostream &MediaNet::operator<<(std::ostream &stream,
   return stream;
 }
 
+bool MediaNet::operator==(const ShortName& l, const ShortName&r) {
+	return (l.resourceID == r.resourceID && l.fragmentID == r.fragmentID
+					&& l.mediaTime == r.mediaTime && l.sourceID == r.sourceID
+					&& l.senderID == r.senderID);
+}
+
 // Note: no parsing of fragment and mediaTime is supported
 // since they are calculated via code.
 ShortName ShortName::fromString(const std::string &name_str){
