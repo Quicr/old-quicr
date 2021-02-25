@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <sys/types.h>
-
+#include <cassert>
 
 #if defined(__linux__) || defined(__APPLE__)
 #include <netinet/in.h>
