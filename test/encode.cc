@@ -33,11 +33,7 @@ TEST_CASE("ShortName encode/decode") {
 	ShortName name_out{};
 	packet >> name_out;
 
-	CHECK_EQ(name.resourceID, name_out.resourceID);
-	CHECK_EQ(name.senderID, name_out.senderID);
-	CHECK_EQ(name.sourceID, name_out.sourceID);
-	CHECK_EQ(name.mediaTime, name_out.mediaTime);
-	CHECK_EQ(name.fragmentID, name_out.fragmentID);
+	CHECK_EQ(name, name_out);
 }
 
 
@@ -160,7 +156,7 @@ TEST_CASE("NetAck encode/decode") {
 	NetAck ack_in;
 	ack_in.ecnVec = 0x1;
 	ack_in.ackVec = 0x4;
-	ack_in.netAckSeqNum = 0x1000;
+	ack_in.clientSeqNum = 0x1000;
 	ack_in.netRecvTimeUs = 0x2000;
 
 	auto packet = std::make_unique<Packet>();
@@ -172,24 +168,43 @@ TEST_CASE("NetAck encode/decode") {
 	CHECK_EQ(ack_in.ecnVec, ack_out.ecnVec);
 	CHECK_EQ(ack_in.ackVec, ack_out.ackVec);
 	CHECK_EQ(ack_in.netRecvTimeUs, ack_out.netRecvTimeUs);
-	CHECK_EQ(ack_in.netAckSeqNum, ack_out.netAckSeqNum);
+	CHECK_EQ(ack_in.clientSeqNum, ack_out.clientSeqNum);
 }
 
-TEST_CASE("NetMsgPublish encode/decode") {
+TEST_CASE("PubData encode/decode") {
 	auto cipherText = std::vector<uint8_t>{0x1, 0x2, 0x3, 0x4, 0x5, 0xA};
-	NetMsgPublish msg_in;
-	msg_in.name = ShortName(1, 2, 3);
-	msg_in.lifetime = toVarInt(0x1000);
-	msg_in.encryptedDataBlock = EncryptedDataBlock{1, cipherText};
+	PubData data_in;
+	data_in.name = ShortName(1, 2, 3);
+	data_in.lifetime = toVarInt(0x1000);
+	data_in.encryptedDataBlock = EncryptedDataBlock{1, cipherText};
 
 	auto packet = std::make_unique<Packet>();
-	packet << msg_in;
+	packet << data_in;
 
-	NetMsgPublish msg_out{};
-	packet >> msg_out;
+	PubData data_out{};
+	packet >> data_out;
 
-	CHECK(msg_in.name == msg_out.name);
-	CHECK_EQ(msg_in.lifetime, msg_out.lifetime);
-	CHECK_EQ(msg_in.encryptedDataBlock.cipherText, msg_out.encryptedDataBlock.cipherText);
+	CHECK(data_in.name == data_out.name);
+	CHECK_EQ(data_in.lifetime, data_out.lifetime);
+	CHECK_EQ(data_in.encryptedDataBlock.authTagLen, data_out.encryptedDataBlock.authTagLen);
+	CHECK_EQ(data_in.encryptedDataBlock.cipherText, data_out.encryptedDataBlock.cipherText);
 }
 
+TEST_CASE("PSubData encode/decode") {
+	auto cipherText = std::vector<uint8_t>{0x1, 0x2, 0x3, 0x4, 0x5, 0xA};
+	SubData data_in;
+	data_in.name = ShortName(1, 2, 3);
+	data_in.lifetime = toVarInt(0x1000);
+	data_in.encryptedDataBlock = EncryptedDataBlock{1, cipherText};
+
+	auto packet = std::make_unique<Packet>();
+	packet << data_in;
+
+	SubData data_out{};
+	packet >> data_out;
+
+	CHECK(data_in.name == data_out.name);
+	CHECK_EQ(data_in.lifetime, data_out.lifetime);
+	CHECK_EQ(data_in.encryptedDataBlock.authTagLen, data_out.encryptedDataBlock.authTagLen);
+	CHECK_EQ(data_in.encryptedDataBlock.cipherText, data_out.encryptedDataBlock.cipherText);
+}

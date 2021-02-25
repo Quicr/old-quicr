@@ -50,18 +50,20 @@ enum struct PacketTag : uint32_t {
 
   none = packetTagGen(0, 0, true), // must be smallest tag
 
-  pubData = packetTagGen(1, 255, true),
-  pubDataFrag = packetTagGen(9, 255, true),
-  clientData = packetTagGen(2, 4, true), // make part of appData ???
-  ack = packetTagGen(3, 255, true),
-  sync = packetTagGen(4, 255, true),
-  shortName = packetTagGen(5, 18, true),
-  relayData = packetTagGen(7, 8, true),
-  relayRateReq = packetTagGen(6, 4, true),
-  subscribeReq = packetTagGen(8, 0, true),
+	sync = packetTagGen(4, 255, true),
 	syncAck = packetTagGen(10, 255, true),
 	rstRetry = packetTagGen(11, 255, true),
 	rstRedirect = packetTagGen(12, 255, true),
+	clientData = packetTagGen(2, 4, true), // make part of appData ???
+	pubData = packetTagGen(1, 255, true),
+	pubDataFrag = packetTagGen(9, 255, true),
+	nack = packetTagGen(14, 255, true),
+	relayRateReq = packetTagGen(6, 4, true),
+	ack = packetTagGen(3, 255, true),
+	relayData = packetTagGen(7, 8, true),
+	subData = packetTagGen(13, 0, true),
+  subscribeReq = packetTagGen(8, 0, true),
+	shortName = packetTagGen(5, 18, true),
 
   // TODO - Could add nextReservedCodePoints of various lengths and MTI
 
@@ -75,7 +77,8 @@ enum struct PacketTag : uint32_t {
 	headerMagicSynAckCrazy = packetTagGen(21, 0, true),
   headerMagicRstCrazy = packetTagGen(23, 0, true),
 
-  extraMagicVer1 = packetTagGen(12538, 0, false),
+
+	extraMagicVer1 = packetTagGen(12538, 0, false),
 
   badTag = packetTagGen(16383, 0,
                         true), // must not have any tag values greater than this
@@ -144,57 +147,11 @@ std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const NetRateReq &msg);
 bool operator>>(std::unique_ptr<Packet> &p, NetRateReq &msg);
 
-/*
- * struct NetNonceReq {
-  uint32_t sourceId;
-  uint64_t timeNowMs;
-};
-struct NetNonceResp {
-  uint64_t clientToken;
-  bool timeOK;
-  bool sourceIdOK;
-};
-struct NetAuthReq {
-  uint32_t sourceId;
-  uint64_t timeNowMs;
-  uint64_t clientToken;
-  uint64_t authHash;
-};
-struct NetAuthResp {
-  bool authOK;
-};
-*/
-
-/*
-struct NetRedirect4RResp {
-  // no sourceId as sent from server
-  uint32_t clientSeqNum;
-  uint64_t clientToken;
-  uint32_t ipAddr;
-  uint16_t port;
-};
-*/
-
-struct ClientData {
-  uint32_t clientSeqNum;
-};
-std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
-                                    const ClientData &msg);
-bool operator>>(std::unique_ptr<Packet> &p, ClientData &msg);
-
-struct RelayData {
-  uint32_t relaySeqNum;
-	uint32_t remoteSendTimeUs;
-};
-std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
-                                    const RelayData &msg);
-bool operator>>(std::unique_ptr<Packet> &p, RelayData &msg);
-
 /* NetAck */
 struct NetAck {
 	uint32_t ackVec;
 	uint32_t ecnVec;
-  uint32_t netAckSeqNum;
+  uint32_t clientSeqNum;
   uint32_t netRecvTimeUs;
 };
 
@@ -202,7 +159,52 @@ std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const NetAck &msg);
 bool operator>>(std::unique_ptr<Packet> &p, NetAck &msg);
 
-/* EncDataBlock */
+
+/* NetNack */
+struct NetNack {
+	uint32_t relaySeqNum;
+};
+
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const NetNack &msg);
+bool operator>>(std::unique_ptr<Packet> &p, NetNack &msg);
+
+
+/* SubscribeRequest */
+struct Subscribe {
+	ShortName name;
+};
+
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const Subscribe &msg);
+bool operator>>(std::unique_ptr<Packet> &p, Subscribe &msg);
+
+///
+/// ClientData
+///
+struct ClientData {
+	uint32_t clientSeqNum;
+};
+
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const ClientData &msg);
+bool operator>>(std::unique_ptr<Packet> &p, ClientData &msg);
+
+///
+/// RelayData
+///
+struct RelayData {
+	uint32_t relaySeqNum;
+	uint32_t remoteSendTimeUs;
+};
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const RelayData &msg);
+bool operator>>(std::unique_ptr<Packet> &p, RelayData &msg);
+
+
+///
+/// EncDataBlock
+///
 struct EncryptedDataBlock {
 	uint8_t authTagLen;
 	std::vector<uint8_t> cipherText; // enc + auth
@@ -210,17 +212,29 @@ struct EncryptedDataBlock {
 std::unique_ptr<Packet>& operator<<(std::unique_ptr<Packet> &p, const EncryptedDataBlock &data);
 bool operator>>(std::unique_ptr<Packet> &p, EncryptedDataBlock &msg);
 
-/* NetMsgPublish */
-struct NetMsgPublish {
+
+///
+/// PubSubData and friends
+///
+struct PublishedData {
 	ShortName name;
 	uintVar_t lifetime;
 	EncryptedDataBlock encryptedDataBlock;
 };
 
+// sent by client in publish message
+struct PubData : public PublishedData {};
 
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
-																		const NetMsgPublish &msg);
-bool operator>>(std::unique_ptr<Packet> &p, NetMsgPublish &msg);
+																		const PubData &msg);
+bool operator>>(std::unique_ptr<Packet> &p, PubData &msg);
+
+// sent by relay to all the subscribers
+struct SubData : public PublishedData {};
+
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const SubData &msg);
+bool operator>>(std::unique_ptr<Packet> &p, SubData &msg);
 
 
 /*
@@ -273,6 +287,35 @@ struct NetMsgClientStats {
   uint32_t reserved1;
   uint32_t reserved2;
 };
+
+ * struct NetNonceReq {
+  uint32_t sourceId;
+  uint64_t timeNowMs;
+};
+struct NetNonceResp {
+  uint64_t clientToken;
+  bool timeOK;
+  bool sourceIdOK;
+};
+struct NetAuthReq {
+  uint32_t sourceId;
+  uint64_t timeNowMs;
+  uint64_t clientToken;
+  uint64_t authHash;
+};
+struct NetAuthResp {
+  bool authOK;
+};
+
+
+struct NetRedirect4RResp {
+  // no sourceId as sent from server
+  uint32_t clientSeqNum;
+  uint64_t clientToken;
+  uint32_t ipAddr;
+  uint16_t port;
+};
+
 */
 
 std::ostream &operator<<(std::ostream &stream, Packet &packet);

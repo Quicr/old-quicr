@@ -81,19 +81,18 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet) {
   // TODO - get rid of prev Ack tag and use ack vector
   if (prevAckSeqNum > 0) {
     NetAck prevAckTag{};
-    prevAckTag.netAckSeqNum = prevAckSeqNum;
+    prevAckTag.clientSeqNum = prevAckSeqNum;
     prevAckTag.netRecvTimeUs = prevRecvTimeUs;
     ack << prevAckTag;
   }
 
   NetAck ackTag{};
-  ackTag.netAckSeqNum = seqNumTag.clientSeqNum;
+  ackTag.clientSeqNum = seqNumTag.clientSeqNum;
   ackTag.netRecvTimeUs = nowUs;
   ack << ackTag;
-
   transport.send(move(ack));
 
-  prevAckSeqNum = ackTag.netAckSeqNum;
+  prevAckSeqNum = ackTag.clientSeqNum;
   prevRecvTimeUs = ackTag.netRecvTimeUs;
 
   // TODO - loop over connections and remove ones with old last Syn time

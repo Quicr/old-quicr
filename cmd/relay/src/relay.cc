@@ -95,13 +95,13 @@ void Relay::processSub(std::unique_ptr<MediaNet::Packet> &packet, ClientData& cl
 									.count();
 
 	// ack the packet
-	auto ack = std::make_unique<Packet>();
-	ack->setDst(packet->getSrc());
-	ack << PacketTag::headerMagicData;
-	NetAck ackTag{};
-	ackTag.netAckSeqNum = clientSeqNumTag.clientSeqNum;
-	ackTag.netRecvTimeUs = nowUs;
-	ack << ackTag;
+	auto ackPacket = std::make_unique<Packet>();
+	ackPacket->setDst(packet->getSrc());
+	ackPacket << PacketTag::headerMagicData;
+	NetAck ack{};
+	ack.clientSeqNum = clientSeqNumTag.clientSeqNum;
+	ack.netRecvTimeUs = nowUs;
+	ackPacket << ack;
 
 	// save the subscription
 	PacketTag tag;
@@ -144,19 +144,19 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, ClientData& cl
 	// TODO - get rid of prev Ack tag and use ack vector
 	if (prevAckSeqNum > 0) {
 		NetAck prevAckTag{};
-		prevAckTag.netAckSeqNum = prevAckSeqNum;
+		prevAckTag.clientSeqNum = prevAckSeqNum;
 		prevAckTag.netRecvTimeUs = prevRecvTimeUs;
 		ack << prevAckTag;
 	}
 
 	NetAck ackTag{};
-	ackTag.netAckSeqNum = clientSeqNumTag.clientSeqNum;
+	ackTag.clientSeqNum = clientSeqNumTag.clientSeqNum;
 	ackTag.netRecvTimeUs = nowUs;
 	ack << ackTag;
 
 	transport.send(move(ack));
 
-	prevAckSeqNum = ackTag.netAckSeqNum;
+	prevAckSeqNum = ackTag.clientSeqNum;
 	prevRecvTimeUs = ackTag.netRecvTimeUs;
 
   // find the matching subscribers

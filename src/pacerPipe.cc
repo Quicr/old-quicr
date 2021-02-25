@@ -152,7 +152,7 @@ void PacerPipe::runNetRecv() {
       NetAck ackTag{};
       packet >> ackTag;
       bool congested = false; // TODO - add to ACK
-      rateCtrl.recvAck(ackTag.netAckSeqNum, ackTag.netRecvTimeUs, nowUs, congested, haveAck );
+      rateCtrl.recvAck(ackTag.clientSeqNum, ackTag.netRecvTimeUs, nowUs, congested, haveAck );
       haveAck = false; // treat redundant ACK as received but not acks
     }
 
