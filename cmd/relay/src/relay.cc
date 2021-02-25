@@ -40,7 +40,7 @@ void Relay::process() {
 	switch (tag) {
 		case PacketTag::sync:
 			return processSyn(packet);
-		case PacketTag::relayData:
+		case PacketTag::clientData:
 			return processAppMessage(packet);
 		case PacketTag::relayRateReq:
 			return processRateRequest(packet);

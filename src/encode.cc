@@ -217,9 +217,12 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
   case packetTagTrunc(PacketTag::none):
     tag = PacketTag::none;
     break;
+	case packetTagTrunc(PacketTag::subscribeReq):
+		tag = PacketTag::subscribeReq;
+		break;
 	case packetTagTrunc(PacketTag::pubData):
-    tag = PacketTag::pubData;
-    break;
+		tag = PacketTag::pubData;
+	break;
   case packetTagTrunc(PacketTag::pubDataFrag):
     tag = PacketTag::pubDataFrag;
     break;
