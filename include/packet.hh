@@ -81,7 +81,7 @@ public:
 
   [[nodiscard]] ShortName shortName() const { return name; };
 
-  void setFragID(uint8_t fragmentID);
+  void setFragID(uint8_t fragmentID, bool lastFrag );
 
   void push_back(const std::vector<uint8_t>& data) {
   	buffer.insert(buffer.end(), data.begin(), data.end());

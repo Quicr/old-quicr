@@ -45,9 +45,11 @@ public:
   virtual void ack(MediaNet::ShortName name);
 
   // tells downstream things the current RTT
-  virtual void updateRTT(uint16_t minRttMs, uint16_t bitRttMs);
+  virtual void updateRTT(uint16_t minRttMs, uint16_t bigRttMs);
 
   virtual void updateMTU(uint16_t mtu, uint32_t pps);
+
+  virtual void updateBitrateUp( uint64_t minBps, uint64_t startBps, uint64_t maxBps );
 
 protected:
   explicit PipeInterface(PipeInterface *downStream);

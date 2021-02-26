@@ -56,7 +56,7 @@ enum struct PacketTag : uint32_t {
 	rstRedirect = packetTagGen(12, 255, true),
 	clientData = packetTagGen(2, 4, true), // make part of appData ???
 	pubData = packetTagGen(1, 255, true),
-	pubDataFrag = packetTagGen(9, 255, true),
+	//pubDataFrag = packetTagGen(9, 255, true),
 	nack = packetTagGen(14, 255, true),
 	relayRateReq = packetTagGen(6, 4, true),
 	ack = packetTagGen(3, 255, true),

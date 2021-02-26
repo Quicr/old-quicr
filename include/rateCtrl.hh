@@ -53,6 +53,7 @@ public:
     void add(int64_t v);
     void update() {};
     void reset() { initOnFirst=true; };
+    void override(int64_t v) { value=v; initOnFirst=false; };
     [[nodiscard]] int64_t estimate() const;
 private:
     int64_t value;
@@ -79,6 +80,11 @@ public:
   [[nodiscard]] uint64_t bwUpTarget() const;   // in bits per second
   [[nodiscard]] uint64_t bwDownTarget() const; // in bits per second
 
+  void overrideMtu(uint16_t mtu, uint32_t pps);
+  void overrideRTT(uint16_t minRttMs, uint16_t bigRttMs);
+  void overrideBitrateUp( uint64_t minBps, uint64_t startBps, uint64_t maxBps );
+
+
 private:
   PipeInterface *pacerPipe;
 
@@ -89,7 +95,7 @@ private:
   std::vector<PacketDownstreamStatus> downstreamHistory;
 
   void updatePhase();
-  static const uint32_t phaseTimeUs = 33333 * 2; // 0.5 frames at 30 fps
+  static const uint32_t phaseTimeUs = 33333 * 2 ; // 0.5 frames at 30 fps
   static const uint32_t numPhasePerCycle = 5;
 
   void startNewPhase();
@@ -130,6 +136,8 @@ private:
 
   void calcPhaseBitrateUp(  int start, int end );
   MediaNet::Filter filterBitrateUp;
+  uint64_t limitBitrateMinUp;
+  uint64_t limitBitrateMaxUp;
 
   void calcPhaseBitrateDown(   int start, int end );
   MediaNet::Filter filterBitrateDown;

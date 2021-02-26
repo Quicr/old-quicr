@@ -38,6 +38,10 @@ public:
 	// exchange Note: This is hard coded secret until we bring in MLS
 	void setCryptoKey(sframe::MLSContext::EpochID epoch, const sframe::bytes &mls_epoch_secret);
 
+	void setBitrateUp( uint64_t minBps, uint64_t startBps, uint64_t maxBps );
+	void setRttEstimate( uint32_t minRttMs, uint32_t bigRttMs=0 );
+	void setPacketsUp( uint16_t pps, uint16_t mtu=1280 );
+
 
 	/*
    * void setEncryptionKey(std::vector<uint8_t> salt, std::vector<uint8_t> key,

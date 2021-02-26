@@ -115,10 +115,15 @@ bool MediaNet::operator<(const ShortName &a, const ShortName &b) {
                                            b.fragmentID);
 }
 
-void Packet::setFragID(const uint8_t fragmentID) {
-  name.fragmentID = fragmentID;
-  if (buffer.size() > 19) {
+void Packet::setFragID(const uint8_t fragmentID, bool lastFrag ) {
+
+  assert( fragmentID <= 63 );
+
+  name.fragmentID = fragmentID * 2 + (lastFrag ? 1 : 0);
+#if 0 // TODO REMOVE
+   if (buffer.size() > 19) {
     assert(buffer.at(19) == packetTagTrunc(PacketTag::shortName));
     buffer.at(18) = fragmentID;
   }
+#endif
 }
