@@ -34,8 +34,9 @@ bool EncryptPipe::send(std::unique_ptr<Packet> packet) {
 	ShortName name;
 	// strip out [tag, name, payload len]
 	packet >> tag;
-  assert( tag == PacketTag::appData );
+  assert( tag == PacketTag::pubData );
 	packet >> name;
+	// TODO - probably need more here - this looks wrong
 	packet >> payloadSize;
 
 	auto encrypted = protect(packet, payloadSize);

@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
   qClient.setRttEstimate( 50 );
   qClient.setPacketsUp( 500,240 );
 
-  const int packetSizeByes = (maxSpeedUpBps / packetsUpPerSecond) / 8;
+  const int packetSizeByes = 100; // TODO FIX (maxSpeedUpBps / packetsUpPerSecond) / 8;
   assert( packetSizeByes < 32768 );
 
   int packetCount = 0;

@@ -35,15 +35,21 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
     return downStream->send(move(packet));
   }
 
+  assert(0); // this is broken with new encndoing
+
   assert(nextTag(packet) == PacketTag::pubData);
   bool ok = true;
 
-  uint16_t payloadSize;
   PacketTag tag;
   ShortName name;
+  uintVar_t lifetime;
+  uint8_t  authTagLen;
+  uintVar_t payloadSize;
 
   packet >> tag;
   packet >> name;
+  packet >> lifetime;
+  packet >> authTagLen;
   packet >> payloadSize;
 
   //std::clog << "fragment input size: " << payloadSize << std::endl;
@@ -76,7 +82,7 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
     fragPacket << (uint16_t)numUse;
 
     fragPacket << packet->shortName();
-    fragPacket << PacketTag::pubDataFrag;
+    fragPacket << PacketTag::pubData;
 
     // std::clog << "Send Frag: " << *fragPacket << std::endl;
     // std::clog << "Frag Send:" << fragPacket->shortName() << std::endl;
@@ -103,11 +109,13 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
       return packet;
     }
 
-    if (nextTag(packet) != PacketTag::pubDataFrag) {
+    // TODO - this is broken now, need to looka at shortname to decide if this is a fragment or not
+
+    if (nextTag(packet) != PacketTag::subData) {
       return packet;
     }
 
-    while ( nextTag(packet) != PacketTag::appDataFrag)  {
+    while ( nextTag(packet) != PacketTag::subData)  {
 
     auto packetCopy = packet->clone();
 
@@ -184,7 +192,7 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
 
         assert(fragPacket);
         assert(fragPacket->size() > 0);
-        assert(tag == PacketTag::pubDataFrag);
+        assert(tag == PacketTag::subData);
         assert(dataSize > 0);
         assert(dataSize <= fragPacket->size());
 

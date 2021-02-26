@@ -223,9 +223,9 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
 	case packetTagTrunc(PacketTag::pubData):
 		tag = PacketTag::pubData;
 	break;
-  case packetTagTrunc(PacketTag::pubDataFrag):
-    tag = PacketTag::pubDataFrag;
-    break;
+//  case packetTagTrunc(PacketTag::pubDataFrag):
+//    tag = PacketTag::pubDataFrag;
+//    break;
   case packetTagTrunc(PacketTag::clientData):
     tag = PacketTag::clientData;
     break;
@@ -875,9 +875,9 @@ std::ostream &MediaNet::operator<<(std::ostream &stream, Packet &packet) {
     case PacketTag::pubData:
       stream << " pubData(" << len << ")";
       break;
-    case PacketTag::pubDataFrag:
-      stream << " pubDataFrag(" << len << ")";
-      break;
+//    case PacketTag::pubDataFrag:
+//      stream << " pubDataFrag(" << len << ")";
+//      break;
 		case PacketTag::clientData:
 			stream << " clientData";
 			break;
