@@ -64,7 +64,7 @@ std::unique_ptr<Packet> EncryptPipe::recv() {
   auto packet = downStream->recv();
 	if(packet) {
 		auto tag = nextTag(packet);
-		if(tag == PacketTag::appData) {
+		if(tag == PacketTag::pubData) {
 			ShortName name;
 			uint16_t payloadSize = 0;
 			packet >> tag;

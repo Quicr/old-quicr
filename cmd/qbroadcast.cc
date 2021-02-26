@@ -37,7 +37,7 @@ void BroadcastRelay::process() {
     return;
   }
 
-  if (nextTag(packet) == PacketTag::clientSeqNum) {
+  if (nextTag(packet) == PacketTag::clientData) {
     processPub(packet);
     return;
   }
@@ -66,7 +66,7 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet) {
       (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(dn)
           .count();
 
-  NetClientSeqNum seqNumTag;
+	ClientData seqNumTag;
   packet >> seqNumTag;
 
   std::clog << ".";
@@ -81,19 +81,18 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet) {
   // TODO - get rid of prev Ack tag and use ack vector
   if (prevAckSeqNum > 0) {
     NetAck prevAckTag{};
-    prevAckTag.netAckSeqNum = prevAckSeqNum;
+    prevAckTag.clientSeqNum = prevAckSeqNum;
     prevAckTag.netRecvTimeUs = prevRecvTimeUs;
     ack << prevAckTag;
   }
 
   NetAck ackTag{};
-  ackTag.netAckSeqNum = seqNumTag.clientSeqNum;
+  ackTag.clientSeqNum = seqNumTag.clientSeqNum;
   ackTag.netRecvTimeUs = nowUs;
   ack << ackTag;
-
   transport.send(move(ack));
 
-  prevAckSeqNum = ackTag.netAckSeqNum;
+  prevAckSeqNum = ackTag.clientSeqNum;
   prevRecvTimeUs = ackTag.netRecvTimeUs;
 
   // TODO - loop over connections and remove ones with old last Syn time
@@ -108,7 +107,7 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet) {
 
     subData->setDst(addr);
 
-    NetRelaySeqNum netRelaySeqNum;
+    RelayData netRelaySeqNum;
     netRelaySeqNum.relaySeqNum = con->relaySeqNum++;
     netRelaySeqNum.remoteSendTimeUs = nowUs;
 

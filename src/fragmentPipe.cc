@@ -35,7 +35,7 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
     return downStream->send(move(packet));
   }
 
-  assert(nextTag(packet) == PacketTag::appData);
+  assert(nextTag(packet) == PacketTag::pubData);
   bool ok = true;
 
   uint16_t payloadSize;
@@ -74,8 +74,9 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
     fragPacket->setFragID(frag, (numLeft == 0) );
 
     fragPacket << (uint16_t)numUse;
+
     fragPacket << packet->shortName();
-    fragPacket << PacketTag::appDataFrag;
+    fragPacket << PacketTag::pubDataFrag;
 
     // std::clog << "Send Frag: " << *fragPacket << std::endl;
     // std::clog << "Frag Send:" << fragPacket->shortName() << std::endl;
@@ -102,7 +103,7 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
       return packet;
     }
 
-    if (nextTag(packet) != PacketTag::appDataFrag) {
+    if (nextTag(packet) != PacketTag::pubDataFrag) {
       return packet;
     }
 
@@ -183,7 +184,7 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
 
         assert(fragPacket);
         assert(fragPacket->size() > 0);
-        assert(tag == PacketTag::appDataFrag);
+        assert(tag == PacketTag::pubDataFrag);
         assert(dataSize > 0);
         assert(dataSize <= fragPacket->size());
 
@@ -211,8 +212,10 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
       name.fragmentID = 0;
       uint16_t payloadSize = result->size();
       result << payloadSize;
+
       result << name;
-      result << PacketTag::appData;
+      result << PacketTag::pubData;
+
 
       result->name = name;
       result->setFragID(0,true);

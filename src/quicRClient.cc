@@ -45,7 +45,7 @@ bool QuicRClient::publish(std::unique_ptr<Packet> packet) {
   assert(payloadSize < 63 * 1200);
   packet << (uint16_t)payloadSize;
   packet << packet->name;
-  packet << PacketTag::appData;
+  packet << PacketTag::pubData;
   return firstPipe->send(move(packet));
 }
 
@@ -76,7 +76,7 @@ std::unique_ptr<Packet> QuicRClient::recv() {
       continue;
     }
 
-    if (tag != PacketTag::appData) {
+    if (tag != PacketTag::pubData) {
       // TODO log bad data
       std::clog << "quicr recv bad tag: " << (((uint16_t)(tag)) >> 8)
                 << std::endl;

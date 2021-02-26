@@ -2,7 +2,7 @@
 
 #include <cstdint>
 #include <memory>
-
+#include <vector>
 #include "name.hh"
 
 namespace MediaNet {
@@ -13,11 +13,15 @@ std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint64_t val);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint32_t val);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint16_t val);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint8_t val);
+std::unique_ptr<Packet>& operator<<(std::unique_ptr<Packet> &p, const std::string& val);
+std::unique_ptr<Packet>& operator<<(std::unique_ptr<Packet>& p, const std::vector<uint8_t>& val);
 
 bool operator>>(std::unique_ptr<Packet> &p, uint64_t &val);
 bool operator>>(std::unique_ptr<Packet> &p, uint32_t &val);
 bool operator>>(std::unique_ptr<Packet> &p, uint16_t &val);
 bool operator>>(std::unique_ptr<Packet> &p, uint8_t &val);
+bool operator>>(std::unique_ptr<Packet> &p, std::string &val);
+bool operator>>(std::unique_ptr<Packet> &p, std::vector<uint8_t>& val);
 
 enum class uintVar_t : uint64_t {};
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uintVar_t val);
@@ -46,27 +50,35 @@ enum struct PacketTag : uint32_t {
 
   none = packetTagGen(0, 0, true), // must be smallest tag
 
-  appData = packetTagGen(1, 255, true),
-  appDataFrag = packetTagGen(9, 255, true),
-  clientSeqNum = packetTagGen(2, 4, true), // make part of appData ???
-  ack = packetTagGen(3, 255, true),
-  sync = packetTagGen(4, 255, true),
-  shortName = packetTagGen(5, 18, true),
-  relaySeqNum = packetTagGen(7, 8, true),
-  relayRateReq = packetTagGen(6, 4, true),
+	sync = packetTagGen(4, 255, true),
+	syncAck = packetTagGen(10, 255, true),
+	rstRetry = packetTagGen(11, 255, true),
+	rstRedirect = packetTagGen(12, 255, true),
+	clientData = packetTagGen(2, 4, true), // make part of appData ???
+	pubData = packetTagGen(1, 255, true),
+	pubDataFrag = packetTagGen(9, 255, true),
+	nack = packetTagGen(14, 255, true),
+	relayRateReq = packetTagGen(6, 4, true),
+	ack = packetTagGen(3, 255, true),
+	relayData = packetTagGen(7, 8, true),
+	subData = packetTagGen(13, 0, true),
   subscribeReq = packetTagGen(8, 0, true),
+	shortName = packetTagGen(5, 18, true),
 
   // TODO - Could add nextReservedCodePoints of various lengths and MTI
 
   // This block of headerMagic values selected to multiplex with STUN/DTLS/RTP
   headerMagicData = packetTagGen(16, 0, true),
   headerMagicSyn = packetTagGen(18, 0, true),
-  headerMagicRst = packetTagGen(22, 0, true),
+	headerMagicSynAck = packetTagGen(20, 0, true),
+	headerMagicRst = packetTagGen(22, 0, true),
   headerMagicDataCrazy = packetTagGen(17, 0, true),
   headerMagicSynCrazy = packetTagGen(19, 0, true),
+	headerMagicSynAckCrazy = packetTagGen(21, 0, true),
   headerMagicRstCrazy = packetTagGen(23, 0, true),
 
-  extraMagicVer1 = packetTagGen(12538, 0, false),
+
+	extraMagicVer1 = packetTagGen(12538, 0, false),
 
   badTag = packetTagGen(16383, 0,
                         true), // must not have any tag values greater than this
@@ -79,25 +91,55 @@ bool operator>>(std::unique_ptr<Packet> &p, PacketTag &tag);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, PacketTag tag);
 
 /* ShortName */
-
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const ShortName &msg);
 
 bool operator>>(std::unique_ptr<Packet> &p, ShortName &msg);
 
 /* SYNC Request */
-
 struct NetSyncReq {
+	uint32_t cookie;
+	std::string origin;
   uint32_t senderId;
   uint64_t clientTimeMs;
-  uint64_t versionVec;
+  uint64_t supportedFeaturesVec;
 };
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const NetSyncReq &msg);
 bool operator>>(std::unique_ptr<Packet> &p, NetSyncReq &msg);
 
-/* Rate Request */
+/* NetSyncAck */
+struct NetSyncAck {
+	uint64_t serverTimeMs;
+	uint64_t useFeaturesVec;
+};
 
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const NetSyncAck &msg);
+bool operator>>(std::unique_ptr<Packet> &p, NetSyncAck &msg);
+
+
+/* NetReset*/
+struct NetReset {
+	uint64_t cookie;
+};
+
+struct NetRstRetry: NetReset {};
+
+struct NetRstRedirect: NetReset {
+	std::string origin;
+	uint16_t port;
+};
+
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const NetRstRetry &msg);
+bool operator>>(std::unique_ptr<Packet> &p, NetRstRetry &msg);
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const NetRstRedirect &msg);
+bool operator>>(std::unique_ptr<Packet> &p, NetRstRedirect &msg);
+
+
+/* Rate Request */
 struct NetRateReq {
   uintVar_t bitrateKbps; // in kilo bits pers second
 };
@@ -105,61 +147,95 @@ std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const NetRateReq &msg);
 bool operator>>(std::unique_ptr<Packet> &p, NetRateReq &msg);
 
-/*
- * struct NetNonceReq {
-  uint32_t sourceId;
-  uint64_t timeNowMs;
-};
-struct NetNonceResp {
-  uint64_t clientToken;
-  bool timeOK;
-  bool sourceIdOK;
-};
-struct NetAuthReq {
-  uint32_t sourceId;
-  uint64_t timeNowMs;
-  uint64_t clientToken;
-  uint64_t authHash;
-};
-struct NetAuthResp {
-  bool authOK;
-};
-*/
-
-/*
-struct NetRedirect4RResp {
-  // no sourceId as sent from server
-  uint32_t clientSeqNum;
-  uint64_t clientToken;
-  uint32_t ipAddr;
-  uint16_t port;
-};
-*/
-
-struct NetClientSeqNum {
-  uint32_t clientSeqNum;
-};
-std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
-                                    const NetClientSeqNum &msg);
-bool operator>>(std::unique_ptr<Packet> &p, NetClientSeqNum &msg);
-
-struct NetRelaySeqNum {
-  uint32_t relaySeqNum;
-  uint32_t remoteSendTimeUs;
-};
-std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
-                                    const NetRelaySeqNum &msg);
-bool operator>>(std::unique_ptr<Packet> &p, NetRelaySeqNum &msg);
-
+/* NetAck */
 struct NetAck {
-  // todo - add ack and ECN vectors
-  uint32_t netAckSeqNum;
+	uint32_t ackVec;
+	uint32_t ecnVec;
+  uint32_t clientSeqNum;
   uint32_t netRecvTimeUs;
 };
 
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const NetAck &msg);
 bool operator>>(std::unique_ptr<Packet> &p, NetAck &msg);
+
+
+/* NetNack */
+struct NetNack {
+	uint32_t relaySeqNum;
+};
+
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const NetNack &msg);
+bool operator>>(std::unique_ptr<Packet> &p, NetNack &msg);
+
+
+/* SubscribeRequest */
+struct Subscribe {
+	ShortName name;
+};
+
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const Subscribe &msg);
+bool operator>>(std::unique_ptr<Packet> &p, Subscribe &msg);
+
+///
+/// ClientData
+///
+struct ClientData {
+	uint32_t clientSeqNum;
+};
+
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const ClientData &msg);
+bool operator>>(std::unique_ptr<Packet> &p, ClientData &msg);
+
+///
+/// RelayData
+///
+struct RelayData {
+	uint32_t relaySeqNum;
+	uint32_t remoteSendTimeUs;
+};
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const RelayData &msg);
+bool operator>>(std::unique_ptr<Packet> &p, RelayData &msg);
+
+
+///
+/// EncDataBlock
+///
+struct EncryptedDataBlock {
+	uint8_t authTagLen;
+	std::vector<uint8_t> cipherText; // enc + auth
+};
+std::unique_ptr<Packet>& operator<<(std::unique_ptr<Packet> &p, const EncryptedDataBlock &data);
+bool operator>>(std::unique_ptr<Packet> &p, EncryptedDataBlock &msg);
+
+
+///
+/// PubSubData and friends
+///
+struct PublishedData {
+	ShortName name;
+	uintVar_t lifetime;
+	EncryptedDataBlock encryptedDataBlock;
+};
+
+// sent by client in publish message
+struct PubData : public PublishedData {};
+
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const PubData &msg);
+bool operator>>(std::unique_ptr<Packet> &p, PubData &msg);
+
+// sent by relay to all the subscribers
+struct SubData : public PublishedData {};
+
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const SubData &msg);
+bool operator>>(std::unique_ptr<Packet> &p, SubData &msg);
+
 
 /*
 struct NetMsgSubReq {
@@ -211,6 +287,35 @@ struct NetMsgClientStats {
   uint32_t reserved1;
   uint32_t reserved2;
 };
+
+ * struct NetNonceReq {
+  uint32_t sourceId;
+  uint64_t timeNowMs;
+};
+struct NetNonceResp {
+  uint64_t clientToken;
+  bool timeOK;
+  bool sourceIdOK;
+};
+struct NetAuthReq {
+  uint32_t sourceId;
+  uint64_t timeNowMs;
+  uint64_t clientToken;
+  uint64_t authHash;
+};
+struct NetAuthResp {
+  bool authOK;
+};
+
+
+struct NetRedirect4RResp {
+  // no sourceId as sent from server
+  uint32_t clientSeqNum;
+  uint64_t clientToken;
+  uint32_t ipAddr;
+  uint16_t port;
+};
+
 */
 
 std::ostream &operator<<(std::ostream &stream, Packet &packet);
