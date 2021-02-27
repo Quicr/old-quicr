@@ -280,9 +280,9 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
 	case packetTagTrunc(PacketTag::headerMagicSynAckCrazy):
 		tag = PacketTag::headerMagicSynAckCrazy;
 		break;
-	case packetTagTrunc(PacketTag::extraMagicVer1):
-		tag = PacketTag::extraMagicVer1;
-		break;
+//	case packetTagTrunc(PacketTag::extraMagicVer1):
+//		tag = PacketTag::extraMagicVer1;
+//		break;
   case packetTagTrunc(PacketTag::badTag):
     tag = PacketTag::badTag;
     break;
