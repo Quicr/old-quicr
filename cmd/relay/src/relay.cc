@@ -11,24 +11,18 @@
 
 using namespace MediaNet;
 
-///
-/// Connection
-///
-
-Connection::Connection(uint32_t relaySeqNo) : relaySeqNum(relaySeqNo) {}
-
 
 Relay::Relay(uint16_t port)
-		: transport(* new UdpPipe)
+		: qServer()
 		  , fib(std::make_unique<MultimapFib>()) {
-	transport.start(port, "", nullptr);
+	qServer.open(port);
 	std::random_device randDev;
 	randomGen.seed(randDev()); // TODO - should use crypto random
 	getRandom = std::bind(randomDist, randomGen);
 }
 
 void Relay::process() {
-	auto packet = transport.recv();
+	auto packet = qServer.recv();
 
 	if(!packet) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -38,8 +32,6 @@ void Relay::process() {
 	auto tag = nextTag(packet);
 
 	switch (tag) {
-		case PacketTag::sync:
-			return processSyn(packet);
 		case PacketTag::clientData:
 			return processAppMessage(packet);
 		case PacketTag::relayRateReq:
@@ -55,20 +47,6 @@ void Relay::process() {
 /// Private Implementation
 ///
 
-void Relay::processSyn(std::unique_ptr<MediaNet::Packet> &packet) {
-	std::clog << "Got a Syn"
-						<< " from=" << IpAddr::toString(packet->getSrc())
-						<< " len=" << packet->fullSize() << std::endl;
-
-	auto conIndex = connectionMap.find(packet->getSrc());
-	if (conIndex == connectionMap.end()) {
-		// new connection
-		connectionMap[packet->getSrc()] = std::make_unique<Connection>(getRandom());
-	}
-
-	std::unique_ptr<Connection> &con = connectionMap[packet->getSrc()];
-	con->lastSyn = std::chrono::steady_clock::now();
-}
 
 void Relay::processAppMessage(std::unique_ptr<MediaNet::Packet>& packet) {
 	ClientData seqNumTag{};
@@ -109,7 +87,7 @@ void Relay::processSub(std::unique_ptr<MediaNet::Packet> &packet, ClientData& cl
   ShortName name;
   packet >> name;
   std::clog << "Adding Subscription for: " << name << std::endl;
-  fib->addSubscription(name, SubscriberInfo{name, packet->getSrc()});
+  fib->addSubscription(name, SubscriberInfo{name, packet->getSrc(), getRandom()});
 }
 
 void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, ClientData& clientSeqNumTag) {
@@ -154,7 +132,7 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, ClientData& cl
 	ackTag.netRecvTimeUs = nowUs;
 	ack << ackTag;
 
-	transport.send(move(ack));
+	qServer.send(move(ack));
 
 	prevAckSeqNum = ackTag.clientSeqNum;
 	prevRecvTimeUs = ackTag.netRecvTimeUs;
@@ -168,14 +146,12 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, ClientData& cl
   packet << name;
   packet << tag;
 
-  for(auto const& subscriber : subscribers) {
+  for(auto& subscriber : subscribers) {
 		auto subData = packet->clone(); // TODO - just clone header stuff
-		auto con = connectionMap.find(subscriber.face);
-		assert(con != connectionMap.end());
 		subData->setDst(subscriber.face);
 
 		RelayData netRelaySeqNum{};
-		netRelaySeqNum.relaySeqNum = con->second->relaySeqNum++;
+		netRelaySeqNum.relaySeqNum = subscriber.relaySeqNum++;
 		netRelaySeqNum.remoteSendTimeUs = nowUs;
 
 		subData << netRelaySeqNum;
@@ -192,7 +168,7 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, ClientData& cl
 		}
 
 		if (!simLoss) {
-			transport.send(move(subData));
+			qServer.send(move(subData));
 			std::clog << "*";
 		} else {
 			std::clog << "-";
@@ -200,7 +176,6 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, ClientData& cl
 	}
 
 }
-
 
 void Relay::processRateRequest(std::unique_ptr<MediaNet::Packet> &packet) {
 	NetRateReq rateReq{};

@@ -65,7 +65,7 @@ enum struct PacketTag : uint32_t {
   subscribeReq = packetTagGen(8, 0, true),
 	shortName = packetTagGen(5, 18, true),
 
-  // TODO - Could add nextReservedCodePoints of various lengths and MTI
+	// TODO - Could add nextReservedCodePoints of various lengths and MTI
 
   // This block of headerMagic values selected to multiplex with STUN/DTLS/RTP
   headerMagicData = packetTagGen(16, 0, true),
@@ -75,7 +75,7 @@ enum struct PacketTag : uint32_t {
   headerMagicDataCrazy = packetTagGen(17, 0, true),
   headerMagicSynCrazy = packetTagGen(19, 0, true),
 	headerMagicSynAckCrazy = packetTagGen(21, 0, true),
-  headerMagicRstCrazy = packetTagGen(23, 0, true),
+	headerMagicRstCrazy = packetTagGen(23, 0, true),
 
 
 	extraMagicVer1 = packetTagGen(12538, 0, false),
@@ -108,7 +108,7 @@ std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const NetSyncReq &msg);
 bool operator>>(std::unique_ptr<Packet> &p, NetSyncReq &msg);
 
-/* NetSyncAck */
+/* SYN ACK */
 struct NetSyncAck {
 	uint64_t serverTimeMs;
 	uint64_t useFeaturesVec;
@@ -117,7 +117,6 @@ struct NetSyncAck {
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
 																		const NetSyncAck &msg);
 bool operator>>(std::unique_ptr<Packet> &p, NetSyncAck &msg);
-
 
 /* NetReset*/
 struct NetReset {
@@ -137,7 +136,6 @@ bool operator>>(std::unique_ptr<Packet> &p, NetRstRetry &msg);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
 																		const NetRstRedirect &msg);
 bool operator>>(std::unique_ptr<Packet> &p, NetRstRedirect &msg);
-
 
 /* Rate Request */
 struct NetRateReq {

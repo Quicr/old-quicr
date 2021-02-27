@@ -4,41 +4,40 @@
 
 #include "encode.hh"
 #include "qbroadcast.hh"
+#include "quicRServer.hh"
 
 using namespace MediaNet;
 
-Connection::Connection(uint32_t randNum) : relaySeqNum(randNum) {}
+Connection::Connection(uint32_t randNum, const MediaNet::IpAddr& addr)
+: relaySeqNum(randNum)
+  , address(addr) {}
 
-BroadcastRelay::BroadcastRelay(uint16_t port) : transport(*new UdpPipe) {
-  transport.start(port, "", nullptr);
+BroadcastRelay::BroadcastRelay(uint16_t port) : qServer() {
+	qServer.open(port);
   prevAckSeqNum = 0;
   prevRecvTimeUs = 0;
 
-  std::random_device randDev;
-  randomGen.seed(randDev()); // TODO - should use crypto random
-  getRandom = std::bind(randomDist, randomGen);
+	std::random_device randDev;
+	randomGen.seed(randDev()); // TODO - should use crypto random
+	getRandom = std::bind(randomDist, randomGen);
 }
 
 void BroadcastRelay::process() {
-  std::unique_ptr<Packet> packet = transport.recv();
+  std::unique_ptr<Packet> packet = qServer.recv();
 
   if (!packet) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
     return;
   }
 
-  if (packet->fullSize() <= 1) {
+  if (packet->fullSize() < 1) {
     // log bad packet
     return;
   }
 
-	if (packet->fullData() == packetTagTrunc(PacketTag::headerMagicSyn)) {
-    processSyn(packet);
-    return;
-  }
 
   if (nextTag(packet) == PacketTag::clientData) {
-    processPub(packet);
+    processAppMessage(packet);
     return;
   }
 
@@ -59,19 +58,76 @@ void BroadcastRelay::processRate(std::unique_ptr<MediaNet::Packet> &packet) {
             << std::endl;
 }
 
-void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet) {
+void BroadcastRelay::processAppMessage(std::unique_ptr<MediaNet::Packet>& packet) {
+	ClientData seqNumTag{};
+	packet >> seqNumTag;
+
+	//auto tag = PacketTag::none;
+	//packet >> tag;
+	auto tag = nextTag(packet);
+	if(tag == PacketTag::pubData) {
+		return processPub(packet, seqNumTag);
+	} else if(tag  == PacketTag::subscribeReq) {
+		return processSub(packet, seqNumTag);
+	}
+
+	std::clog << "Bad App message:" << (int) tag << "\n";
+}
+
+void BroadcastRelay::processSub(std::unique_ptr<MediaNet::Packet> &packet, ClientData& clientSeqNumTag) {
+	std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
+	std::chrono::steady_clock::duration dn = tp.time_since_epoch();
+	uint32_t nowUs =
+					(uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(dn)
+									.count();
+
+	// ack the packet
+	auto ack = std::make_unique<Packet>();
+	ack->setDst(packet->getSrc());
+	ack << PacketTag::headerMagicData;
+	NetAck ackTag{};
+	ackTag.clientSeqNum = clientSeqNumTag.clientSeqNum;
+	ackTag.netRecvTimeUs = nowUs;
+	ack << ackTag;
+
+	// save the subscription
+	PacketTag tag;
+	packet >> tag;
+	ShortName name;
+	packet >> name;
+	std::clog << "Adding Subscription for: " << name << std::endl;
+	auto conIndex = connectionMap.find(name);
+	if (conIndex == connectionMap.end()) {
+		// new connection
+		connectionMap[name] = std::make_unique<Connection>(getRandom(), packet->getSrc());
+	}
+
+	std::unique_ptr<Connection> &con = connectionMap[name];
+	con->lastSyn = std::chrono::steady_clock::now();
+}
+
+void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet, ClientData& seqNumTag) {
   std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
   std::chrono::steady_clock::duration dn = tp.time_since_epoch();
   uint32_t nowUs =
       (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(dn)
           .count();
 
-	ClientData seqNumTag;
-  packet >> seqNumTag;
-
   std::clog << ".";
 
-  // std::clog << int(seqNumTag.clientSeqNum);
+	// save the name for publish
+	PacketTag tag;
+	packet >> tag;
+	ShortName name;
+	packet >> name;
+
+	uint16_t payloadSize;
+	packet >> payloadSize;
+	if (payloadSize > packet->size()) {
+		std::clog << "relay recv bad data size " << payloadSize << " "
+							<< packet->size() << std::endl;
+		return;
+	}
 
   auto ack = std::make_unique<Packet>();
   ack->setDst(packet->getSrc());
@@ -90,22 +146,24 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet) {
   ackTag.clientSeqNum = seqNumTag.clientSeqNum;
   ackTag.netRecvTimeUs = nowUs;
   ack << ackTag;
-  transport.send(move(ack));
+
+  qServer.send(move(ack));
 
   prevAckSeqNum = ackTag.clientSeqNum;
   prevRecvTimeUs = ackTag.netRecvTimeUs;
 
   // TODO - loop over connections and remove ones with old last Syn time
 
+  // TODO: push this into server class
+	packet << payloadSize;
+	packet << name;
+	packet << tag;
+
   // for each connection, make copy and forward
   for (auto const &[addr, con] : connectionMap) {
-    // auto subData = std::make_unique<Packet>();
-    // subData->copy(*packet);
-
     auto subData = packet->clone(); // TODO - just clone header stuff
-    // subData->resize(0);
 
-    subData->setDst(addr);
+    subData->setDst(con->address);
 
     RelayData netRelaySeqNum;
     netRelaySeqNum.relaySeqNum = con->relaySeqNum++;
@@ -125,27 +183,12 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet) {
     }
 
     if (!simLoss) {
-      transport.send(move(subData));
+      qServer.send(move(subData));
       std::clog << "*";
     } else {
       std::clog << "-";
     }
   }
-}
-
-void BroadcastRelay::processSyn(std::unique_ptr<MediaNet::Packet> &packet) {
-  std::clog << "Got a Syn"
-            << " from=" << IpAddr::toString(packet->getSrc())
-            << " len=" << packet->fullSize() << std::endl;
-
-  auto conIndex = connectionMap.find(packet->getSrc());
-  if (conIndex == connectionMap.end()) {
-    // new connection
-    connectionMap[packet->getSrc()] = std::make_unique<Connection>(getRandom());
-  }
-
-  std::unique_ptr<Connection> &con = connectionMap[packet->getSrc()];
-  con->lastSyn = std::chrono::steady_clock::now();
 }
 
 #ifdef __clang__
@@ -159,10 +202,9 @@ void BroadcastRelay::processSyn(std::unique_ptr<MediaNet::Packet> &packet) {
 #pragma ide diagnostic ignored "UnreachableCode"
 
 int main() {
-  BroadcastRelay qRelay(5004);
-
+  auto qRelay = BroadcastRelay(5004);
   while (true) {
-    qRelay.process();
+  	qRelay.process();
   }
   return 0;
 }

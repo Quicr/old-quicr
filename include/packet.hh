@@ -22,6 +22,7 @@
 namespace MediaNet {
 
 class QuicRClient;
+class QuicRServer;
 class SubscribePipe;
 class FragmentPipe;
 class EncryptPipe; // Needed to manipulate buffer directly
@@ -42,6 +43,7 @@ class Packet {
   // friend FecPipe;
   // friend CrazyBitPipe;
   friend QuicRClient;
+  friend QuicRServer;
   friend SubscribePipe;
   friend FragmentPipe;
   friend EncryptPipe;

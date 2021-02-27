@@ -71,7 +71,7 @@ private:
   UdpPipe udpPipe;
   FakeLossPipe fakeLossPipe;
   CrazyBitPipe crazyBitPipe;
-  ConnectionPipe connectionPipe;
+  ClientConnectionPipe connectionPipe;
   PacerPipe pacerPipe;
   PriorityPipe priorityPipe;
   RetransmitPipe retransmitPipe;

@@ -280,9 +280,9 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
 	case packetTagTrunc(PacketTag::headerMagicSynAckCrazy):
 		tag = PacketTag::headerMagicSynAckCrazy;
 		break;
-	case packetTagTrunc(PacketTag::extraMagicVer1):
-		tag = PacketTag::extraMagicVer1;
-		break;
+  case packetTagTrunc(PacketTag::extraMagicVer1):
+    tag = PacketTag::extraMagicVer1;
+    break;
   case packetTagTrunc(PacketTag::badTag):
     tag = PacketTag::badTag;
     break;
@@ -511,7 +511,6 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
 	// TODO add other fields
 	p << msg.useFeaturesVec;
 	p << msg.serverTimeMs;
-
 	p << PacketTag::syncAck;
 
 	return p;
@@ -528,7 +527,6 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetSyncAck &msg) {
 	ok &= p >> tag;
 	ok &= p >> msg.serverTimeMs;
 	ok &= p >> msg.useFeaturesVec;
-
 	if (!ok) {
 		std::cerr << "problem parsing syncAck" << std::endl;
 	}
@@ -540,7 +538,7 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetSyncAck &msg) {
 /// NetReset and Types
 ///
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-																							const NetRstRetry &msg) {
+																		const NetRstRetry &msg) {
 
 	p << msg.cookie;
 	p << PacketTag::rstRetry;
@@ -564,8 +562,8 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRstRetry &msg) {
 	return ok;
 }
 
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-																							const NetRstRedirect &msg) {
+
+std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p, const NetRstRedirect &msg) {
 	p << msg.port;
 	p << msg.origin;
 	p << msg.cookie;
