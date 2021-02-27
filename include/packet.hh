@@ -1,8 +1,8 @@
 #pragma once
 
+#include <cassert>
 #include <iostream>
 #include <sys/types.h>
-#include <cassert>
 
 #if defined(__linux__) || defined(__APPLE__)
 #include <netinet/in.h>
@@ -61,7 +61,7 @@ public:
   uint8_t &fullData() { return buffer.at(0); }
 
   //[[nodiscard]] const uint8_t &constData() const { return
-  //buffer.at(headerSize); }
+  // buffer.at(headerSize); }
   [[nodiscard]] size_t size() const;
   [[nodiscard]] size_t fullSize() const { return buffer.size(); }
   void resize(int size) { buffer.resize(headerSize + size); }
@@ -83,27 +83,28 @@ public:
 
   [[nodiscard]] ShortName shortName() const { return name; };
 
-  void setFragID(uint8_t fragmentID, bool lastFrag );
+  void setFragID(uint8_t fragmentID, bool lastFrag);
 
-  void push_back(const std::vector<uint8_t>& data) {
-  	buffer.insert(buffer.end(), data.begin(), data.end());
+  void push_back(const std::vector<uint8_t> &data) {
+    buffer.insert(buffer.end(), data.begin(), data.end());
   }
   void push_back(uint8_t t) { buffer.push_back(t); };
   void pop_back() { buffer.pop_back(); };
   uint8_t back() { return buffer.back(); };
-	std::vector<uint8_t> back(uint16_t len) {
-		assert(len <= buffer.size());
-		auto vec = std::vector<uint8_t>(len);
-		auto detla = buffer.size() - len;
-		std::copy(buffer.begin() + detla, buffer.end(), vec.begin());
-		buffer.erase(buffer.begin() + detla, buffer.end());
-		return vec;
-	}
+  std::vector<uint8_t> back(uint16_t len) {
+    assert(len <= buffer.size());
+    auto vec = std::vector<uint8_t>(len);
+    auto detla = buffer.size() - len;
+    std::copy(buffer.begin() + detla, buffer.end(), vec.begin());
+    buffer.erase(buffer.begin() + detla, buffer.end());
+    return vec;
+  }
   [[maybe_unused]] [[nodiscard]] uint8_t getPriority() const;
   void setPriority(uint8_t priority);
 
   // Handy debugging function
   std::string to_hex();
+
 private:
   std::vector<uint8_t> buffer; // TODO make private
   int headerSize;

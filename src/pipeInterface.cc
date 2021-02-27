@@ -69,17 +69,18 @@ void PipeInterface::updateRTT(uint16_t minRtMs, uint16_t bigRtMs) {
 }
 
 std::unique_ptr<Packet> PipeInterface::toDownstream() {
-    return std::unique_ptr<Packet>(nullptr);
+  return std::unique_ptr<Packet>(nullptr);
 }
 
-void PipeInterface::updateMTU(uint16_t mtu,uint32_t pps) {
-    if (downStream) {
-        downStream->updateMTU(mtu,pps);
-    }
-}
-
-void PipeInterface::updateBitrateUp(uint64_t minBps, uint64_t startBps, uint64_t maxBps) {
+void PipeInterface::updateMTU(uint16_t mtu, uint32_t pps) {
   if (downStream) {
-    downStream->updateBitrateUp( minBps,  startBps,  maxBps);
+    downStream->updateMTU(mtu, pps);
+  }
+}
+
+void PipeInterface::updateBitrateUp(uint64_t minBps, uint64_t startBps,
+                                    uint64_t maxBps) {
+  if (downStream) {
+    downStream->updateBitrateUp(minBps, startBps, maxBps);
   }
 }

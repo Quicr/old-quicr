@@ -15,20 +15,15 @@ using namespace MediaNet;
 
 RateCtrl::RateCtrl(PipeInterface *pacerPipeRef)
     : pacerPipe(pacerPipeRef), upHistorySeqOffset(0), downHistorySeqOffset(0),
-      phaseCycleCount(0),
-      filterMinRTT(10 * 1000, 102, 1024,true),
+      phaseCycleCount(0), filterMinRTT(10 * 1000, 102, 1024, true),
       filterBigRTT(50 * 1000, 1024, 10, true),
       filterLowerBoundSkew(0, 1024, 1, true),
       filterUpperBoundSkew(0, 1, 1024, true),
-      filterJitterUp(1, 1024, 102, true),
-      filterJitterDown(1, 1024, 102, true),
+      filterJitterUp(1, 1024, 102, true), filterJitterDown(1, 1024, 102, true),
       filterLossRatePerMillionUp(0, 102, 102),
       filterLossRatePerMillionDown(0, 102, 102),
-      filterBitrateUp(1e6,1024,0,true),
-      limitBitrateMinUp(0),
-      limitBitrateMaxUp(100e9),
-      filterBitrateDown(1e6,1024,0,true)
-      {
+      filterBitrateUp(1e6, 1024, 0, true), limitBitrateMinUp(0),
+      limitBitrateMaxUp(100e9), filterBitrateDown(1e6, 1024, 0, true) {
   upstreamHistory.clear();
   upstreamHistory.reserve(5000); // TODO limit length of history
 
@@ -117,21 +112,21 @@ uint64_t RateCtrl::bwUpTarget() const // in bits per second
 {
   assert(numPhasePerCycle >= 3);
 
-  uint64_t  target = upstreamBitrateTarget;
+  uint64_t target = upstreamBitrateTarget;
 
   int phase = phaseCycleCount % numPhasePerCycle;
   if (phase == 1) {
     target = (upstreamBitrateTarget * 5) / 4;
   }
   if (phase == 2) {
-    target =  (upstreamBitrateTarget * 3) / 4;
+    target = (upstreamBitrateTarget * 3) / 4;
   }
 
-  if ( target > limitBitrateMaxUp) {
+  if (target > limitBitrateMaxUp) {
     target = limitBitrateMaxUp;
   }
 
-  if ( target < limitBitrateMinUp ) {
+  if (target < limitBitrateMinUp) {
     target = limitBitrateMinUp;
   }
 
@@ -174,9 +169,7 @@ void RateCtrl::updatePhase() {
   }
 }
 
-void RateCtrl::startNewPhase() {
-  calcPhaseAll();
-}
+void RateCtrl::startNewPhase() { calcPhaseAll(); }
 
 void RateCtrl::startNewCycle() {
 
@@ -210,17 +203,25 @@ void RateCtrl::startNewCycle() {
 
   // TODO - send the filters as stats
   assert(pacerPipe);
-  pacerPipe->updateStat(PipeInterface::StatName::bigRTTms, filterBigRTT.estimate()/1000 );
-  pacerPipe->updateStat(PipeInterface::StatName::minRTTms, filterMinRTT.estimate()/1000 ); // keep after big
+  pacerPipe->updateStat(PipeInterface::StatName::bigRTTms,
+                        filterBigRTT.estimate() / 1000);
+  pacerPipe->updateStat(PipeInterface::StatName::minRTTms,
+                        filterMinRTT.estimate() / 1000); // keep after big
 
-  pacerPipe->updateStat(PipeInterface::StatName::lossPerMillionUp, filterLossRatePerMillionUp.estimate() );
-  pacerPipe->updateStat(PipeInterface::StatName::lossPerMillionDown, filterLossRatePerMillionDown.estimate() );
+  pacerPipe->updateStat(PipeInterface::StatName::lossPerMillionUp,
+                        filterLossRatePerMillionUp.estimate());
+  pacerPipe->updateStat(PipeInterface::StatName::lossPerMillionDown,
+                        filterLossRatePerMillionDown.estimate());
 
-  pacerPipe->updateStat(PipeInterface::StatName::bitrateUp, filterBitrateUp.estimate() );
-  pacerPipe->updateStat(PipeInterface::StatName::bitrateDown, filterBitrateDown.estimate() );
+  pacerPipe->updateStat(PipeInterface::StatName::bitrateUp,
+                        filterBitrateUp.estimate());
+  pacerPipe->updateStat(PipeInterface::StatName::bitrateDown,
+                        filterBitrateDown.estimate());
 
-  pacerPipe->updateStat(PipeInterface::StatName::jitterUpMs, filterJitterUp.estimate()/1000 );
-  pacerPipe->updateStat(PipeInterface::StatName::jitterDownMs, filterJitterDown.estimate()/1000 );
+  pacerPipe->updateStat(PipeInterface::StatName::jitterUpMs,
+                        filterJitterUp.estimate() / 1000);
+  pacerPipe->updateStat(PipeInterface::StatName::jitterDownMs,
+                        filterJitterDown.estimate() / 1000);
 
   cycleStartTime = std::chrono::steady_clock::now();
 
@@ -233,7 +234,6 @@ void RateCtrl::startNewCycle() {
   filterJitterUp.reset();
   filterJitterUp.reset();
 }
-
 
 void RateCtrl::recvPacket(uint32_t relaySeqNum, uint32_t remoteSendTimeUs,
                           uint32_t localRecvTimeUs, uint16_t sizeBits,
@@ -377,7 +377,7 @@ void RateCtrl::calcPhaseAll() {
   // << std::endl; std::clog << "histPhase Down Start=" << histDownStart << "
   // end=" << histDownEnd << std::endl;
 
-  //std::clog << "Phase ----------------- " << std::endl;
+  // std::clog << "Phase ----------------- " << std::endl;
 
   const int numPacketsBackForBigRTT = 1000;
   int histUpStartBig = std::max(0, histUpStart - numPacketsBackForBigRTT);
@@ -387,13 +387,14 @@ void RateCtrl::calcPhaseAll() {
   calcPhaseClockSkew(histUpStart, histUpEnd);
   calcPhaseJitterUp(histUpStart, histUpEnd);
   calcPhaseLossRateUp(histUpStart, histUpEnd);
-  calcPhaseBitrateUp( histUpStart, histUpEnd  );
+  calcPhaseBitrateUp(histUpStart, histUpEnd);
 
-  // TODO - could have more aggressive value for histDownEnd based on jitter down
+  // TODO - could have more aggressive value for histDownEnd based on jitter
+  // down
 
   calcPhaseJitterDown(histDownStart, histDownEnd);
-  calcPhaseLossRateDown( histDownStart, histDownEnd  );
-  calcPhaseBitrateDown( histDownStart, histDownEnd  );
+  calcPhaseLossRateDown(histDownStart, histDownEnd);
+  calcPhaseBitrateDown(histDownStart, histDownEnd);
 
   // TODO - update all the filters
   filterMinRTT.update();
@@ -406,7 +407,6 @@ void RateCtrl::calcPhaseAll() {
   filterLossRatePerMillionDown.update();
   filterBitrateUp.update();
   filterBitrateDown.update();
-
 }
 
 void RateCtrl::calcPhaseMinRTT(int start, int end) {
@@ -429,7 +429,8 @@ void RateCtrl::calcPhaseMinRTT(int start, int end) {
   if (!noneFound) {
     filterMinRTT.add(minRttUs);
     // std::clog << " phase minRTT=" << minRttUs/1000 << " ms" << std::endl;
-    //std::clog << " phase estMinRTT=" << filterMinRTT.estimate() / 1000 << " ms"
+    // std::clog << " phase estMinRTT=" << filterMinRTT.estimate() / 1000 << "
+    // ms"
     //          << std::endl;
   }
 }
@@ -576,7 +577,7 @@ void RateCtrl::calcPhaseBigRTT(int start, int end) {
     int32_t bigRttUs = rttList.at(index);
 
     filterBigRTT.add(bigRttUs);
-    //std::clog << " phase bigRtt=" << bigRttUs / 1000 << " ms" << std::endl;
+    // std::clog << " phase bigRtt=" << bigRttUs / 1000 << " ms" << std::endl;
 #if 0
     std::clog << " phase estBigRtt=" << filterBigRTT.estimate() / 1000 << " ms"
               << std::endl;
@@ -606,8 +607,8 @@ void RateCtrl::calcPhaseLossRateUp(int start, int end) {
     int64_t lossPerMillion = lostCount * 1000000 / packetCount;
 
     filterLossRatePerMillionUp.add(lossPerMillion);
-    // std::clog << " phase lostCountUp=" << lostCount << " of " << packetCount<<
-    // std::endl; std::clog << " phase lossRateUp = " <<
+    // std::clog << " phase lostCountUp=" << lostCount << " of " <<
+    // packetCount<< std::endl; std::clog << " phase lossRateUp = " <<
     // (float)lossPerMillion/10000.0 << "% " << std::endl;
 #if 0
     std::clog << " phase estLossRateUp = "
@@ -621,8 +622,7 @@ void RateCtrl::calcPhaseLossRateDown(int start, int end) {
 
   for (int i = start; i < end; i++) {
     if ((downstreamHistory.at(i).status != HistoryStatus::received) &&
-        (downstreamHistory.at(i).status != HistoryStatus::congested))
-    {
+        (downstreamHistory.at(i).status != HistoryStatus::congested)) {
       downstreamHistory.at(i).status = HistoryStatus::lost;
     }
   }
@@ -641,8 +641,8 @@ void RateCtrl::calcPhaseLossRateDown(int start, int end) {
     int64_t lossPerMillion = lostCount * 1000000 / packetCount;
 
     filterLossRatePerMillionDown.add(lossPerMillion);
-    // std::clog << " phase lostCountDown=" << lostCount << " of " << packetCount<<
-    // std::endl; std::clog << " phase lossRateDown = " <<
+    // std::clog << " phase lostCountDown=" << lostCount << " of " <<
+    // packetCount<< std::endl; std::clog << " phase lossRateDown = " <<
     // (float)lossPerMillion/10000.0 << "% " << std::endl;
 #if 0
     std::clog << " phase estLossRateDown = "
@@ -650,7 +650,6 @@ void RateCtrl::calcPhaseLossRateDown(int start, int end) {
               << std::endl;
 #endif
   }
-
 }
 
 void RateCtrl::calcPhaseBitrateUp(int start, int end) {
@@ -664,13 +663,15 @@ void RateCtrl::calcPhaseBitrateUp(int start, int end) {
   int64_t bitCount = 0;
   int64_t bitLostCount = 0;
   for (int i = start; i < end; i++) {
-    //std::clog << " acked = " << bool( upstreamHistory.at(i).status == HistoryStatus::ack ) << std::endl;
-    //std::clog << " revcd = " << bool( upstreamHistory.at(i).status == HistoryStatus::received ) << std::endl;
+    // std::clog << " acked = " << bool( upstreamHistory.at(i).status ==
+    // HistoryStatus::ack ) << std::endl; std::clog << " revcd = " << bool(
+    // upstreamHistory.at(i).status == HistoryStatus::received ) << std::endl;
 
     if ((upstreamHistory.at(i).status == HistoryStatus::received) ||
         (upstreamHistory.at(i).status == HistoryStatus::ack)) {
       bitCount += upstreamHistory.at(i).sizeBits;
-      //std::clog << " bits = " << upstreamHistory.at(i).sizeBits << " bits " << std::endl;
+      // std::clog << " bits = " << upstreamHistory.at(i).sizeBits << " bits "
+      // << std::endl;
     } else {
       bitLostCount += upstreamHistory.at(i).sizeBits;
     }
@@ -690,22 +691,20 @@ void RateCtrl::calcPhaseBitrateUp(int start, int end) {
     (void)bitLostRate;
 #endif
   }
-
 }
 
 void RateCtrl::calcPhaseBitrateDown(int start, int end) {
 
   for (int i = start; i < end; i++) {
     if ((downstreamHistory.at(i).status != HistoryStatus::received) &&
-        (downstreamHistory.at(i).status != HistoryStatus::congested))
-    {
+        (downstreamHistory.at(i).status != HistoryStatus::congested)) {
       downstreamHistory.at(i).status = HistoryStatus::lost;
     }
   }
 
   int64_t bitCount = 0;
   for (int i = start; i < end; i++) {
-    if ( downstreamHistory.at(i).status == HistoryStatus::received ) {
+    if (downstreamHistory.at(i).status == HistoryStatus::received) {
       bitCount += downstreamHistory.at(i).sizeBits;
     }
   }
@@ -714,13 +713,11 @@ void RateCtrl::calcPhaseBitrateDown(int start, int end) {
     int64_t bitRate = bitCount * 1000000 / phaseTimeUs;
     filterBitrateDown.add(bitRate);
 
-
 #if 0
     //std::clog << " phase bitrateDown = " << (float)bitRate/1.0e6 << " mbps " << std::endl;
     std::clog << " phase estBitRateDown = "<< (float)filterBitrateDown.estimate()/1e6 << " mbps " << std::endl;
 #endif
   }
-
 }
 
 void RateCtrl::cycleUpdateUpstreamTarget() {
@@ -729,14 +726,15 @@ void RateCtrl::cycleUpdateUpstreamTarget() {
   int64_t bitrateUp = filterBitrateUp.estimate();
   int64_t lossRatePerMillionUp = filterLossRatePerMillionUp.estimate();
 
-  if (lossRatePerMillionUp > 600*1000 ) {
+  if (lossRatePerMillionUp > 600 * 1000) {
     // when 60% packet loss, drop to min of half prev rate or what works
-    upstreamBitrateTarget = std::min( prevTargetUp/2 , bitrateUp );
+    upstreamBitrateTarget = std::min(prevTargetUp / 2, bitrateUp);
   } else {
     // TODO - consider packet size and delay info in decision
 
     // move to max bitrate that worked
-    upstreamBitrateTarget = std::min( bitrateUp , prevTargetUp * 3 / 2 ); // TODO - mirror in download
+    upstreamBitrateTarget =
+        std::min(bitrateUp, prevTargetUp * 3 / 2); // TODO - mirror in download
   }
 }
 
@@ -746,9 +744,9 @@ void RateCtrl::cycleUpdateDownstreamTarget() {
   int64_t bitrateDown = filterBitrateDown.estimate();
   int64_t lossRatePerMillionDown = filterLossRatePerMillionDown.estimate();
 
-  if (lossRatePerMillionDown > 600*1000 ) {
+  if (lossRatePerMillionDown > 600 * 1000) {
     // when 60% packet loss, drop to min of half prev rate or what works
-    downstreamBitrateTarget = std::min( prevTargetDown/2 , bitrateDown );
+    downstreamBitrateTarget = std::min(prevTargetDown / 2, bitrateDown);
   } else {
     // TODO - consider packet size and delay info in decision
 
@@ -763,16 +761,16 @@ void RateCtrl::overrideMtu(uint16_t mtu, uint32_t pps) {
 }
 
 void RateCtrl::overrideRTT(uint16_t minRttMs, uint16_t bigRttMs) {
-  filterMinRTT.override(minRttMs*1000);
-  filterBigRTT.override(bigRttMs*1000);
+  filterMinRTT.override(minRttMs * 1000);
+  filterBigRTT.override(bigRttMs * 1000);
 }
 
-void RateCtrl::overrideBitrateUp(uint64_t minBps, uint64_t startBps, uint64_t maxBps) {
+void RateCtrl::overrideBitrateUp(uint64_t minBps, uint64_t startBps,
+                                 uint64_t maxBps) {
 
   filterBitrateUp.override(startBps);
   upstreamBitrateTarget = startBps;
 
-  limitBitrateMinUp=minBps;
-  limitBitrateMaxUp=maxBps;
+  limitBitrateMinUp = minBps;
+  limitBitrateMaxUp = maxBps;
 }
-

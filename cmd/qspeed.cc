@@ -8,17 +8,16 @@
 #include "encode.hh"
 #include <quicRClient.hh>
 
-
 using namespace MediaNet;
 
 int main(int argc, char *argv[]) {
   std::string relayName("localhost");
 
-	if (argc != 2) {
-		std::cerr << "Usage: " << argv[0] << " <hostname>" << std::endl;
-		return -1;
-	}
-	relayName = std::string( argv[1] );
+  if (argc != 2) {
+    std::cerr << "Usage: " << argv[0] << " <hostname>" << std::endl;
+    return -1;
+  }
+  relayName = std::string(argv[1]);
 
   QuicRClient qClient;
   qClient.setCryptoKey(1, sframe::bytes(8, uint8_t(1)));
@@ -31,22 +30,23 @@ int main(int argc, char *argv[]) {
 
   // setup up sending rate and size
 
-  //const int maxSpeedUpBps = 5 * 1000 * 1000;
+  // const int maxSpeedUpBps = 5 * 1000 * 1000;
   const int timeToSendUpSeconds = 30;
   const int packetsUpPerSecond = 60;
 
-  qClient.setBitrateUp( 1e6, 3e6, 4e6 );
-  qClient.setRttEstimate( 50 );
-  qClient.setPacketsUp( 500,240 );
+  qClient.setBitrateUp(1e6, 3e6, 4e6);
+  qClient.setRttEstimate(50);
+  qClient.setPacketsUp(500, 240);
 
-  const int packetSizeByes = 100; // TODO FIX (maxSpeedUpBps / packetsUpPerSecond) / 8;
-  assert( packetSizeByes < 32768 );
+  const int packetSizeByes =
+      100; // TODO FIX (maxSpeedUpBps / packetsUpPerSecond) / 8;
+  assert(packetSizeByes < 32768);
 
   int packetCount = 0;
   auto startTimePoint = std::chrono::steady_clock::now();
-  uint32_t lastPrintTime =0;
+  uint32_t lastPrintTime = 0;
 
-  ShortName name( 1, 1, 1 );
+  ShortName name(1, 1, 1);
   name.mediaTime = packetCount;
 
   // test Speed Upstream
@@ -55,9 +55,8 @@ int main(int argc, char *argv[]) {
 
     const int packetGapUs = 1000000 / packetsUpPerSecond;
     auto sendTime =
-        startTimePoint + std::chrono::microseconds(packetGapUs * packetCount );
+        startTimePoint + std::chrono::microseconds(packetGapUs * packetCount);
     std::this_thread::sleep_until(sendTime);
-
 
     name.mediaTime = packetCount;
     auto packet = qClient.createPacket(name, packetSizeByes);
@@ -81,20 +80,22 @@ int main(int argc, char *argv[]) {
 
     auto now = std::chrono::steady_clock::now();
     uint32_t durationMs =
-        (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(now-startTimePoint)
+        (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(
+            now - startTimePoint)
             .count();
-    if (durationMs > timeToSendUpSeconds * 1000 ) {
+    if (durationMs > timeToSendUpSeconds * 1000) {
       break;
     }
 
-    if ( durationMs > lastPrintTime+500 ) {
+    if (durationMs > lastPrintTime + 500) {
       lastPrintTime = durationMs;
 
       uint64_t bitRate = qClient.getTargetUpstreamBitrate(); // in bps
-      std::clog << "Send Up rate: " << float(bitRate)/1e6 << " mbps" << std::endl;
+      std::clog << "Send Up rate: " << float(bitRate) / 1e6 << " mbps"
+                << std::endl;
     }
 
-  } while ( true );
+  } while (true);
 
   return 0;
 }

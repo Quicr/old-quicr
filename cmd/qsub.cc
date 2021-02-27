@@ -12,10 +12,12 @@ int main(int argc, char *argv[]) {
 
   if (argc < 3) {
     std::cerr << "Usage: " << argv[0] << " <hostname> <shortname>" << std::endl;
-    std::cerr << "<shortname>: qr://<resourceId>/<senderId>/<sourceId>;" << std::endl;
-    std::cerr << "resourceId, senderId, sourceId, mediaTime are integers." << std::endl;
-		std::cerr << "\t Example: qr://1234/" << std::endl;
-		std::cerr << "senderId, sourceId, mediaTime optional" << std::endl;
+    std::cerr << "<shortname>: qr://<resourceId>/<senderId>/<sourceId>;"
+              << std::endl;
+    std::cerr << "resourceId, senderId, sourceId, mediaTime are integers."
+              << std::endl;
+    std::cerr << "\t Example: qr://1234/" << std::endl;
+    std::cerr << "senderId, sourceId, mediaTime optional" << std::endl;
     return -1;
   }
 
@@ -36,7 +38,7 @@ int main(int argc, char *argv[]) {
 
   std::cout << "Transport is ready" << std::endl;
 
-	qClient.subscribe(shortName);
+  qClient.subscribe(shortName);
 
   int numRecv = 0;
   // empty the receive queue

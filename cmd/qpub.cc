@@ -15,14 +15,15 @@ using namespace MediaNet;
 int main(int argc, char *argv[]) {
   std::string relayName("localhost");
 
-	if (argc < 3) {
-		std::cerr << "Usage: " << argv[0] << " <hostname> <shortname>" << std::endl;
-		std::cerr << "\t<shortname>: qr://<resourceId>/<senderId>/<sourceId>/" << std::endl;
-		std::cerr << "\t Example: qr://1234/12/1/" << std::endl;
-		std::cerr << "resourceId, senderId, sourceId are MANDATORY & integers." << std::endl;
-		return -1;
-	}
-
+  if (argc < 3) {
+    std::cerr << "Usage: " << argv[0] << " <hostname> <shortname>" << std::endl;
+    std::cerr << "\t<shortname>: qr://<resourceId>/<senderId>/<sourceId>/"
+              << std::endl;
+    std::cerr << "\t Example: qr://1234/12/1/" << std::endl;
+    std::cerr << "resourceId, senderId, sourceId are MANDATORY & integers."
+              << std::endl;
+    return -1;
+  }
 
   QuicRClient qClient;
   qClient.setCryptoKey(1, sframe::bytes(8, uint8_t(1)));
@@ -54,7 +55,7 @@ int main(int argc, char *argv[]) {
 
     uint64_t bitRate = qClient.getTargetUpstreamBitrate(); // in bps
 
-    const int maxBitRate = 100*1000 * 1000;
+    const int maxBitRate = 100 * 1000 * 1000;
     if (bitRate > maxBitRate) {
       // limit bitRate
       bitRate = maxBitRate;

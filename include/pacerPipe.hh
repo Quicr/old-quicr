@@ -1,12 +1,12 @@
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 #include <memory>
 #include <mutex>
 #include <queue>
 #include <string>
 #include <thread>
-#include <atomic>
 
 #include "packet.hh"
 #include "pipeInterface.hh"
@@ -24,16 +24,15 @@ public:
   [[nodiscard]] bool ready() const override;
   void stop() override;
 
-
   bool send(std::unique_ptr<Packet>) override;
   std::unique_ptr<Packet> recv() override;
 
   uint64_t getTargetUpstreamBitrate(); // in bps
 
-  void updateMTU(uint16_t mtu,uint32_t pps) override;
-  void updateBitrateUp( uint64_t minBps, uint64_t startBps, uint64_t maxBps ) override;
+  void updateMTU(uint16_t mtu, uint32_t pps) override;
+  void updateBitrateUp(uint64_t minBps, uint64_t startBps,
+                       uint64_t maxBps) override;
   void updateRTT(uint16_t minRttMs, uint16_t bigRttMs) override;
-
 
 private:
   RateCtrl rateCtrl;
