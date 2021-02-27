@@ -4,25 +4,23 @@
 # Set CMAKE_GENERATOR in the environment to select how you build, e.g.:
 #   CMAKE_GENERATOR=Ninja
 
-BUILD_DIR=build
 CLANG_FORMAT=clang-format -i
 
 .PHONY: all test clean cclean format
 
 all: ${BUILD_DIR}
-	cmake --build ${BUILD_DIR} 
-
-${BUILD_DIR}: CMakeLists.txt
-	cmake -B${BUILD_DIR} -DCMAKE_BUILD_TYPE=Debug .
+	cmake -B build -DCMAKE_BUILD_TYPE=Release .
+	cmake --build build --parallel 8
 
 test: ${BUILD_DIR} test/*
-	cmake --build ${BUILD_DIR} -DTESTING=ON --target quicr_test
+	cmake -B build -DCMAKE_BUILD_TYPE=Debug -DTESTING=ON .
+	cmake --build build --parallel 8
 
 clean:
-	cmake --build ${BUILD_DIR} --target clean
+	cmake --build build --target clean
 
 cclean:
-	rm -rf ${BUILD_DIR}
+	rm -rf build
 
 format:
 	find include -iname "*.hh" -or -iname "*.cc" | xargs ${CLANG_FORMAT}
