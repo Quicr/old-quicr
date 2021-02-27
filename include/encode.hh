@@ -68,6 +68,8 @@ enum struct PacketTag : uint32_t {
 
  	shortName = packetTagGen(5, 18, true),
 
+ 	shortName = packetTagGen(5, 18, true),
+
 	// TODO - Could add nextReservedCodePoints of various lengths and MTI
 
   // This block of headerMagic values selected to multiplex with STUN/DTLS/RTP
