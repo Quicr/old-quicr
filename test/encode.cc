@@ -176,13 +176,15 @@ TEST_CASE("PubData encode/decode") {
 	PubData data_in;
 	data_in.name = ShortName(1, 2, 3);
 	data_in.lifetime = toVarInt(0x1000);
-	data_in.encryptedDataBlock = EncryptedDataBlock{1, cipherText};
+	// TODO data_in.encryptedDataBlock = EncryptedDataBlock{1, cipherText.size() };
 
 	auto packet = std::make_unique<Packet>();
+	// TODO packet << ciperText;
 	packet << data_in;
 
 	PubData data_out{};
 	packet >> data_out;
+
 
 	CHECK(data_in.name == data_out.name);
 	CHECK_EQ(data_in.lifetime, data_out.lifetime);
