@@ -54,16 +54,19 @@ enum struct PacketTag : uint32_t {
 	syncAck = packetTagGen(10, 255, true),
 	rstRetry = packetTagGen(11, 255, true),
 	rstRedirect = packetTagGen(12, 255, true),
-	clientData = packetTagGen(2, 4, true), // make part of appData ???
-	pubData = packetTagGen(1, 255, true),
-	//pubDataFrag = packetTagGen(9, 255, true),
+
 	nack = packetTagGen(14, 255, true),
 	relayRateReq = packetTagGen(6, 4, true),
 	ack = packetTagGen(3, 255, true),
+	subscribeReq = packetTagGen(8, 0, true),
+
+	clientData = packetTagGen(2, 4, true),
 	relayData = packetTagGen(7, 8, true),
+	pubData = packetTagGen(1, 255, true),
+	//pubDataFrag = packetTagGen(9, 255, true),
 	subData = packetTagGen(13, 0, true),
-  subscribeReq = packetTagGen(8, 0, true),
-	shortName = packetTagGen(5, 18, true),
+
+ 	shortName = packetTagGen(5, 18, true),
 
 	// TODO - Could add nextReservedCodePoints of various lengths and MTI
 
@@ -78,7 +81,7 @@ enum struct PacketTag : uint32_t {
 	headerMagicRstCrazy = packetTagGen(23, 0, true),
 
 
-	extraMagicVer1 = packetTagGen(12538, 0, false),
+	//extraMagicVer1 = packetTagGen(12538, 0, false),
 
   badTag = packetTagGen(16383, 0,
                         true), // must not have any tag values greater than this
@@ -205,6 +208,7 @@ bool operator>>(std::unique_ptr<Packet> &p, RelayData &msg);
 ///
 struct EncryptedDataBlock {
 	uint8_t authTagLen;
+	// varInt cipherTextAndTagLen;
 	std::vector<uint8_t> cipherText; // enc + auth
 };
 std::unique_ptr<Packet>& operator<<(std::unique_ptr<Packet> &p, const EncryptedDataBlock &data);
