@@ -16,7 +16,7 @@ namespace MediaNet {
 
 class QuicRServer {
 public:
-	QuicRServer();
+  QuicRServer();
   virtual ~QuicRServer();
 
   virtual bool open(uint16_t port);
@@ -24,14 +24,13 @@ public:
   virtual void close();
   // Packet might be null
   virtual std::unique_ptr<Packet> recv();
-	virtual bool send(std::unique_ptr<Packet>);
+  virtual bool send(std::unique_ptr<Packet>);
 
 private:
   UdpPipe udpPipe;
   FakeLossPipe fakeLossPipe;
   ServerConnectionPipe connectionPipe;
   PipeInterface *firstPipe;
-
 };
 
 } // namespace MediaNet

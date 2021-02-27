@@ -10,29 +10,29 @@ using namespace MediaNet;
 
 namespace MediaNet {
 
-    enum struct HistoryStatus : uint8_t {
-        // this is bit vector were bits indicate set, received, congested, lost
-        none = 0,
-        sent = 1,
-        congested = 2+1, // ECN was set for this
-        received = 4+1, // received but lost ACK
-        ack  = 8+4+1, // got ACK and not congested
-        lost = 0x10+1  // no ACK in time
-    };
+enum struct HistoryStatus : uint8_t {
+  // this is bit vector were bits indicate set, received, congested, lost
+  none = 0,
+  sent = 1,
+  congested = 2 + 1, // ECN was set for this
+  received = 4 + 1,  // received but lost ACK
+  ack = 8 + 4 + 1,   // got ACK and not congested
+  lost = 0x10 + 1    // no ACK in time
+};
 
 struct PacketUpstreamStatus {
-    uint32_t seqNum;
-    uint16_t sizeBits;
+  uint32_t seqNum;
+  uint16_t sizeBits;
 
-    uint32_t localSendTimeUs;
-    uint32_t remoteReceiveTimeUs;
-    uint32_t localAckTimeUs;
+  uint32_t localSendTimeUs;
+  uint32_t remoteReceiveTimeUs;
+  uint32_t localAckTimeUs;
 
-    uint32_t sendPhaseCount;
+  uint32_t sendPhaseCount;
 
-    HistoryStatus status;
+  HistoryStatus status;
 
-    MediaNet::ShortName shortName;
+  MediaNet::ShortName shortName;
 };
 
 struct PacketDownstreamStatus {
@@ -47,19 +47,24 @@ struct PacketDownstreamStatus {
   HistoryStatus status;
 };
 
-class Filter{
+class Filter {
 public:
-    Filter( int64_t initialValue, int64_t gainUp1024s, int64_t gainDown1024s, bool initOnFirstValue=false );
-    void add(int64_t v);
-    void update() {};
-    void reset() { initOnFirst=true; };
-    void override(int64_t v) { value=v; initOnFirst=false; };
-    [[nodiscard]] int64_t estimate() const;
+  Filter(int64_t initialValue, int64_t gainUp1024s, int64_t gainDown1024s,
+         bool initOnFirstValue = false);
+  void add(int64_t v);
+  void update(){};
+  void reset() { initOnFirst = true; };
+  void override(int64_t v) {
+    value = v;
+    initOnFirst = false;
+  };
+  [[nodiscard]] int64_t estimate() const;
+
 private:
-    int64_t value;
-    const  int64_t gainUp;
-    const  int64_t gainDown;
-    bool initOnFirst;
+  int64_t value;
+  const int64_t gainUp;
+  const int64_t gainDown;
+  bool initOnFirst;
 };
 
 class RateCtrl {
@@ -70,10 +75,9 @@ public:
                   ShortName shortName);
 
   void recvPacket(uint32_t relaySeqNum, uint32_t remoteSendTimeUs,
-                  uint32_t localRecvTimeUs, uint16_t sizeBits, bool congested );
+                  uint32_t localRecvTimeUs, uint16_t sizeBits, bool congested);
   void recvAck(uint32_t seqNum, uint32_t remoteAckTimeUs,
-               uint32_t localRecvAckTimeUs, bool congested, bool haveAck );
-
+               uint32_t localRecvAckTimeUs, bool congested, bool haveAck);
 
   [[nodiscard]] uint32_t getPhase() const;
 
@@ -82,8 +86,7 @@ public:
 
   void overrideMtu(uint16_t mtu, uint32_t pps);
   void overrideRTT(uint16_t minRttMs, uint16_t bigRttMs);
-  void overrideBitrateUp( uint64_t minBps, uint64_t startBps, uint64_t maxBps );
-
+  void overrideBitrateUp(uint64_t minBps, uint64_t startBps, uint64_t maxBps);
 
 private:
   PipeInterface *pacerPipe;
@@ -95,7 +98,7 @@ private:
   std::vector<PacketDownstreamStatus> downstreamHistory;
 
   void updatePhase();
-  static const uint32_t phaseTimeUs = 33333 * 2 ; // 0.5 frames at 30 fps
+  static const uint32_t phaseTimeUs = 33333 * 2; // 0.5 frames at 30 fps
   static const uint32_t numPhasePerCycle = 5;
 
   void startNewPhase();
@@ -112,34 +115,34 @@ private:
 
   void calcPhaseAll();
 
-  void calcPhaseMinRTT(  int start, int end );
+  void calcPhaseMinRTT(int start, int end);
   MediaNet::Filter filterMinRTT;
 
-  void calcPhaseBigRTT(int start, int end );
+  void calcPhaseBigRTT(int start, int end);
   MediaNet::Filter filterBigRTT;
 
-  void calcPhaseClockSkew(   int start, int end );
+  void calcPhaseClockSkew(int start, int end);
   MediaNet::Filter filterLowerBoundSkew;
   MediaNet::Filter filterUpperBoundSkew;
 
-  void calcPhaseJitterUp(   int start, int end );
+  void calcPhaseJitterUp(int start, int end);
   MediaNet::Filter filterJitterUp;
 
-  void calcPhaseJitterDown(  int start, int end  );
+  void calcPhaseJitterDown(int start, int end);
   MediaNet::Filter filterJitterDown;
 
-  void calcPhaseLossRateUp(   int start, int end  );
+  void calcPhaseLossRateUp(int start, int end);
   MediaNet::Filter filterLossRatePerMillionUp;
 
-  void calcPhaseLossRateDown(   int start, int end );
+  void calcPhaseLossRateDown(int start, int end);
   MediaNet::Filter filterLossRatePerMillionDown;
 
-  void calcPhaseBitrateUp(  int start, int end );
+  void calcPhaseBitrateUp(int start, int end);
   MediaNet::Filter filterBitrateUp;
   uint64_t limitBitrateMinUp;
   uint64_t limitBitrateMaxUp;
 
-  void calcPhaseBitrateDown(   int start, int end );
+  void calcPhaseBitrateDown(int start, int end);
   MediaNet::Filter filterBitrateDown;
 };
 

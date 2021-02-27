@@ -11,9 +11,9 @@
 using namespace MediaNet;
 // TODO: Add other elements for pipeline - loss,spinBit, rateCtrl
 QuicRServer::QuicRServer()
-    : udpPipe(), fakeLossPipe(&udpPipe),
-      connectionPipe(&fakeLossPipe), firstPipe(&connectionPipe) {
-    firstPipe->updateMTU(1200,500);
+    : udpPipe(), fakeLossPipe(&udpPipe), connectionPipe(&fakeLossPipe),
+      firstPipe(&connectionPipe) {
+  firstPipe->updateMTU(1200, 500);
 }
 
 QuicRServer::~QuicRServer() { firstPipe->stop(); }
@@ -49,11 +49,11 @@ std::unique_ptr<Packet> QuicRServer::recv() {
 }
 
 bool QuicRServer::open(const uint16_t port) {
-	// TODO: add a start() overload for server flows
+  // TODO: add a start() overload for server flows
   return firstPipe->start(port, "", nullptr);
 }
 
 bool QuicRServer::send(std::unique_ptr<Packet> packet) {
-	// TODO: using UdpPipe directly. Revis this
-	return udpPipe.send(std::move(packet));
+  // TODO: using UdpPipe directly. Revis this
+  return udpPipe.send(std::move(packet));
 }

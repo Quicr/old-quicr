@@ -23,14 +23,12 @@ QuicRClient::QuicRClient()
       priorityPipe(&pacerPipe), retransmitPipe(&priorityPipe),
       fecPipe(&retransmitPipe), subscribePipe(&fecPipe),
       fragmentPipe(&subscribePipe), encryptPipe(&fragmentPipe),
-      statsPipe(&subscribePipe),  // TODO put back in fragment and encyprt pipe
+      statsPipe(&subscribePipe), // TODO put back in fragment and encyprt pipe
       firstPipe(&statsPipe) {
 
-
-
-    // TODO - get rid of all other places were defaults get set for mtu, rtt, pps
-    firstPipe->updateMTU(1280,480 );
-    firstPipe->updateRTT(20,50);
+  // TODO - get rid of all other places were defaults get set for mtu, rtt, pps
+  firstPipe->updateMTU(1280, 480);
+  firstPipe->updateRTT(20, 50);
 }
 
 QuicRClient::~QuicRClient() { firstPipe->stop(); }
@@ -39,10 +37,10 @@ bool QuicRClient::ready() const { return firstPipe->ready(); }
 
 void QuicRClient::close() { firstPipe->stop(); }
 
-void QuicRClient::setCryptoKey(sframe::MLSContext::EpochID epoch, const sframe::bytes &mls_epoch_secret) {
-	encryptPipe.setCryptoKey(epoch, mls_epoch_secret);
+void QuicRClient::setCryptoKey(sframe::MLSContext::EpochID epoch,
+                               const sframe::bytes &mls_epoch_secret) {
+  encryptPipe.setCryptoKey(epoch, mls_epoch_secret);
 }
-
 
 bool QuicRClient::publish(std::unique_ptr<Packet> packet) {
   size_t payloadSize = packet->size();
@@ -95,9 +93,9 @@ std::unique_ptr<Packet> QuicRClient::recv() {
 
     ShortName name;
     packet >> name;
-		//std::clog << "quicr recv data from " << name << std::endl;
+    // std::clog << "quicr recv data from " << name << std::endl;
 
-		uint16_t payloadSize;
+    uint16_t payloadSize;
     packet >> payloadSize;
     if (payloadSize > packet->size()) {
       std::clog << "quicr recv bad data size " << payloadSize << " "
@@ -151,22 +149,23 @@ bool QuicRClient::subscribe(ShortName name) {
 
 void QuicRClient::setPacketsUp(uint16_t pps, uint16_t mtu) {
   assert(firstPipe);
-  assert( pps >= 10 );
-  assert( mtu >= 56 );
-  firstPipe->updateMTU(mtu,pps);
+  assert(pps >= 10);
+  assert(mtu >= 56);
+  firstPipe->updateMTU(mtu, pps);
 }
 
 void QuicRClient::setRttEstimate(uint32_t minRttMs, uint32_t bigRttMs) {
   assert(firstPipe);
-  if ( bigRttMs == 0 ) {
+  if (bigRttMs == 0) {
     bigRttMs = minRttMs * 3 / 2;
   }
-  assert( minRttMs > 0 );
-  assert( bigRttMs > 0 );
-  firstPipe->updateRTT(minRttMs,bigRttMs);
+  assert(minRttMs > 0);
+  assert(bigRttMs > 0);
+  firstPipe->updateRTT(minRttMs, bigRttMs);
 }
 
-void QuicRClient::setBitrateUp(uint64_t minBps, uint64_t startBps, uint64_t maxBps) {
+void QuicRClient::setBitrateUp(uint64_t minBps, uint64_t startBps,
+                               uint64_t maxBps) {
   assert(firstPipe);
-  firstPipe->updateBitrateUp( minBps, startBps, maxBps );
+  firstPipe->updateBitrateUp(minBps, startBps, maxBps);
 }

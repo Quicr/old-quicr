@@ -18,8 +18,8 @@
 #endif
 
 #include "packet.hh"
-#include <sstream>
 #include <iomanip>
+#include <sstream>
 
 using namespace MediaNet;
 
@@ -58,15 +58,13 @@ void Packet::copy(const Packet &p) {
   dst = p.dst;
 }
 
-std::string
-Packet::to_hex()
-{
-	std::stringstream hex(std::ios_base::out);
-	hex.flags(std::ios::hex);
-	for (const auto& byte : buffer) {
-		hex << std::setw(2) << std::setfill('0') << int(byte);
-	}
-	return hex.str();
+std::string Packet::to_hex() {
+  std::stringstream hex(std::ios_base::out);
+  hex.flags(std::ios::hex);
+  for (const auto &byte : buffer) {
+    hex << std::setw(2) << std::setfill('0') << int(byte);
+  }
+  return hex.str();
 }
 
 std::unique_ptr<Packet> Packet::clone() const {
@@ -115,9 +113,9 @@ bool MediaNet::operator<(const ShortName &a, const ShortName &b) {
                                            b.fragmentID);
 }
 
-void Packet::setFragID(const uint8_t fragmentID, bool lastFrag ) {
+void Packet::setFragID(const uint8_t fragmentID, bool lastFrag) {
 
-  assert( fragmentID <= 63 );
+  assert(fragmentID <= 63);
 
   name.fragmentID = fragmentID * 2 + (lastFrag ? 1 : 0);
 #if 0 // TODO REMOVE

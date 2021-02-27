@@ -1,8 +1,8 @@
 
 
 #include <cassert>
-#include <iostream>
 #include <chrono>
+#include <iostream>
 
 #include "crazyBitPipe.hh"
 #include "packet.hh"

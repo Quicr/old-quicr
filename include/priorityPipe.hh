@@ -1,10 +1,10 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <memory>
 #include <mutex>
 #include <queue>
-#include <array>
 
 #include "packet.hh"
 #include "pipeInterface.hh"
@@ -21,18 +21,18 @@ public:
   std::unique_ptr<Packet> toDownstream() override;
   bool fromDownstream(std::unique_ptr<Packet>) override;
 
-    void updateMTU(uint16_t mtu,uint32_t pps) override;
+  void updateMTU(uint16_t mtu, uint32_t pps) override;
 
 private:
-    static const int maxPriority=10;
+  static const int maxPriority = 10;
 
-    std::mutex sendQMutex;
-    std::array< std::queue<std::unique_ptr<Packet>>, maxPriority+1 > sendQarray;
+  std::mutex sendQMutex;
+  std::array<std::queue<std::unique_ptr<Packet>>, maxPriority + 1> sendQarray;
 
-    std::queue<std::unique_ptr<Packet>> recvQ;
-    std::mutex recvQMutex;
+  std::queue<std::unique_ptr<Packet>> recvQ;
+  std::mutex recvQMutex;
 
-    uint16_t mtu;
+  uint16_t mtu;
 };
 
 } // namespace MediaNet

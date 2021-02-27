@@ -8,18 +8,17 @@
 
 using namespace MediaNet;
 
-Connection::Connection(uint32_t randNum, const MediaNet::IpAddr& addr)
-: relaySeqNum(randNum)
-  , address(addr) {}
+Connection::Connection(uint32_t randNum, const MediaNet::IpAddr &addr)
+    : relaySeqNum(randNum), address(addr) {}
 
 BroadcastRelay::BroadcastRelay(uint16_t port) : qServer() {
-	qServer.open(port);
+  qServer.open(port);
   prevAckSeqNum = 0;
   prevRecvTimeUs = 0;
 
-	std::random_device randDev;
-	randomGen.seed(randDev()); // TODO - should use crypto random
-	getRandom = std::bind(randomDist, randomGen);
+  std::random_device randDev;
+  randomGen.seed(randDev()); // TODO - should use crypto random
+  getRandom = std::bind(randomDist, randomGen);
 }
 
 void BroadcastRelay::process() {
@@ -35,7 +34,6 @@ void BroadcastRelay::process() {
     return;
   }
 
-
   if (nextTag(packet) == PacketTag::clientData) {
     processAppMessage(packet);
     return;
@@ -47,7 +45,9 @@ void BroadcastRelay::process() {
     return;
   }
 
-  std::clog << std::endl << "Got bad packet nextTag=" << int(nextTag(packet))/256  << std::endl;
+  std::clog << std::endl
+            << "Got bad packet nextTag=" << int(nextTag(packet)) / 256
+            << std::endl;
 }
 
 void BroadcastRelay::processRate(std::unique_ptr<MediaNet::Packet> &packet) {
@@ -58,55 +58,59 @@ void BroadcastRelay::processRate(std::unique_ptr<MediaNet::Packet> &packet) {
             << std::endl;
 }
 
-void BroadcastRelay::processAppMessage(std::unique_ptr<MediaNet::Packet>& packet) {
-	ClientData seqNumTag{};
-	packet >> seqNumTag;
+void BroadcastRelay::processAppMessage(
+    std::unique_ptr<MediaNet::Packet> &packet) {
+  ClientData seqNumTag{};
+  packet >> seqNumTag;
 
-	//auto tag = PacketTag::none;
-	//packet >> tag;
-	auto tag = nextTag(packet);
-	if(tag == PacketTag::pubData) {
-		return processPub(packet, seqNumTag);
-	} else if(tag  == PacketTag::subscribeReq) {
-		return processSub(packet, seqNumTag);
-	}
+  // auto tag = PacketTag::none;
+  // packet >> tag;
+  auto tag = nextTag(packet);
+  if (tag == PacketTag::pubData) {
+    return processPub(packet, seqNumTag);
+  } else if (tag == PacketTag::subscribeReq) {
+    return processSub(packet, seqNumTag);
+  }
 
-	std::clog << "Bad App message:" << (int) tag << "\n";
+  std::clog << "Bad App message:" << (int)tag << "\n";
 }
 
-void BroadcastRelay::processSub(std::unique_ptr<MediaNet::Packet> &packet, ClientData& clientSeqNumTag) {
-	std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
-	std::chrono::steady_clock::duration dn = tp.time_since_epoch();
-	uint32_t nowUs =
-					(uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(dn)
-									.count();
+void BroadcastRelay::processSub(std::unique_ptr<MediaNet::Packet> &packet,
+                                ClientData &clientSeqNumTag) {
+  std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
+  std::chrono::steady_clock::duration dn = tp.time_since_epoch();
+  uint32_t nowUs =
+      (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(dn)
+          .count();
 
-	// ack the packet
-	auto ack = std::make_unique<Packet>();
-	ack->setDst(packet->getSrc());
-	ack << PacketTag::headerMagicData;
-	NetAck ackTag{};
-	ackTag.clientSeqNum = clientSeqNumTag.clientSeqNum;
-	ackTag.netRecvTimeUs = nowUs;
-	ack << ackTag;
+  // ack the packet
+  auto ack = std::make_unique<Packet>();
+  ack->setDst(packet->getSrc());
+  ack << PacketTag::headerMagicData;
+  NetAck ackTag{};
+  ackTag.clientSeqNum = clientSeqNumTag.clientSeqNum;
+  ackTag.netRecvTimeUs = nowUs;
+  ack << ackTag;
 
-	// save the subscription
-	PacketTag tag;
-	packet >> tag;
-	ShortName name;
-	packet >> name;
-	std::clog << "Adding Subscription for: " << name << std::endl;
-	auto conIndex = connectionMap.find(name);
-	if (conIndex == connectionMap.end()) {
-		// new connection
-		connectionMap[name] = std::make_unique<Connection>(getRandom(), packet->getSrc());
-	}
+  // save the subscription
+  PacketTag tag;
+  packet >> tag;
+  ShortName name;
+  packet >> name;
+  std::clog << "Adding Subscription for: " << name << std::endl;
+  auto conIndex = connectionMap.find(name);
+  if (conIndex == connectionMap.end()) {
+    // new connection
+    connectionMap[name] =
+        std::make_unique<Connection>(getRandom(), packet->getSrc());
+  }
 
-	std::unique_ptr<Connection> &con = connectionMap[name];
-	con->lastSyn = std::chrono::steady_clock::now();
+  std::unique_ptr<Connection> &con = connectionMap[name];
+  con->lastSyn = std::chrono::steady_clock::now();
 }
 
-void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet, ClientData& seqNumTag) {
+void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
+                                ClientData &seqNumTag) {
   std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
   std::chrono::steady_clock::duration dn = tp.time_since_epoch();
   uint32_t nowUs =
@@ -115,19 +119,19 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet, Clien
 
   std::clog << ".";
 
-	// save the name for publish
-	PacketTag tag;
-	packet >> tag;
-	ShortName name;
-	packet >> name;
+  // save the name for publish
+  PacketTag tag;
+  packet >> tag;
+  ShortName name;
+  packet >> name;
 
-	uint16_t payloadSize;
-	packet >> payloadSize;
-	if (payloadSize > packet->size()) {
-		std::clog << "relay recv bad data size " << payloadSize << " "
-							<< packet->size() << std::endl;
-		return;
-	}
+  uint16_t payloadSize;
+  packet >> payloadSize;
+  if (payloadSize > packet->size()) {
+    std::clog << "relay recv bad data size " << payloadSize << " "
+              << packet->size() << std::endl;
+    return;
+  }
 
   auto ack = std::make_unique<Packet>();
   ack->setDst(packet->getSrc());
@@ -155,9 +159,9 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet, Clien
   // TODO - loop over connections and remove ones with old last Syn time
 
   // TODO: push this into server class
-	packet << payloadSize;
-	packet << name;
-	packet << tag;
+  packet << payloadSize;
+  packet << name;
+  packet << tag;
 
   // for each connection, make copy and forward
   for (auto const &[addr, con] : connectionMap) {
@@ -204,7 +208,7 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet, Clien
 int main() {
   auto qRelay = BroadcastRelay(5004);
   while (true) {
-  	qRelay.process();
+    qRelay.process();
   }
   return 0;
 }

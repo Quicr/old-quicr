@@ -9,9 +9,8 @@
 using namespace MediaNet;
 
 PacerPipe::PacerPipe(PipeInterface *t)
-    : PipeInterface(t), rateCtrl(this), shutDown(false), oldPhase(-1),mtu(1200),targetPpsUp(500),
-    useConstantPacketRate(true),
-      nextSeqNum(1) {
+    : PipeInterface(t), rateCtrl(this), shutDown(false), oldPhase(-1),
+      mtu(1200), targetPpsUp(500), useConstantPacketRate(true), nextSeqNum(1) {
   assert(downStream);
 }
 
@@ -56,16 +55,13 @@ bool PacerPipe::ready() const {
   return downStream->ready();
 }
 
-
-
 bool PacerPipe::send(std::unique_ptr<Packet> p) {
-    (void)p;
-    assert(0);
+  (void)p;
+  assert(0);
   return true;
 }
 
-void PacerPipe::sendRateCommand()
-{
+void PacerPipe::sendRateCommand() {
   auto packet = std::make_unique<Packet>();
   assert(packet);
 
@@ -110,10 +106,10 @@ void PacerPipe::runNetSend() {
     std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
     std::chrono::steady_clock::duration dn = tp.time_since_epoch();
     uint32_t nowUs =
-        (uint32_t) std::chrono::duration_cast<std::chrono::microseconds>(dn)
+        (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(dn)
             .count();
 
-    uint16_t bits = (uint16_t) packet->fullSize() * 8 +
+    uint16_t bits = (uint16_t)packet->fullSize() * 8 +
                     42 * 8; // Capture shows 42 byte header before UDP payload
     // including ethernet frame
 
@@ -127,19 +123,22 @@ void PacerPipe::runNetSend() {
 
     if (useConstantPacketRate) {
       // wait until time to send next packet
-      uint64_t delayTimeUs = ( uint64_t(packetsSentThisPhase) * 1000000l) / uint64_t(targetPpsUp);
-      //std::clog<<"packetsSentThisPhase="<<packetsSentThisPhase << " delayMs="<< delayTimeUs/1000 <<std::endl;
+      uint64_t delayTimeUs =
+          (uint64_t(packetsSentThisPhase) * 1000000l) / uint64_t(targetPpsUp);
+      // std::clog<<"packetsSentThisPhase="<<packetsSentThisPhase << "
+      // delayMs="<< delayTimeUs/1000 <<std::endl;
 
-      std::this_thread::sleep_until(phaseStartTime + std::chrono::microseconds(delayTimeUs));
+      std::this_thread::sleep_until(phaseStartTime +
+                                    std::chrono::microseconds(delayTimeUs));
     }
 
     {
       // watch bitrate and don't send until OK to send more data
       uint64_t targetBitrate = rateCtrl.bwUpTarget();
       uint64_t delayTimeUs = (bits * 1000000l) / targetBitrate;
-      std::this_thread::sleep_until(tp + std::chrono::microseconds(delayTimeUs));
+      std::this_thread::sleep_until(tp +
+                                    std::chrono::microseconds(delayTimeUs));
     }
-
   }
 }
 
@@ -160,12 +159,13 @@ void PacerPipe::runNetRecv() {
     // look for ACKs
 
     // TODO - move to if and allow only one ???
-    bool haveAck=true;
+    bool haveAck = true;
     while (nextTag(packet) == PacketTag::ack) {
       NetAck ackTag{};
       packet >> ackTag;
       bool congested = false; // TODO - add to ACK
-      rateCtrl.recvAck(ackTag.clientSeqNum, ackTag.netRecvTimeUs, nowUs, congested, haveAck );
+      rateCtrl.recvAck(ackTag.clientSeqNum, ackTag.netRecvTimeUs, nowUs,
+                       congested, haveAck);
       haveAck = false; // treat redundant ACK as received but not acks
     }
 
@@ -176,14 +176,14 @@ void PacerPipe::runNetRecv() {
 
       uint16_t bits = (uint16_t)packet->fullSize() * 8 +
                       42 * 8; // Capture shows 42 byte header before UDP payload
-                              // including ethernet frame
+      // including ethernet frame
 
-                              bool congested = false; // TODO - add
+      bool congested = false; // TODO - add
       rateCtrl.recvPacket(relaySeqNum.relaySeqNum, relaySeqNum.remoteSendTimeUs,
                           nowUs, bits, congested);
     }
 
-    upStream->fromDownstream( move(packet) );
+    upStream->fromDownstream(move(packet));
 
     // std::clog << "<";
   }
@@ -191,33 +191,33 @@ void PacerPipe::runNetRecv() {
 
 uint64_t PacerPipe::getTargetUpstreamBitrate() { return rateCtrl.bwUpTarget(); }
 
-
 std::unique_ptr<Packet> PacerPipe::recv() {
-    // this should never be called
-    assert(0);
-    return std::unique_ptr<Packet>(nullptr);
+  // this should never be called
+  assert(0);
+  return std::unique_ptr<Packet>(nullptr);
 }
 
-void PacerPipe::updateMTU(uint16_t val,uint32_t pps) {
-    mtu = val;
-    targetPpsUp = pps;
+void PacerPipe::updateMTU(uint16_t val, uint32_t pps) {
+  mtu = val;
+  targetPpsUp = pps;
 
-    useConstantPacketRate = bool( targetPpsUp > 0 );
+  useConstantPacketRate = bool(targetPpsUp > 0);
 
-    rateCtrl.overrideMtu(mtu,pps);
+  rateCtrl.overrideMtu(mtu, pps);
 
-    PipeInterface::updateMTU(val,pps);
+  PipeInterface::updateMTU(val, pps);
 }
 
-void PacerPipe::updateBitrateUp(uint64_t minBps, uint64_t startBps, uint64_t maxBps) {
+void PacerPipe::updateBitrateUp(uint64_t minBps, uint64_t startBps,
+                                uint64_t maxBps) {
 
-  rateCtrl.overrideBitrateUp(minBps,startBps,maxBps);
+  rateCtrl.overrideBitrateUp(minBps, startBps, maxBps);
 
   PipeInterface::updateBitrateUp(minBps, startBps, maxBps);
 }
 
 void PacerPipe::updateRTT(uint16_t minRttMs, uint16_t bigRttMs) {
-   rateCtrl.overrideRTT(minRttMs,bigRttMs);
+  rateCtrl.overrideRTT(minRttMs, bigRttMs);
 
   PipeInterface::updateRTT(minRttMs, bigRttMs);
 }
