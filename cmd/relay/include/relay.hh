@@ -21,8 +21,8 @@ public:
 private:
 	void processAppMessage(std::unique_ptr<MediaNet::Packet>& packet);
 	void processRateRequest(std::unique_ptr<MediaNet::Packet>& packet);
-	void processSub(std::unique_ptr<MediaNet::Packet>& packet, MediaNet::NetClientSeqNum& clientSeqNum);
-	void processPub(std::unique_ptr<MediaNet::Packet>& packet, MediaNet::NetClientSeqNum& clientSeqNum);
+	void processSub(std::unique_ptr<MediaNet::Packet>& packet, MediaNet::ClientData& clientSeqNum);
+	void processPub(std::unique_ptr<MediaNet::Packet>& packet, MediaNet::ClientData& clientSeqNum);
 
 	uint32_t prevAckSeqNum = 0;
 	uint32_t prevRecvTimeUs = 0;

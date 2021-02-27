@@ -35,7 +35,8 @@ void BroadcastRelay::process() {
     return;
   }
 
-  if (nextTag(packet) == PacketTag::clientSeqNum) {
+
+  if (nextTag(packet) == PacketTag::clientData) {
     processAppMessage(packet);
     return;
   }
@@ -46,7 +47,7 @@ void BroadcastRelay::process() {
     return;
   }
 
-  std::clog << std::endl << "Got bad packet: Tag" << int(nextTag(packet)) << std::endl;
+  std::clog << std::endl << "Got bad packet nextTag=" << int(nextTag(packet))/256  << std::endl;
 }
 
 void BroadcastRelay::processRate(std::unique_ptr<MediaNet::Packet> &packet) {
@@ -58,13 +59,13 @@ void BroadcastRelay::processRate(std::unique_ptr<MediaNet::Packet> &packet) {
 }
 
 void BroadcastRelay::processAppMessage(std::unique_ptr<MediaNet::Packet>& packet) {
-	NetClientSeqNum seqNumTag{};
+	ClientData seqNumTag{};
 	packet >> seqNumTag;
 
 	//auto tag = PacketTag::none;
 	//packet >> tag;
 	auto tag = nextTag(packet);
-	if(tag == PacketTag::appData) {
+	if(tag == PacketTag::pubData) {
 		return processPub(packet, seqNumTag);
 	} else if(tag  == PacketTag::subscribeReq) {
 		return processSub(packet, seqNumTag);
@@ -73,7 +74,7 @@ void BroadcastRelay::processAppMessage(std::unique_ptr<MediaNet::Packet>& packet
 	std::clog << "Bad App message:" << (int) tag << "\n";
 }
 
-void BroadcastRelay::processSub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNum& clientSeqNumTag) {
+void BroadcastRelay::processSub(std::unique_ptr<MediaNet::Packet> &packet, ClientData& clientSeqNumTag) {
 	std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
 	std::chrono::steady_clock::duration dn = tp.time_since_epoch();
 	uint32_t nowUs =
@@ -85,7 +86,7 @@ void BroadcastRelay::processSub(std::unique_ptr<MediaNet::Packet> &packet, NetCl
 	ack->setDst(packet->getSrc());
 	ack << PacketTag::headerMagicData;
 	NetAck ackTag{};
-	ackTag.netAckSeqNum = clientSeqNumTag.clientSeqNum;
+	ackTag.clientSeqNum = clientSeqNumTag.clientSeqNum;
 	ackTag.netRecvTimeUs = nowUs;
 	ack << ackTag;
 
@@ -105,7 +106,7 @@ void BroadcastRelay::processSub(std::unique_ptr<MediaNet::Packet> &packet, NetCl
 	con->lastSyn = std::chrono::steady_clock::now();
 }
 
-void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNum& seqNumTag) {
+void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet, ClientData& seqNumTag) {
   std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
   std::chrono::steady_clock::duration dn = tp.time_since_epoch();
   uint32_t nowUs =
@@ -136,19 +137,19 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetCl
   // TODO - get rid of prev Ack tag and use ack vector
   if (prevAckSeqNum > 0) {
     NetAck prevAckTag{};
-    prevAckTag.netAckSeqNum = prevAckSeqNum;
+    prevAckTag.clientSeqNum = prevAckSeqNum;
     prevAckTag.netRecvTimeUs = prevRecvTimeUs;
     ack << prevAckTag;
   }
 
   NetAck ackTag{};
-  ackTag.netAckSeqNum = seqNumTag.clientSeqNum;
+  ackTag.clientSeqNum = seqNumTag.clientSeqNum;
   ackTag.netRecvTimeUs = nowUs;
   ack << ackTag;
 
   qServer.send(move(ack));
 
-  prevAckSeqNum = ackTag.netAckSeqNum;
+  prevAckSeqNum = ackTag.clientSeqNum;
   prevRecvTimeUs = ackTag.netRecvTimeUs;
 
   // TODO - loop over connections and remove ones with old last Syn time
@@ -164,7 +165,7 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetCl
 
     subData->setDst(con->address);
 
-    NetRelaySeqNum netRelaySeqNum;
+    RelayData netRelaySeqNum;
     netRelaySeqNum.relaySeqNum = con->relaySeqNum++;
     netRelaySeqNum.remoteSendTimeUs = nowUs;
 

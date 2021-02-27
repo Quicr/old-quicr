@@ -13,14 +13,12 @@ PriorityPipe::PriorityPipe(PipeInterface *t): PipeInterface(t) ,mtu(1200) {}
 bool PriorityPipe::send(std::unique_ptr<Packet> packet) {
   assert(downStream);
 
-  // TODO - implement priority Q that rate controller can use
+  uint8_t priority = packet->getPriority();
+  if ( priority > maxPriority ) {
+    priority=maxPriority;
+  }
 
   {
-      uint8_t priority = packet->getPriority();
-      if ( priority > maxPriority ) {
-          priority=maxPriority;
-      }
-
     std::lock_guard<std::mutex> lock(sendQMutex);
     // std::clog << "+";
     sendQarray[priority].push(move(packet));
@@ -43,6 +41,9 @@ std::unique_ptr<Packet> PriorityPipe::toDownstream() {
         if (!sendQarray[i].empty()) {
             packet = move(sendQarray[i].front());
             sendQarray[i].pop();
+
+            // TODO - if below the MTU , add some more data to the packet
+
             break;
         }
     }

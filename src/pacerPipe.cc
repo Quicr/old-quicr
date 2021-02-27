@@ -9,7 +9,9 @@
 using namespace MediaNet;
 
 PacerPipe::PacerPipe(PipeInterface *t)
-    : PipeInterface(t), rateCtrl(this), shutDown(false), oldPhase(0),mtu(1200),targetPpsUp(500) {
+    : PipeInterface(t), rateCtrl(this), shutDown(false), oldPhase(-1),mtu(1200),targetPpsUp(500),
+    useConstantPacketRate(true),
+      nextSeqNum(1) {
   assert(downStream);
 }
 
@@ -62,53 +64,58 @@ bool PacerPipe::send(std::unique_ptr<Packet> p) {
   return true;
 }
 
+void PacerPipe::sendRateCommand()
+{
+  auto packet = std::make_unique<Packet>();
+  assert(packet);
+
+  packet << PacketTag::headerMagicData;
+  // packet << PacketTag::extraMagicVer1;
+  // packet << PacketTag::extraMagicVer2;
+
+  NetRateReq rateReq{};
+  rateReq.bitrateKbps = toVarInt(rateCtrl.bwDownTarget() / 1000);
+  packet << rateReq;
+
+  // std::clog << "Send Rate Req" << std::endl;
+  downStream->send(move(packet));
+}
+
 void PacerPipe::runNetSend() {
   while (!shutDown) {
 
     // If in a new cycle, send a rate message to relay
     uint32_t phase = rateCtrl.getPhase();
     if (oldPhase != phase) {
-
-      oldPhase = phase;
       // starting new phase
+      oldPhase = phase;
+      phaseStartTime = std::chrono::steady_clock::now();
+      packetsSentThisPhase = 0;
 
-      auto packet = std::make_unique<Packet>();
-      assert(packet);
-      // packet->buffer.reserve(20); // TODO - tune the 20
-
-      packet << PacketTag::headerMagicData;
-      // packet << PacketTag::extraMagicVer1;
-      // packet << PacketTag::extraMagicVer2;
-
-      NetRateReq rateReq{};
-      rateReq.bitrateKbps = toVarInt(rateCtrl.bwDownTarget() / 1000); // TODO
-      packet << rateReq;
-
-      // std::clog << "Send Rate Req" << std::endl;
-      downStream->send(move(packet));
+      sendRateCommand();
     }
 
     std::unique_ptr<Packet> packet = upStream->toDownstream();
 
-    if ( !packet ) {
+    if (!packet) {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
       continue;
     }
 
-    NetClientSeqNum seqTag{};
-    static uint32_t nextSeqNum = 0; // TODO - add mutex etc
-    seqTag.clientSeqNum = (nextSeqNum++);
+    ClientData seqTag{};
+    seqTag.clientSeqNum = nextSeqNum++;
+
     packet << seqTag;
 
     std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
     std::chrono::steady_clock::duration dn = tp.time_since_epoch();
     uint32_t nowUs =
-        (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(dn)
+        (uint32_t) std::chrono::duration_cast<std::chrono::microseconds>(dn)
             .count();
 
-    uint16_t bits = (uint16_t)packet->fullSize() * 8 +
+    uint16_t bits = (uint16_t) packet->fullSize() * 8 +
                     42 * 8; // Capture shows 42 byte header before UDP payload
-                            // including ethernet frame
+    // including ethernet frame
 
     assert(packet);
     rateCtrl.sendPacket((seqTag.clientSeqNum), nowUs, bits,
@@ -116,17 +123,23 @@ void PacerPipe::runNetSend() {
 
     downStream->send(move(packet));
     // std::clog << ">";
+    packetsSentThisPhase++;
 
-    // TODO - watch bitrate and don't send until OK to send more data
-    uint64_t targetBitrate = rateCtrl.bwUpTarget();
-    uint64_t delayTimeUs = ( bits * 1000000l ) / targetBitrate;
-#if 0
-    std::clog << "delay for " << delayTimeUs <<  " us,"
-    << " target=" << (float)targetBitrate/1.e6 << " mbps"
-    <<std::endl;
-#endif
+    if (useConstantPacketRate) {
+      // wait until time to send next packet
+      uint64_t delayTimeUs = ( uint64_t(packetsSentThisPhase) * 1000000l) / uint64_t(targetPpsUp);
+      //std::clog<<"packetsSentThisPhase="<<packetsSentThisPhase << " delayMs="<< delayTimeUs/1000 <<std::endl;
 
-    std::this_thread::sleep_until( tp+std::chrono::microseconds( delayTimeUs ) );
+      std::this_thread::sleep_until(phaseStartTime + std::chrono::microseconds(delayTimeUs));
+    }
+
+    {
+      // watch bitrate and don't send until OK to send more data
+      uint64_t targetBitrate = rateCtrl.bwUpTarget();
+      uint64_t delayTimeUs = (bits * 1000000l) / targetBitrate;
+      std::this_thread::sleep_until(tp + std::chrono::microseconds(delayTimeUs));
+    }
+
   }
 }
 
@@ -152,13 +165,13 @@ void PacerPipe::runNetRecv() {
       NetAck ackTag{};
       packet >> ackTag;
       bool congested = false; // TODO - add to ACK
-      rateCtrl.recvAck(ackTag.netAckSeqNum, ackTag.netRecvTimeUs, nowUs, congested, haveAck );
+      rateCtrl.recvAck(ackTag.clientSeqNum, ackTag.netRecvTimeUs, nowUs, congested, haveAck );
       haveAck = false; // treat redundant ACK as received but not acks
     }
 
     // look for incoming remoteSeqNum
-    if (nextTag(packet) == PacketTag::relaySeqNum) {
-      NetRelaySeqNum relaySeqNum{};
+    if (nextTag(packet) == PacketTag::relayData) {
+      RelayData relaySeqNum{};
       packet >> relaySeqNum;
 
       uint16_t bits = (uint16_t)packet->fullSize() * 8 +
@@ -189,5 +202,22 @@ void PacerPipe::updateMTU(uint16_t val,uint32_t pps) {
     mtu = val;
     targetPpsUp = pps;
 
+    useConstantPacketRate = bool( targetPpsUp > 0 );
+
+    rateCtrl.overrideMtu(mtu,pps);
+
     PipeInterface::updateMTU(val,pps);
+}
+
+void PacerPipe::updateBitrateUp(uint64_t minBps, uint64_t startBps, uint64_t maxBps) {
+
+  rateCtrl.overrideBitrateUp(minBps,startBps,maxBps);
+
+  PipeInterface::updateBitrateUp(minBps, startBps, maxBps);
+}
+
+void PacerPipe::updateRTT(uint16_t minRttMs, uint16_t bigRttMs) {
+   rateCtrl.overrideRTT(minRttMs,bigRttMs);
+
+  PipeInterface::updateRTT(minRttMs, bigRttMs);
 }

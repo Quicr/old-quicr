@@ -24,14 +24,16 @@ RateCtrl::RateCtrl(PipeInterface *pacerPipeRef)
       filterJitterDown(1, 1024, 102, true),
       filterLossRatePerMillionUp(0, 102, 102),
       filterLossRatePerMillionDown(0, 102, 102),
-      filterBitrateUp(1000000,1024,0,true),
-      filterBitrateDown(1000000,1024,0,true)
+      filterBitrateUp(1e6,1024,0,true),
+      limitBitrateMinUp(0),
+      limitBitrateMaxUp(100e9),
+      filterBitrateDown(1e6,1024,0,true)
       {
   upstreamHistory.clear();
-  upstreamHistory.reserve(100); // TODO limit length of history
+  upstreamHistory.reserve(5000); // TODO limit length of history
 
   downstreamHistory.clear();
-  downstreamHistory.reserve(100); // TODO limit length of history
+  downstreamHistory.reserve(5000); // TODO limit length of history
 
   startNewCycle();
 }
@@ -113,30 +115,39 @@ void RateCtrl::recvAck(uint32_t seqNum, uint32_t remoteAckTimeUs,
 
 uint64_t RateCtrl::bwUpTarget() const // in bits per second
 {
-  assert(numPhasePerCycle > 2);
+  assert(numPhasePerCycle >= 3);
+
+  uint64_t  target = upstreamBitrateTarget;
 
   int phase = phaseCycleCount % numPhasePerCycle;
-
   if (phase == 1) {
-    return (upstreamBitrateTarget * 5) / 4;
+    target = (upstreamBitrateTarget * 5) / 4;
   }
   if (phase == 2) {
-    return (upstreamBitrateTarget * 3) / 4;
+    target =  (upstreamBitrateTarget * 3) / 4;
   }
 
-  return upstreamBitrateTarget;
+  if ( target > limitBitrateMaxUp) {
+    target = limitBitrateMaxUp;
+  }
+
+  if ( target < limitBitrateMinUp ) {
+    target = limitBitrateMinUp;
+  }
+
+  return target;
 }
 
 uint64_t RateCtrl::bwDownTarget() const // in bits per second
 {
-  assert(numPhasePerCycle > 4);
+  assert(numPhasePerCycle >= 4);
 
   int phase = phaseCycleCount % numPhasePerCycle;
 
-  if (phase == 3) {
+  if (phase == 2) {
     return (downstreamBitrateTarget * 5) / 4;
   }
-  if (phase == 4) {
+  if (phase == 3) {
     return (downstreamBitrateTarget * 3) / 4;
   }
 
@@ -169,7 +180,7 @@ void RateCtrl::startNewPhase() {
 
 void RateCtrl::startNewCycle() {
 
-#if 1
+#if 0
   int64_t  estRTTUs = filterMinRTT.estimate();
   int64_t  estBigRTTUs = filterBigRTT.estimate();
   int64_t  upstreamBwEst = filterBitrateUp.estimate();
@@ -182,15 +193,15 @@ void RateCtrl::startNewCycle() {
   if (phaseCycleCount > 0) {
     std::clog << "Cycle"
               << " cycle: " << phaseCycleCount / numPhasePerCycle
-         << " estRtt: " << float(estRTTUs) / 1e3 << " ms "
+              << " estRtt: " << float(estRTTUs) / 1e3 << " ms "
               << " bigRTT: " << float(estBigRTTUs) / 1e3 << " ms "
-        << std::endl;
-    std::clog << " Up   bitrate: " << float(upstreamBwEst  ) / 1e6 << " mbps "
-      << " jitter:" << (float)jitterUpUs/1e3 << " ms "
-      << " lossRate: " << (float)upstreamLossRate/10000.0 << " %"  << std::endl;
+              << std::endl;
+    std::clog << " Up   bitrate: " << float(upstreamBwEst) / 1e6 << " mbps "
+              << " jitter:" << (float)jitterUpUs/1e3 << " ms "
+              << " lossRate: " << (float)upstreamLossRate/10000.0 << " %"  << std::endl;
     std::clog << " Down bitrate: " << float(downstreamBwEst) / 1e6 << " mbps "
-        << " jitter:" << (float)jitterDownUs/1e3 << " ms "
-        << " lossRate: " << (float)downstreamLossRate/10000.0 << " %"  << std::endl;
+              << " jitter:" << (float)jitterDownUs/1e3 << " ms "
+              << " lossRate: " << (float)downstreamLossRate/10000.0 << " %"  << std::endl;
   }
 #endif
 
@@ -446,9 +457,6 @@ void RateCtrl::calcPhaseClockSkew(int start, int end) {
           (int64_t)upstreamHistory.at(i).remoteReceiveTimeUs -
           (int64_t)upstreamHistory.at(i).localAckTimeUs;
 
-      // upperBoundUs -= -134518 * 1000l; lowerBoundUs -= -134518 * 1000l; //
-      // TODO remove
-
       if (noneFound) {
         noneFound = false;
         maxLowerBoundUs = lowerBoundUs;
@@ -647,29 +655,53 @@ void RateCtrl::calcPhaseLossRateDown(int start, int end) {
 
 void RateCtrl::calcPhaseBitrateUp(int start, int end) {
 
-  int64_t bitCount = 0;
   for (int i = start; i < end; i++) {
+    if (upstreamHistory.at(i).status == HistoryStatus::sent) {
+      upstreamHistory.at(i).status = HistoryStatus::lost;
+    }
+  }
+
+  int64_t bitCount = 0;
+  int64_t bitLostCount = 0;
+  for (int i = start; i < end; i++) {
+    //std::clog << " acked = " << bool( upstreamHistory.at(i).status == HistoryStatus::ack ) << std::endl;
+    //std::clog << " revcd = " << bool( upstreamHistory.at(i).status == HistoryStatus::received ) << std::endl;
+
     if ((upstreamHistory.at(i).status == HistoryStatus::received) ||
         (upstreamHistory.at(i).status == HistoryStatus::ack)) {
       bitCount += upstreamHistory.at(i).sizeBits;
       //std::clog << " bits = " << upstreamHistory.at(i).sizeBits << " bits " << std::endl;
+    } else {
+      bitLostCount += upstreamHistory.at(i).sizeBits;
     }
   }
 
   if (bitCount > 0) {
     int64_t bitRate = bitCount * 1000000 / phaseTimeUs;
+    int64_t bitLostRate = bitLostCount * 1000000 / phaseTimeUs;
     filterBitrateUp.add(bitRate);
 #if 0
     std::clog << "------------------------" << std::endl;
     std::clog << " phase target bitrateUp = " << (float)bwUpTarget()/1.0e6 << " mbps " << std::endl;
     std::clog << " phase bitrateUp = " << (float)bitRate/1.0e6 << " mbps " << std::endl;
-   std::clog << " phase estBitRateUp = "<< (float)filterBitrateUp.estimate()/1e6 << " mbps " << std::endl;
+    std::clog << " phase bitrateLostUp = " << (float)bitLostRate/1.0e6 << " mbps " << std::endl;
+    std::clog << " phase estBitRateUp = "<< (float)filterBitrateUp.estimate()/1e6 << " mbps " << std::endl;
+#else
+    (void)bitLostRate;
 #endif
   }
 
 }
 
 void RateCtrl::calcPhaseBitrateDown(int start, int end) {
+
+  for (int i = start; i < end; i++) {
+    if ((downstreamHistory.at(i).status != HistoryStatus::received) &&
+        (downstreamHistory.at(i).status != HistoryStatus::congested))
+    {
+      downstreamHistory.at(i).status = HistoryStatus::lost;
+    }
+  }
 
   int64_t bitCount = 0;
   for (int i = start; i < end; i++) {
@@ -704,7 +736,7 @@ void RateCtrl::cycleUpdateUpstreamTarget() {
     // TODO - consider packet size and delay info in decision
 
     // move to max bitrate that worked
-    upstreamBitrateTarget = bitrateUp;
+    upstreamBitrateTarget = std::min( bitrateUp , prevTargetUp * 3 / 2 ); // TODO - mirror in download
   }
 }
 
@@ -724,3 +756,23 @@ void RateCtrl::cycleUpdateDownstreamTarget() {
     downstreamBitrateTarget = bitrateDown;
   }
 }
+
+void RateCtrl::overrideMtu(uint16_t mtu, uint32_t pps) {
+  (void)mtu;
+  (void)pps;
+}
+
+void RateCtrl::overrideRTT(uint16_t minRttMs, uint16_t bigRttMs) {
+  filterMinRTT.override(minRttMs*1000);
+  filterBigRTT.override(bigRttMs*1000);
+}
+
+void RateCtrl::overrideBitrateUp(uint64_t minBps, uint64_t startBps, uint64_t maxBps) {
+
+  filterBitrateUp.override(startBps);
+  upstreamBitrateTarget = startBps;
+
+  limitBitrateMinUp=minBps;
+  limitBitrateMaxUp=maxBps;
+}
+

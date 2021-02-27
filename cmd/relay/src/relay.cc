@@ -32,7 +32,7 @@ void Relay::process() {
 	auto tag = nextTag(packet);
 
 	switch (tag) {
-		case PacketTag::clientSeqNum:
+		case PacketTag::clientData:
 			return processAppMessage(packet);
 		case PacketTag::relayRateReq:
 			return processRateRequest(packet);
@@ -49,13 +49,13 @@ void Relay::process() {
 
 
 void Relay::processAppMessage(std::unique_ptr<MediaNet::Packet>& packet) {
-	NetClientSeqNum seqNumTag{};
+	ClientData seqNumTag{};
 	packet >> seqNumTag;
 
 	//auto tag = PacketTag::none;
 	//packet >> tag;
 	auto tag = nextTag(packet);
-	if(tag == PacketTag::appData) {
+	if(tag == PacketTag::pubData) {
 		return processPub(packet, seqNumTag);
 	} else if(tag  == PacketTag::subscribeReq) {
 		return processSub(packet, seqNumTag);
@@ -65,7 +65,7 @@ void Relay::processAppMessage(std::unique_ptr<MediaNet::Packet>& packet) {
 }
 
 /// Subscribe Request
-void Relay::processSub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNum& clientSeqNumTag) {
+void Relay::processSub(std::unique_ptr<MediaNet::Packet> &packet, ClientData& clientSeqNumTag) {
 	std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
 	std::chrono::steady_clock::duration dn = tp.time_since_epoch();
 	uint32_t nowUs =
@@ -73,13 +73,13 @@ void Relay::processSub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
 									.count();
 
 	// ack the packet
-	auto ack = std::make_unique<Packet>();
-	ack->setDst(packet->getSrc());
-	ack << PacketTag::headerMagicData;
-	NetAck ackTag{};
-	ackTag.netAckSeqNum = clientSeqNumTag.clientSeqNum;
-	ackTag.netRecvTimeUs = nowUs;
-	ack << ackTag;
+	auto ackPacket = std::make_unique<Packet>();
+	ackPacket->setDst(packet->getSrc());
+	ackPacket << PacketTag::headerMagicData;
+	NetAck ack{};
+	ack.clientSeqNum = clientSeqNumTag.clientSeqNum;
+	ack.netRecvTimeUs = nowUs;
+	ackPacket << ack;
 
 	// save the subscription
 	PacketTag tag;
@@ -90,7 +90,7 @@ void Relay::processSub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
   fib->addSubscription(name, SubscriberInfo{name, packet->getSrc(), getRandom()});
 }
 
-void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNum& clientSeqNumTag) {
+void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, ClientData& clientSeqNumTag) {
 	std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
 	std::chrono::steady_clock::duration dn = tp.time_since_epoch();
 	uint32_t nowUs =
@@ -122,19 +122,19 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
 	// TODO - get rid of prev Ack tag and use ack vector
 	if (prevAckSeqNum > 0) {
 		NetAck prevAckTag{};
-		prevAckTag.netAckSeqNum = prevAckSeqNum;
+		prevAckTag.clientSeqNum = prevAckSeqNum;
 		prevAckTag.netRecvTimeUs = prevRecvTimeUs;
 		ack << prevAckTag;
 	}
 
 	NetAck ackTag{};
-	ackTag.netAckSeqNum = clientSeqNumTag.clientSeqNum;
+	ackTag.clientSeqNum = clientSeqNumTag.clientSeqNum;
 	ackTag.netRecvTimeUs = nowUs;
 	ack << ackTag;
 
 	qServer.send(move(ack));
 
-	prevAckSeqNum = ackTag.netAckSeqNum;
+	prevAckSeqNum = ackTag.clientSeqNum;
 	prevRecvTimeUs = ackTag.netRecvTimeUs;
 
   // find the matching subscribers
@@ -150,7 +150,7 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet, NetClientSeqNu
 		auto subData = packet->clone(); // TODO - just clone header stuff
 		subData->setDst(subscriber.face);
 
-		NetRelaySeqNum netRelaySeqNum{};
+		RelayData netRelaySeqNum{};
 		netRelaySeqNum.relaySeqNum = subscriber.relaySeqNum++;
 		netRelaySeqNum.remoteSendTimeUs = nowUs;
 

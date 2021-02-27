@@ -34,7 +34,6 @@ void ConnectionPipe::stop() {
 	PipeInterface::stop();
 }
 
-
 ///
 /// ClientConnectionPipe
 ///
@@ -66,11 +65,11 @@ std::unique_ptr<Packet> ClientConnectionPipe::recv() {
 		NetSyncAck syncAck{};
 		packet >> syncAck;
 
-		if (token != syncAck.authSecret) {
-			std::clog << "Auth token mismatch\n";
-			stop();
-			return nullptr;
-		}
+		//if (token != syncAck.authSecret) {
+		//	std::clog << "Auth token mismatch\n";
+		//	stop();
+		//	return nullptr;
+		//}
 
 		// kickoff periodic sync flow
 		if (!syncLoopRunning) {
@@ -107,9 +106,9 @@ void ClientConnectionPipe::sendSync() {
 	const auto duration = now.time_since_epoch();
 	synReq.clientTimeMs = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();;
 	synReq.senderId = senderID;
-	synReq.versionVec = 1;
+	synReq.supportedFeaturesVec = 1;
 	synReq.cookie = cookie;
-	synReq.authSecret = token;
+	synReq.origin = "example.com";
 	//std::clog << "syncConnection: cookie:" << synReq.cookie << std::endl;
 	packet << synReq;
 	//std::clog <<"sync Packet" << packet->to_hex() << std::endl;
@@ -199,7 +198,7 @@ void ServerConnectionPipe::processSyn(std::unique_ptr<MediaNet::Packet> &packet)
 		std::unique_ptr<Connection> &con = connectionMap[packet->getSrc()];
 		con->lastSyn = std::chrono::steady_clock::now();
 		//std::clog << "existing connection\n";
-		sendSyncAck(packet->getSrc(), sync.authSecret);
+		sendSyncAck(packet->getSrc(), {});
 		return;
 	}
 
@@ -239,7 +238,7 @@ void ServerConnectionPipe::processSyn(std::unique_ptr<MediaNet::Packet> &packet)
 	connectionMap[packet->getSrc()] = std::make_unique<Connection>(getRandom(), cookie);
 	cookies.erase(it);
 	std::clog << "Added connection:" << MediaNet::IpAddr::toString(packet->getSrc()) << std::endl;
-	sendSyncAck(packet->getSrc(), sync.authSecret);
+	sendSyncAck(packet->getSrc(), {});
 }
 
 void ServerConnectionPipe::processRst(std::unique_ptr<MediaNet::Packet> &packet) {
@@ -262,7 +261,7 @@ void ServerConnectionPipe::sendSyncAck(const MediaNet::IpAddr &to, uint64_t auth
 	const auto now = std::chrono::system_clock::now();
 	const auto duration = now.time_since_epoch();
 	syncAck.serverTimeMs = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-	syncAck.authSecret = authSecret;
+	//syncAck.authSecret = authSecret;
 	syncAckPkt << PacketTag::headerMagicSynAck;
 	syncAckPkt << syncAck;
 	syncAckPkt->setDst(to);

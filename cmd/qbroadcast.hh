@@ -23,8 +23,8 @@ public:
   explicit BroadcastRelay(uint16_t port);
   void process();
 	void processAppMessage(std::unique_ptr<MediaNet::Packet>& packet);
-	void processPub(std::unique_ptr<MediaNet::Packet> &packet, MediaNet::NetClientSeqNum& clientSeqNumTa);
-	void processSub(std::unique_ptr<MediaNet::Packet>& packet, MediaNet::NetClientSeqNum& clientSeqNum);
+	void processPub(std::unique_ptr<MediaNet::Packet> &packet, MediaNet::ClientData& clientSeqNumTa);
+	void processSub(std::unique_ptr<MediaNet::Packet>& packet, MediaNet::ClientData& clientSeqNum);
 	void processRate(std::unique_ptr<MediaNet::Packet> &packet);
 
 private:

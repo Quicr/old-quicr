@@ -23,10 +23,14 @@ QuicRClient::QuicRClient()
       priorityPipe(&pacerPipe), retransmitPipe(&priorityPipe),
       fecPipe(&retransmitPipe), subscribePipe(&fecPipe),
       fragmentPipe(&subscribePipe), encryptPipe(&fragmentPipe),
-      statsPipe(&encryptPipe), firstPipe(&statsPipe) {
+      statsPipe(&subscribePipe),  // TODO put back in fragment and encyprt pipe
+      firstPipe(&statsPipe) {
+
+
+
     // TODO - get rid of all other places were defaults get set for mtu, rtt, pps
-    firstPipe->updateMTU(1200,500);
-    firstPipe->updateRTT(100,200);
+    firstPipe->updateMTU(1280,480 );
+    firstPipe->updateRTT(20,50);
 }
 
 QuicRClient::~QuicRClient() { firstPipe->stop(); }
@@ -45,7 +49,7 @@ bool QuicRClient::publish(std::unique_ptr<Packet> packet) {
   assert(payloadSize < 63 * 1200);
   packet << (uint16_t)payloadSize;
   packet << packet->name;
-  packet << PacketTag::appData;
+  packet << PacketTag::pubData;
   return firstPipe->send(move(packet));
 }
 
@@ -76,7 +80,7 @@ std::unique_ptr<Packet> QuicRClient::recv() {
       continue;
     }
 
-    if (tag != PacketTag::appData) {
+    if (tag != PacketTag::pubData) {
       // TODO log bad data
       std::clog << "quicr recv bad tag: " << (((uint16_t)(tag)) >> 8)
                 << std::endl;
@@ -143,4 +147,26 @@ std::unique_ptr<Packet> QuicRClient::createPacket(const ShortName &shortName,
 
 bool QuicRClient::subscribe(ShortName name) {
   return subscribePipe.subscribe(name);
+}
+
+void QuicRClient::setPacketsUp(uint16_t pps, uint16_t mtu) {
+  assert(firstPipe);
+  assert( pps >= 10 );
+  assert( mtu >= 56 );
+  firstPipe->updateMTU(mtu,pps);
+}
+
+void QuicRClient::setRttEstimate(uint32_t minRttMs, uint32_t bigRttMs) {
+  assert(firstPipe);
+  if ( bigRttMs == 0 ) {
+    bigRttMs = minRttMs * 3 / 2;
+  }
+  assert( minRttMs > 0 );
+  assert( bigRttMs > 0 );
+  firstPipe->updateRTT(minRttMs,bigRttMs);
+}
+
+void QuicRClient::setBitrateUp(uint64_t minBps, uint64_t startBps, uint64_t maxBps) {
+  assert(firstPipe);
+  firstPipe->updateBitrateUp( minBps, startBps, maxBps );
 }
