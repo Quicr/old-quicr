@@ -174,8 +174,7 @@ TEST_CASE("PubData encode/decode") {
   PubData data_in;
   data_in.name = ShortName(1, 2, 3);
   data_in.lifetime = toVarInt(0x1000);
-  // TODO data_in.encryptedDataBlock = EncryptedDataBlock{1, cipherText.size()
-  // };
+  data_in.encryptedDataBlock = EncryptedDataBlock{1, cipherText};
 
   auto packet = std::make_unique<Packet>();
   // TODO packet << ciperText;
