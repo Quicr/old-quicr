@@ -57,9 +57,8 @@ std::unique_ptr<Packet> ClientConnectionPipe::recv() {
   }
 
   auto tag = nextTag(packet);
-
   if (tag == PacketTag::syncAck) {
-    std::clog << "ConnectionPipe: Got syncAck" << std::endl;
+    //std::clog << "ConnectionPipe: Got syncAck" << std::endl;
 
     NetSyncAck syncAck{};
     packet >> syncAck;
@@ -198,7 +197,6 @@ void ServerConnectionPipe::processSyn(
     // existing connection
     std::unique_ptr<Connection> &con = connectionMap[packet->getSrc()];
     con->lastSyn = std::chrono::steady_clock::now();
-    // std::clog << "existing connection\n";
     sendSyncAck(packet->getSrc(), {});
     return;
   }

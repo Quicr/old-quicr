@@ -135,9 +135,11 @@ void PacerPipe::runNetSend() {
     {
       // watch bitrate and don't send until OK to send more data
       uint64_t targetBitrate = rateCtrl.bwUpTarget();
-      uint64_t delayTimeUs = (bits * 1000000l) / targetBitrate;
-      std::this_thread::sleep_until(tp +
-                                    std::chrono::microseconds(delayTimeUs));
+      if (targetBitrate > 0) {
+	 uint64_t delayTimeUs = (bits * 1000000l) / targetBitrate;
+        std::this_thread::sleep_until(tp + std::chrono::microseconds(delayTimeUs));
+      }
+
     }
   }
 }

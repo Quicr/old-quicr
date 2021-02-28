@@ -44,7 +44,7 @@ std::unique_ptr<Packet> QuicRServer::recv() {
     bad = false;
   }
 
-  // std::clog << "QuicR received packet size=" << packet->size() << std::endl;
+  // std::clog << "QuicR Server received packet size=" << packet->size() << std::endl;
   return packet;
 }
 
