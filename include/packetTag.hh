@@ -4,11 +4,15 @@ namespace MediaNet {
 
 enum struct PacketTag : uint32_t;
 
-constexpr unsigned int packetTagGen(unsigned int val, unsigned int len,
+constexpr uint32_t packetTagGen(uint16_t val,  int len,
                                     bool mandToUnderstand) {
-  (void)mandToUnderstand;
-  return (val << 8) + len;
+  (void)len;
+  uint32_t ret = val;
+  ret <<= 8;
+  ret += (mandToUnderstand?1:0);
+  return ret;
 }
+
 constexpr uint16_t packetTagTrunc(MediaNet::PacketTag tag) {
   auto t = (uint32_t)tag;
   t >>= 8;
@@ -23,23 +27,24 @@ enum struct PacketTag : uint32_t {
 
   none = packetTagGen(0, 0, true), // must be smallest tag
 
-  sync = packetTagGen(4, 255, true),
-  syncAck = packetTagGen(10, 255, true),
-  rstRetry = packetTagGen(11, 255, true),
-  rstRedirect = packetTagGen(12, 255, true),
+  sync = packetTagGen(4, -1, true),
+  syncAck = packetTagGen(10, -1, true),
+  reset = packetTagGen(11, -1, true),
+  resetRetry = packetTagGen(11, -1, true),
+  resetRedirect = packetTagGen(12, -1, true),
 
-  nack = packetTagGen(14, 255, true),
-  relayRateReq = packetTagGen(6, 4, true),
-  ack = packetTagGen(3, 255, true),
-  subscribeReq = packetTagGen(8, 0, true),
+  nack = packetTagGen(14, -1, true),
+  relayRateReq = packetTagGen(6, -1, true),
+  ack = packetTagGen(3, -1, true),
+  subscribeReq = packetTagGen(8, -1, true),
 
-  clientData = packetTagGen(2, 4, true),
-  relayData = packetTagGen(7, 8, true),
-  pubData = packetTagGen(1, 255, true),
+  clientData = packetTagGen(2, -1, true),
+  relayData = packetTagGen(7, -1, true),
+  pubData = packetTagGen(1, -1, true),
   // pubDataFrag = packetTagGen(9, 255, true),
-  subData = packetTagGen(13, 0, true),
+  subData = packetTagGen(13, -1, true),
 
-  shortName = packetTagGen(5, 18, true),
+  shortName = packetTagGen(5, -1, true),
 
   // shortName = packetTagGen(5, 18, true),
 

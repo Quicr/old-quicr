@@ -249,11 +249,11 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
   case packetTagTrunc(PacketTag::subData):
     tag = PacketTag::subData;
     break;
-  case packetTagTrunc(PacketTag::rstRetry):
-    tag = PacketTag::rstRetry;
+  case packetTagTrunc(PacketTag::resetRetry):
+    tag = PacketTag::resetRetry;
     break;
-  case packetTagTrunc(PacketTag::rstRedirect):
-    tag = PacketTag::rstRedirect;
+  case packetTagTrunc(PacketTag::resetRedirect):
+    tag = PacketTag::resetRedirect;
     break;
   case packetTagTrunc(PacketTag::headerMagicData):
     tag = PacketTag::headerMagicData;
@@ -541,12 +541,12 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const NetRstRetry &msg) {
 
   p << msg.cookie;
-  p << PacketTag::rstRetry;
+  p << PacketTag::resetRetry;
   return p;
 }
 
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRstRetry &msg) {
-  if (nextTag(p) != PacketTag::rstRetry) {
+  if (nextTag(p) != PacketTag::resetRetry) {
     std::cerr << "Did not find expected PacketTag::RstRetry" << std::endl;
     return false;
   }
@@ -567,12 +567,12 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   p << msg.port;
   p << msg.origin;
   p << msg.cookie;
-  p << PacketTag::rstRedirect;
+  p << PacketTag::resetRedirect;
   return p;
 }
 
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRstRedirect &msg) {
-  if (nextTag(p) != PacketTag::rstRedirect) {
+  if (nextTag(p) != PacketTag::resetRedirect) {
     std::cerr << "Did not find expected PacketTag::RstRedirect" << std::endl;
     return false;
   }
@@ -861,11 +861,11 @@ std::ostream &MediaNet::operator<<(std::ostream &stream, Packet &packet) {
     case PacketTag::syncAck:
       stream << " syncAck";
       break;
-    case PacketTag::rstRetry:
-      stream << " rstRetry";
+    case PacketTag::resetRetry:
+      stream << " resetRetry";
       break;
-    case PacketTag::rstRedirect:
-      stream << " rstRedirect";
+    case PacketTag::resetRedirect:
+      stream << " resetRedirect";
       break;
     case PacketTag::shortName:
       stream << " shortName";

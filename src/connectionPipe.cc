@@ -77,16 +77,16 @@ std::unique_ptr<Packet> ClientConnectionPipe::recv() {
     state = Connected{};
     // don't need to report syncAck up in the chain
     return nullptr;
-  } else if (tag == PacketTag::rstRetry) {
+  } else if (tag == PacketTag::resetRetry) {
     NetRstRetry rstRetry{};
     packet >> rstRetry;
-    std::clog << "ConnectionPipe: Got rstRetry: cookie " << rstRetry.cookie
+    std::clog << "ConnectionPipe: Got resetRetry: cookie " << rstRetry.cookie
               << std::endl;
     cookie = rstRetry.cookie;
     sendSync();
     return nullptr;
   }
-  // TODO support servr rst/redirect
+  // TODO support servr reset/redirect
   return packet;
 }
 
