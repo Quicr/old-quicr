@@ -41,7 +41,7 @@ enum struct PacketTag : uint32_t {
   relayData = packetTagGen(11, -1, true),
 
   shortName = packetTagGen(12, -1, true),
-  dataBlock = packetTagGen(12, -1, true),
+  dataBlock = packetTagGen(13, -1, true),
   encDataBlock = packetTagGen(14, -1, true),
 
   subData = packetTagGen(50, -1, true), // TODO remove

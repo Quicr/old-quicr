@@ -216,38 +216,15 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
   case packetTagTrunc(PacketTag::none):
     tag = PacketTag::none;
     break;
-  case packetTagTrunc(PacketTag::subscribe):
-    tag = PacketTag::subscribe;
-    break;
-  case packetTagTrunc(PacketTag::pubData):
-    tag = PacketTag::pubData;
-    break;
-    //  case packetTagTrunc(PacketTag::pubDataFrag):
-    //    tag = PacketTag::pubDataFrag;
-    //    break;
-  case packetTagTrunc(PacketTag::clientData):
-    tag = PacketTag::clientData;
-    break;
-  case packetTagTrunc(PacketTag::ack):
-    tag = PacketTag::ack;
-    break;
   case packetTagTrunc(PacketTag::sync):
     tag = PacketTag::sync;
     break;
   case packetTagTrunc(PacketTag::syncAck):
     tag = PacketTag::syncAck;
     break;
-  case packetTagTrunc(PacketTag::shortName):
-    tag = PacketTag::shortName;
-    break;
-  case packetTagTrunc(PacketTag::relayData):
-    tag = PacketTag::relayData;
-    break;
-  case packetTagTrunc(PacketTag::rate):
-    tag = PacketTag::rate;
-    break;
-  case packetTagTrunc(PacketTag::subData):
-    tag = PacketTag::subData;
+
+  case packetTagTrunc(PacketTag::reset):
+    tag = PacketTag::reset;
     break;
   case packetTagTrunc(PacketTag::resetRetry):
     tag = PacketTag::resetRetry;
@@ -255,6 +232,45 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
   case packetTagTrunc(PacketTag::resetRedirect):
     tag = PacketTag::resetRedirect;
     break;
+
+  case packetTagTrunc(PacketTag::subscribe):
+    tag = PacketTag::subscribe;
+    break;
+  case packetTagTrunc(PacketTag::clientData):
+    tag = PacketTag::clientData;
+    break;
+  case packetTagTrunc(PacketTag::nack):
+    tag = PacketTag::nack;
+    break;
+  case packetTagTrunc(PacketTag::rate):
+    tag = PacketTag::rate;
+    break;
+  case packetTagTrunc(PacketTag::ack):
+    tag = PacketTag::ack;
+    break;
+  case packetTagTrunc(PacketTag::relayData):
+    tag = PacketTag::relayData;
+    break;
+
+  case packetTagTrunc(PacketTag::shortName):
+    tag = PacketTag::shortName;
+    break;
+  case packetTagTrunc(PacketTag::dataBlock):
+    tag = PacketTag::dataBlock;
+    break;
+  case packetTagTrunc(PacketTag::encDataBlock):
+    tag = PacketTag::encDataBlock;
+    break;
+
+
+  case packetTagTrunc(PacketTag::subData):
+    tag = PacketTag::subData;
+    break;
+  case packetTagTrunc(PacketTag::pubData):
+    tag = PacketTag::pubData;
+    break;
+
+
   case packetTagTrunc(PacketTag::headerData):
     tag = PacketTag::headerData;
     break;
@@ -279,9 +295,7 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
   case packetTagTrunc(PacketTag::headerSynAckCrazy):
     tag = PacketTag::headerSynAckCrazy;
     break;
-    //	case packetTagTrunc(PacketTag::extraMagicVer1):
-    //		tag = PacketTag::extraMagicVer1;
-    //		break;
+
   case packetTagTrunc(PacketTag::badTag):
     tag = PacketTag::badTag;
     break;
@@ -823,6 +837,8 @@ uintVar_t MediaNet::toVarInt(uint64_t v) {
 uint64_t MediaNet::fromVarInt(uintVar_t v) { return static_cast<uint64_t>(v); }
 
 std::ostream &MediaNet::operator<<(std::ostream &stream, Packet &packet) {
+  // TODO need to update this and perhaps change to "toString"
+
   int ptr = (int)packet.fullSize() - 1;
   while (ptr >= 0) {
     const uint8_t *data = &(packet.fullData());
