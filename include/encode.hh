@@ -175,27 +175,17 @@ bool operator>>(std::unique_ptr<Packet> &p, DataBlock &msg);
 
 
 ///
-/// PubSubData and friends
+/// NamedDataChunk and friends
 ///
 struct NamedDataChunk {
   ShortName name;
   uintVar_t lifetime;
   EncryptedDataBlock encryptedDataBlock;
 };
-
-// sent by client in publish message
-struct PubData : public NamedDataChunk {};
-
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
-                                    const PubData &msg);
-bool operator>>(std::unique_ptr<Packet> &p, PubData &msg);
+                                    const NamedDataChunk &msg);
+bool operator>>(std::unique_ptr<Packet> &p, NamedDataChunk &msg);
 
-// sent by relay to all the subscribers
-struct SubData : public NamedDataChunk {};
-
-std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
-                                    const SubData &msg);
-bool operator>>(std::unique_ptr<Packet> &p, SubData &msg);
 
 
 std::ostream &operator<<(std::ostream &stream, Packet &packet);

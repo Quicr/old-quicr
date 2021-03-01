@@ -664,23 +664,22 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p,
 }
 
 ///
-/// PubData
+/// ClientData
 ///
 
+/*
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const PubData &data) {
+                                              const ClientData &data) {
 
-  p << data.encryptedDataBlock;
-  p << data.lifetime;
-  p << data.name;
-  p << PacketTag::pubData;
+  p << data.clientSeqNum;
+  p << PacketTag::clientData;
 
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, PubData &data) {
-  if (nextTag(p) != PacketTag::pubData) {
-    std::clog << "Did not find expected PacketTag::pubData" << std::endl;
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p, ClientData &data) {
+  if (nextTag(p) != PacketTag::clientData) {
+    std::clog << "Did not find expected PacketTag::clientData" << std::endl;
     return false;
   }
 
@@ -688,35 +687,34 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, PubData &data) {
   bool ok = true;
 
   ok &= p >> tag;
-  ok &= p >> data.name;
-  ok &= p >> data.lifetime;
-  ok &= p >> data.encryptedDataBlock;
+  ok &= p >> data.clientSeqNum;
 
   if (!ok) {
-    std::cerr << "problem parsing pubData" << std::endl;
+    std::cerr << "problem parsing ClientData" << std::endl;
   }
 
   return ok;
 }
+*/
 
 ///
-/// SubData
+/// RelayData
 ///
 
+/*
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const SubData &data) {
+                                              const RelayData &data) {
 
-  p << data.encryptedDataBlock;
-  p << data.lifetime;
-  p << data.name;
-  p << PacketTag::subData;
+  p << data.relaySendTimeUs;
+  p << data.relaySeqNum;
+  p << PacketTag::relayData;
 
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, SubData &data) {
-  if (nextTag(p) != PacketTag::subData) {
-    std::clog << "Did not find expected PacketTag::subData" << std::endl;
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p, RelayData &data) {
+  if (nextTag(p) != PacketTag::relayData) {
+    std::clog << "Did not find expected PacketTag::relayData" << std::endl;
     return false;
   }
 
@@ -724,16 +722,17 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, SubData &data) {
   bool ok = true;
 
   ok &= p >> tag;
-  ok &= p >> data.name;
-  ok &= p >> data.lifetime;
-  ok &= p >> data.encryptedDataBlock;
+  ok &= p >> data.relaySeqNum;
+  ok &= p >> data.relaySendTimeUs;
 
   if (!ok) {
-    std::cerr << "problem parsing subData" << std::endl;
+    std::cerr << "problem parsing relayData" << std::endl;
   }
 
   return ok;
 }
+*/
+
 
 ///
 /// var-ints
