@@ -69,7 +69,7 @@ void Relay::processSub(std::unique_ptr<MediaNet::Packet> &packet,
   // ack the packet
   auto ackPacket = std::make_unique<Packet>();
   ackPacket->setDst(packet->getSrc());
-  ackPacket << PacketTag::headerMagicData;
+  ackPacket << PacketTag::headerData;
   NetAck ack{};
   ack.clientSeqNum = clientSeqNumTag.clientSeqNum;
   ack.netRecvTimeUs = nowUs;
@@ -113,7 +113,7 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
   auto ack = std::make_unique<Packet>();
   ack->setDst(packet->getSrc());
 
-  ack << PacketTag::headerMagicData;
+  ack << PacketTag::headerData;
 
   // TODO - get rid of prev Ack tag and use ack vector
   if (prevAckSeqNum > 0) {

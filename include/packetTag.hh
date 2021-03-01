@@ -50,14 +50,14 @@ enum struct PacketTag : uint32_t {
   // TODO - Could add nextReservedCodePoints of various lengths and MTI
 
   // This block of headerMagic values selected to multiplex with STUN/DTLS/RTP
-  headerMagicData = packetTagGen(16, 0, true),
-  headerMagicSyn = packetTagGen(18, 0, true),
-  headerMagicSynAck = packetTagGen(20, 0, true),
-  headerMagicRst = packetTagGen(22, 0, true),
-  headerMagicDataCrazy = packetTagGen(17, 0, true),
-  headerMagicSynCrazy = packetTagGen(19, 0, true),
-  headerMagicSynAckCrazy = packetTagGen(21, 0, true),
-  headerMagicRstCrazy = packetTagGen(23, 0, true),
+  headerData = packetTagGen(80, 0, true),
+  headerDataCrazy = packetTagGen(81, 0, true),
+  headerSyn = packetTagGen(82, 0, true),
+  headerSynCrazy = packetTagGen(83, 0, true),
+  headerSynAck = packetTagGen(84, 0, true),
+  headerSynAckCrazy = packetTagGen(85, 0, true),
+  headerRst = packetTagGen(86, 0, true),
+  headerRstCrazy = packetTagGen(87, 0, true),
 
   // extraMagicVer1 = packetTagGen(12538, 0, false),
 

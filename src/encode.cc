@@ -255,29 +255,29 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
   case packetTagTrunc(PacketTag::resetRedirect):
     tag = PacketTag::resetRedirect;
     break;
-  case packetTagTrunc(PacketTag::headerMagicData):
-    tag = PacketTag::headerMagicData;
+  case packetTagTrunc(PacketTag::headerData):
+    tag = PacketTag::headerData;
     break;
-  case packetTagTrunc(PacketTag::headerMagicSyn):
-    tag = PacketTag::headerMagicSyn;
+  case packetTagTrunc(PacketTag::headerSyn):
+    tag = PacketTag::headerSyn;
     break;
-  case packetTagTrunc(PacketTag::headerMagicSynAck):
-    tag = PacketTag::headerMagicSynAck;
+  case packetTagTrunc(PacketTag::headerSynAck):
+    tag = PacketTag::headerSynAck;
     break;
-  case packetTagTrunc(PacketTag::headerMagicRst):
-    tag = PacketTag::headerMagicRst;
+  case packetTagTrunc(PacketTag::headerRst):
+    tag = PacketTag::headerRst;
     break;
-  case packetTagTrunc(PacketTag::headerMagicDataCrazy):
-    tag = PacketTag::headerMagicDataCrazy;
+  case packetTagTrunc(PacketTag::headerDataCrazy):
+    tag = PacketTag::headerDataCrazy;
     break;
-  case packetTagTrunc(PacketTag::headerMagicRstCrazy):
-    tag = PacketTag::headerMagicRstCrazy;
+  case packetTagTrunc(PacketTag::headerRstCrazy):
+    tag = PacketTag::headerRstCrazy;
     break;
-  case packetTagTrunc(PacketTag::headerMagicSynCrazy):
-    tag = PacketTag::headerMagicSynCrazy;
+  case packetTagTrunc(PacketTag::headerSynCrazy):
+    tag = PacketTag::headerSynCrazy;
     break;
-  case packetTagTrunc(PacketTag::headerMagicSynAckCrazy):
-    tag = PacketTag::headerMagicSynAckCrazy;
+  case packetTagTrunc(PacketTag::headerSynAckCrazy):
+    tag = PacketTag::headerSynAckCrazy;
     break;
     //	case packetTagTrunc(PacketTag::extraMagicVer1):
     //		tag = PacketTag::extraMagicVer1;
@@ -839,20 +839,20 @@ std::ostream &MediaNet::operator<<(std::ostream &stream, Packet &packet) {
     ptr -= len;
 
     switch (tag) {
-    case PacketTag::headerMagicData:
-    case PacketTag::headerMagicDataCrazy:
+    case PacketTag::headerData:
+    case PacketTag::headerDataCrazy:
       stream << " magicData";
       break;
-    case PacketTag::headerMagicSyn:
-    case PacketTag::headerMagicSynCrazy:
+    case PacketTag::headerSyn:
+    case PacketTag::headerSynCrazy:
       stream << " magicSync";
       break;
-    case PacketTag::headerMagicSynAck:
-    case PacketTag::headerMagicSynAckCrazy:
+    case PacketTag::headerSynAck:
+    case PacketTag::headerSynAckCrazy:
       stream << " magicSyncAck";
       break;
-    case PacketTag::headerMagicRst:
-    case PacketTag::headerMagicRstCrazy:
+    case PacketTag::headerRst:
+    case PacketTag::headerRstCrazy:
       stream << " magicReset";
       break;
     case PacketTag::sync:
