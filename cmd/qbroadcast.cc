@@ -89,7 +89,7 @@ void BroadcastRelay::processSub(std::unique_ptr<MediaNet::Packet> &packet,
   ack << PacketTag::headerData;
   NetAck ackTag{};
   ackTag.clientSeqNum = clientSeqNumTag.clientSeqNum;
-  ackTag.netRecvTimeUs = nowUs;
+  ackTag.recvTimeUs = nowUs;
   ack << ackTag;
 
   // save the subscription
@@ -142,19 +142,19 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
   if (prevAckSeqNum > 0) {
     NetAck prevAckTag{};
     prevAckTag.clientSeqNum = prevAckSeqNum;
-    prevAckTag.netRecvTimeUs = prevRecvTimeUs;
+    prevAckTag.recvTimeUs = prevRecvTimeUs;
     ack << prevAckTag;
   }
 
   NetAck ackTag{};
   ackTag.clientSeqNum = seqNumTag.clientSeqNum;
-  ackTag.netRecvTimeUs = nowUs;
+  ackTag.recvTimeUs = nowUs;
   ack << ackTag;
 
   qServer.send(move(ack));
 
   prevAckSeqNum = ackTag.clientSeqNum;
-  prevRecvTimeUs = ackTag.netRecvTimeUs;
+  prevRecvTimeUs = ackTag.recvTimeUs;
 
   // TODO - loop over connections and remove ones with old last Syn time
 
@@ -171,7 +171,7 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
 
     RelayData netRelaySeqNum;
     netRelaySeqNum.relaySeqNum = con->relaySeqNum++;
-    netRelaySeqNum.remoteSendTimeUs = nowUs;
+    netRelaySeqNum.relaySendTimeUs = nowUs;
 
     subData << netRelaySeqNum;
 

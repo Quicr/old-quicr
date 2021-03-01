@@ -72,7 +72,7 @@ void Relay::processSub(std::unique_ptr<MediaNet::Packet> &packet,
   ackPacket << PacketTag::headerData;
   NetAck ack{};
   ack.clientSeqNum = clientSeqNumTag.clientSeqNum;
-  ack.netRecvTimeUs = nowUs;
+  ack.recvTimeUs = nowUs;
   ackPacket << ack;
 
   // save the subscription
@@ -119,19 +119,19 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
   if (prevAckSeqNum > 0) {
     NetAck prevAckTag{};
     prevAckTag.clientSeqNum = prevAckSeqNum;
-    prevAckTag.netRecvTimeUs = prevRecvTimeUs;
+    prevAckTag.recvTimeUs = prevRecvTimeUs;
     ack << prevAckTag;
   }
 
   NetAck ackTag{};
   ackTag.clientSeqNum = clientSeqNumTag.clientSeqNum;
-  ackTag.netRecvTimeUs = nowUs;
+  ackTag.recvTimeUs = nowUs;
   ack << ackTag;
 
   qServer.send(move(ack));
 
   prevAckSeqNum = ackTag.clientSeqNum;
-  prevRecvTimeUs = ackTag.netRecvTimeUs;
+  prevRecvTimeUs = ackTag.recvTimeUs;
 
   // find the matching subscribers
   auto subscribers = fib->lookupSubscription(name);
@@ -149,7 +149,7 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
 
     RelayData netRelaySeqNum{};
     netRelaySeqNum.relaySeqNum = subscriber.relaySeqNum++;
-    netRelaySeqNum.remoteSendTimeUs = nowUs;
+    netRelaySeqNum.relaySendTimeUs = nowUs;
 
     subData << netRelaySeqNum;
 

@@ -74,7 +74,7 @@ public:
   [[nodiscard]] bool isReliable() const;
 
   void setFEC(bool doFec = true);
-  bool getFEC();
+  bool getFEC() const;
 
   [[nodiscard]] const IpAddr &getSrc() const;
   [[maybe_unused]] void setSrc(const IpAddr &src);

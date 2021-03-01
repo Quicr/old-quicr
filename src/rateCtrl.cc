@@ -242,7 +242,7 @@ void RateCtrl::recvPacket(uint32_t relaySeqNum, uint32_t remoteSendTimeUs,
 
 #if 0
   std::clog << "Got subData seq=" << relaySeqNum
-            << " remoteTime(ms)=" << remoteSendTimeUs / 1000
+            << " remoteTime(ms)=" << relaySendTimeUs / 1000
             << " localTime(us)=" << localRecvTimeUs << " size=" << sizeBits
             << " phaseCycleCount=" << phaseCycleCount
             << std::endl;

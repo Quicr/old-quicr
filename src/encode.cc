@@ -79,7 +79,7 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, ClientData &msg) {
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const RelayData &msg) {
 
-  p << msg.remoteSendTimeUs;
+  p << msg.relaySendTimeUs;
   p << msg.relaySeqNum;
 
   p << PacketTag::relayData;
@@ -98,7 +98,7 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, RelayData &msg) {
   bool ok = true;
   ok &= p >> tag;
   ok &= p >> msg.relaySeqNum;
-  ok &= p >> msg.remoteSendTimeUs;
+  ok &= p >> msg.relaySendTimeUs;
 
   if (!ok) {
     std::cerr << "problem parsing RelayData" << std::endl;
@@ -115,7 +115,7 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   p << msg.ecnVec;
   p << msg.ackVec;
   p << msg.clientSeqNum;
-  p << msg.netRecvTimeUs;
+  p << msg.recvTimeUs;
   p << PacketTag::ack;
 
   return p;
@@ -130,7 +130,7 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetAck &msg) {
   PacketTag tag = PacketTag::none;
   bool ok = true;
   ok &= p >> tag;
-  ok &= p >> msg.netRecvTimeUs;
+  ok &= p >> msg.recvTimeUs;
   ok &= p >> msg.clientSeqNum;
   ok &= p >> msg.ackVec;
   ok &= p >> msg.ecnVec;
@@ -912,6 +912,6 @@ size_t Packet::size() const { return buffer.size() - headerSize; }
 
 [[maybe_unused]] uint8_t Packet::getPriority() const { return priority; }
 
-void Packet::setPriority(uint8_t priority) { Packet::priority = priority; }
+void Packet::setPriority(uint8_t priorityVal ) { Packet::priority = priorityVal; }
 
-bool Packet::getFEC() { return useFEC; }
+bool Packet::getFEC() const { return useFEC; }

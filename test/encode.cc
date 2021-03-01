@@ -41,14 +41,14 @@ TEST_CASE("RelayData encode/decode") {
 
   RelayData data_in{};
   data_in.relaySeqNum = 0x1000;
-  data_in.remoteSendTimeUs = 0;
+  data_in.relaySendTimeUs = 0;
 
   packet << data_in;
 
   RelayData data_out{};
   packet >> data_out;
 
-  CHECK_EQ(data_in.remoteSendTimeUs, data_out.remoteSendTimeUs);
+  CHECK_EQ(data_in.relaySendTimeUs, data_out.relaySendTimeUs);
   CHECK_EQ(data_in.relaySeqNum, data_out.relaySeqNum);
 }
 
@@ -155,7 +155,7 @@ TEST_CASE("NetAck encode/decode") {
   ack_in.ecnVec = 0x1;
   ack_in.ackVec = 0x4;
   ack_in.clientSeqNum = 0x1000;
-  ack_in.netRecvTimeUs = 0x2000;
+  ack_in.recvTimeUs = 0x2000;
 
   auto packet = std::make_unique<Packet>();
   packet << ack_in;
@@ -165,7 +165,7 @@ TEST_CASE("NetAck encode/decode") {
 
   CHECK_EQ(ack_in.ecnVec, ack_out.ecnVec);
   CHECK_EQ(ack_in.ackVec, ack_out.ackVec);
-  CHECK_EQ(ack_in.netRecvTimeUs, ack_out.netRecvTimeUs);
+  CHECK_EQ(ack_in.recvTimeUs, ack_out.recvTimeUs);
   CHECK_EQ(ack_in.clientSeqNum, ack_out.clientSeqNum);
 }
 
