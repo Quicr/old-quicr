@@ -155,8 +155,8 @@ bool operator>>(std::unique_ptr<Packet> &p, RelayData &msg);
 ///
 struct EncryptedDataBlock {
   uint8_t authTagLen;
-  // varInt cipherTextAndTagLen;
-  std::vector<uint8_t> cipherText; // enc + auth
+  uintVar_t metaDataLen;
+  uintVar_t cipherDataLen;
 };
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const EncryptedDataBlock &data);
@@ -178,7 +178,7 @@ bool operator>>(std::unique_ptr<Packet> &p, DataBlock &msg);
 /// NamedDataChunk and friends
 ///
 struct NamedDataChunk {
-  ShortName name;
+  ShortName shortName;
   uintVar_t lifetime;
   EncryptedDataBlock encryptedDataBlock;
 };

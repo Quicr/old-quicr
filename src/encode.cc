@@ -637,14 +637,17 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRateReq &msg) {
 }
 
 ///
-/// NetMsgPublish
+/// EncryptedDataBlock
 ///
 
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const EncryptedDataBlock &data) {
 
-  p << data.cipherText;
+  p << data.cipherDataLen;
+  p << data.metaDataLen;
   p << data.authTagLen;
+
+  p << PacketTag::encDataBlock;
 
   return p;
 }
@@ -652,12 +655,92 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p,
                           EncryptedDataBlock &data) {
 
+  if (nextTag(p) != PacketTag::encDataBlock) {
+    // std::clog << "Did not find expected PacketTag::encDataBlock" <<
+    // std::endl;
+    return false;
+  }
+
+  PacketTag tag = PacketTag::encDataBlock;
   bool ok = true;
+
+  ok &= p >> tag;
   ok &= p >> data.authTagLen;
-  ok &= p >> data.cipherText;
+  ok &= p >> data.metaDataLen;
+  ok &= p >> data.cipherDataLen;
 
   if (!ok) {
     std::cerr << "problem parsing EncryptedDataBlock" << std::endl;
+  }
+
+  return ok;
+}
+
+
+///
+/// DataBlock
+///
+
+
+std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
+                                              const DataBlock &data) {
+
+  p << data.dataLen;
+  p << data.metaDataLen;
+  p << PacketTag::dataBlock;
+
+  return p;
+}
+
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p,
+                          DataBlock &data) {
+
+  if (nextTag(p) != PacketTag::dataBlock) {
+    // std::clog << "Did not find expected PacketTag::encDataBlock" <<
+    // std::endl;
+    return false;
+  }
+
+  PacketTag tag = PacketTag::dataBlock;
+  bool ok = true;
+
+  ok &= p >> tag;
+  ok &= p >> data.metaDataLen;
+  ok &= p >> data.dataLen;
+
+  if (!ok) {
+    std::cerr << "problem parsing EncryptedDataBlock" << std::endl;
+  }
+
+  return ok;
+}
+
+
+
+///
+/// NamedDataChunk
+///
+
+
+std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
+                                              const NamedDataChunk &data) {
+
+  p << data.lifetime;
+  p << data.shortName;
+
+  return p;
+}
+
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p,
+                          NamedDataChunk &data) {
+
+  bool ok = true;
+
+  ok &= p >> data.shortName;
+  ok &= p >> data.lifetime;
+
+  if (!ok) {
+    std::cerr << "problem parsing NamedDataChunk" << std::endl;
   }
 
   return ok;

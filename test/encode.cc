@@ -178,7 +178,7 @@ TEST_CASE("ClientData encode/decode") {
 
   clientDataIn.clientSeqNum= 23;
 
-  chunkIn.name = ShortName(1, 2, 3);
+  chunkIn.shortName = ShortName(1, 2, 3);
   chunkIn.lifetime = toVarInt(0x1000);
 
   dataBlockIn.metaDataLen = static_cast<uintVar_t>( 0 );
@@ -199,32 +199,49 @@ TEST_CASE("ClientData encode/decode") {
   packet >> dataBlockOut;
 
   CHECK_EQ(clientDataIn.clientSeqNum, clientDataOut.clientSeqNum);
-  CHECK(chunkIn.name == chunkOut.name);
+  CHECK(chunkIn.shortName == chunkOut.shortName);
   CHECK_EQ(chunkIn.lifetime, chunkOut.lifetime);
   CHECK_EQ(dataBlockIn.metaDataLen,dataBlockOut.metaDataLen);
   CHECK_EQ(dataBlockIn.dataLen,dataBlockOut.dataLen);
 
 }
 
-/*
-TEST_CASE("PSubData encode/decode") {
-  auto cipherText = std::vector<uint8_t>{0x1, 0x2, 0x3, 0x4, 0x5, 0xA};
-  RelayData dataIn;
-  dataIn.name = ShortName(1, 2, 3);
-  dataIn.lifetime = toVarInt(0x1000);
-  dataIn.encryptedDataBlock = EncryptedDataBlock{1, cipherText};
+
+TEST_CASE("RelayData encode/decode") {
+  auto dataIn = std::vector<uint8_t>{0x1, 0x2, 0x3, 0x4, 0x5, 0xA};
+  RelayData relayDataIn;
+  NamedDataChunk chunkIn;
+  EncryptedDataBlock dataBlockIn;
+
+  relayDataIn.relaySeqNum= 23;
+
+  chunkIn.shortName = ShortName(1, 2, 3);
+  chunkIn.lifetime = toVarInt(0x1000);
+
+  dataBlockIn.metaDataLen = static_cast<uintVar_t>( 0 );
+  dataBlockIn.authTagLen = 4;
+  dataBlockIn.cipherDataLen = static_cast<uintVar_t>(sizeof(dataIn));
 
   auto packet = std::make_unique<Packet>();
   packet << dataIn;
+  packet << dataBlockIn;
+  packet << chunkIn;
+  packet << relayDataIn;
 
-  RelayData dataOut{};
-  packet >> dataOut;
+  RelayData relayDataOut;
+  NamedDataChunk chunkOut;
+  EncryptedDataBlock dataBlockOut;
 
-  CHECK(dataIn.name == dataOut.name);
-  CHECK_EQ(dataIn.lifetime, dataOut.lifetime);
-  CHECK_EQ(dataIn.encryptedDataBlock.authTagLen,
-           dataOut.encryptedDataBlock.authTagLen);
-  CHECK_EQ(dataIn.encryptedDataBlock.cipherText,
-           dataOut.encryptedDataBlock.cipherText);
+  packet >> relayDataOut;
+  packet >> chunkOut;
+  packet >> dataBlockOut;
+
+  CHECK_EQ(relayDataIn.relaySeqNum, relayDataOut.relaySeqNum);
+  CHECK(chunkIn.shortName == chunkOut.shortName);
+  CHECK_EQ(chunkIn.lifetime, chunkOut.lifetime);
+  CHECK_EQ(dataBlockIn.metaDataLen,dataBlockOut.metaDataLen);
+  CHECK_EQ(dataBlockIn.authTagLen,dataBlockOut.authTagLen);
+  CHECK_EQ(dataBlockIn.cipherDataLen,dataBlockOut.cipherDataLen);
+
 }
-*/
+
