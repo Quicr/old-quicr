@@ -65,7 +65,7 @@ void PacerPipe::sendRateCommand() {
   auto packet = std::make_unique<Packet>();
   assert(packet);
 
-  packet << PacketTag::headerMagicData;
+  packet << PacketTag::headerData;
   // packet << PacketTag::extraMagicVer1;
   // packet << PacketTag::extraMagicVer2;
 

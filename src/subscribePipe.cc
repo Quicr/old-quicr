@@ -22,7 +22,7 @@ bool SubscribePipe::subscribe(const ShortName &name) {
 
   auto subReq = Subscribe{name};
   // TODO: moving setting header magic into a function
-  packet << PacketTag::headerMagicData;
+  packet << PacketTag::headerData;
   packet << subReq;
 
   std::cout << "Subscribe: " << packet->to_hex() << std::endl;

@@ -26,7 +26,7 @@ void ConnectionPipe::stop() {
   state = Start{};
   auto packet = std::make_unique<Packet>();
   assert(packet);
-  packet << PacketTag::headerMagicRst;
+  packet << PacketTag::headerRst;
   std::clog << "Reset: " << packet->to_hex() << std::endl;
   send(move(packet));
 
@@ -77,16 +77,16 @@ std::unique_ptr<Packet> ClientConnectionPipe::recv() {
     state = Connected{};
     // don't need to report syncAck up in the chain
     return nullptr;
-  } else if (tag == PacketTag::rstRetry) {
+  } else if (tag == PacketTag::resetRetry) {
     NetRstRetry rstRetry{};
     packet >> rstRetry;
-    std::clog << "ConnectionPipe: Got rstRetry: cookie " << rstRetry.cookie
+    std::clog << "ConnectionPipe: Got resetRetry: cookie " << rstRetry.cookie
               << std::endl;
     cookie = rstRetry.cookie;
     sendSync();
     return nullptr;
   }
-  // TODO support servr rst/redirect
+  // TODO support servr reset/redirect
   return packet;
 }
 
@@ -99,7 +99,7 @@ void ClientConnectionPipe::setAuthInfo(uint32_t sender, uint64_t token_in) {
 void ClientConnectionPipe::sendSync() {
   auto packet = std::make_unique<Packet>();
   assert(packet);
-  packet << PacketTag::headerMagicSyn;
+  packet << PacketTag::headerSyn;
   NetSyncReq synReq{};
   const auto now = std::chrono::system_clock::now();
   const auto duration = now.time_since_epoch();
@@ -174,7 +174,7 @@ std::unique_ptr<Packet> ServerConnectionPipe::recv() {
   if (tag == PacketTag::sync) {
     processSyn(packet);
     return nullptr;
-  } else if (tag == PacketTag::headerMagicRst) {
+  } else if (tag == PacketTag::headerRst) {
     processRst(packet);
     return nullptr;
   }
@@ -212,7 +212,7 @@ void ServerConnectionPipe::processSyn(
     auto rstPkt = std::make_unique<Packet>();
     NetRstRetry rstRetry{};
     rstRetry.cookie = cookie;
-    rstPkt << PacketTag::headerMagicRst;
+    rstPkt << PacketTag::headerRst;
     rstPkt << rstRetry;
     rstPkt->setDst(packet->getSrc());
     send(std::move(rstPkt));
@@ -227,7 +227,7 @@ void ServerConnectionPipe::processSyn(
   if (sync.cookie != cookie) {
     // bad cookie, reset the connection
     auto rstPkt = std::make_unique<Packet>();
-    rstPkt << PacketTag::headerMagicRst;
+    rstPkt << PacketTag::headerRst;
     rstPkt->setDst(packet->getSrc());
     send(std::move(rstPkt));
     std::clog << "incorrect cookie: found:" << sync.cookie
@@ -258,6 +258,7 @@ void ServerConnectionPipe::processRst(
 
 void ServerConnectionPipe::sendSyncAck(const MediaNet::IpAddr &to,
                                        uint64_t authSecret) {
+  (void)authSecret; // TODO
   if (dont_send_sync_ack) {
     std::clog << "Server not sending syn-ack\n";
     return;
@@ -269,7 +270,7 @@ void ServerConnectionPipe::sendSyncAck(const MediaNet::IpAddr &to,
   syncAck.serverTimeMs =
       std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
   // syncAck.authSecret = authSecret;
-  syncAckPkt << PacketTag::headerMagicSynAck;
+  syncAckPkt << PacketTag::headerSynAck;
   syncAckPkt << syncAck;
   syncAckPkt->setDst(to);
   send(std::move(syncAckPkt));

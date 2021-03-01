@@ -73,7 +73,7 @@ std::unique_ptr<Packet> QuicRClient::recv() {
     PacketTag tag;
     packet >> tag;
 
-    if (tag == PacketTag::headerMagicData) {
+    if (tag == PacketTag::headerData) {
       // std::clog << "quicr empty message " << std::endl;
       continue;
     }
@@ -132,7 +132,7 @@ std::unique_ptr<Packet> QuicRClient::createPacket(const ShortName &shortName,
   packet->name = shortName;
   packet->reserve(reservedPayloadSize + 20); // TODO - tune the 20
 
-  packet << PacketTag::headerMagicData;
+  packet << PacketTag::headerData;
   // packet << shortName;
   // packet << PacketTag::extraMagicVer1;
 

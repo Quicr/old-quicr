@@ -30,7 +30,7 @@ void Relay::process() {
   switch (tag) {
   case PacketTag::clientData:
     return processAppMessage(packet);
-  case PacketTag::relayRateReq:
+  case PacketTag::rate:
     return processRateRequest(packet);
   default:
     std::clog << "unknown tag :" << (int)tag << "\n";
@@ -50,7 +50,7 @@ void Relay::processAppMessage(std::unique_ptr<MediaNet::Packet> &packet) {
   auto tag = nextTag(packet);
   if (tag == PacketTag::pubData) {
     return processPub(packet, seqNumTag);
-  } else if (tag == PacketTag::subscribeReq) {
+  } else if (tag == PacketTag::subscribe) {
     return processSub(packet, seqNumTag);
   }
 
@@ -69,7 +69,7 @@ void Relay::processSub(std::unique_ptr<MediaNet::Packet> &packet,
   // ack the packet
   auto ackPacket = std::make_unique<Packet>();
   ackPacket->setDst(packet->getSrc());
-  ackPacket << PacketTag::headerMagicData;
+  ackPacket << PacketTag::headerData;
   NetAck ack{};
   ack.clientSeqNum = clientSeqNumTag.clientSeqNum;
   ack.netRecvTimeUs = nowUs;
@@ -113,7 +113,7 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
   auto ack = std::make_unique<Packet>();
   ack->setDst(packet->getSrc());
 
-  ack << PacketTag::headerMagicData;
+  ack << PacketTag::headerData;
 
   // TODO - get rid of prev Ack tag and use ack vector
   if (prevAckSeqNum > 0) {

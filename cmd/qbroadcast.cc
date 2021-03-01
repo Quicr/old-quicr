@@ -39,8 +39,8 @@ void BroadcastRelay::process() {
     return;
   }
 
-  if (nextTag(packet) == PacketTag::relayRateReq) {
-    // std::clog << std::endl << "Got relayRateReq" << std::endl;
+  if (nextTag(packet) == PacketTag::rate) {
+    // std::clog << std::endl << "Got rate" << std::endl;
     processRate(packet);
     return;
   }
@@ -68,7 +68,7 @@ void BroadcastRelay::processAppMessage(
   auto tag = nextTag(packet);
   if (tag == PacketTag::pubData) {
     return processPub(packet, seqNumTag);
-  } else if (tag == PacketTag::subscribeReq) {
+  } else if (tag == PacketTag::subscribe) {
     return processSub(packet, seqNumTag);
   }
 
@@ -86,7 +86,7 @@ void BroadcastRelay::processSub(std::unique_ptr<MediaNet::Packet> &packet,
   // ack the packet
   auto ack = std::make_unique<Packet>();
   ack->setDst(packet->getSrc());
-  ack << PacketTag::headerMagicData;
+  ack << PacketTag::headerData;
   NetAck ackTag{};
   ackTag.clientSeqNum = clientSeqNumTag.clientSeqNum;
   ackTag.netRecvTimeUs = nowUs;
@@ -136,7 +136,7 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
   auto ack = std::make_unique<Packet>();
   ack->setDst(packet->getSrc());
 
-  ack << PacketTag::headerMagicData;
+  ack << PacketTag::headerData;
 
   // TODO - get rid of prev Ack tag and use ack vector
   if (prevAckSeqNum > 0) {

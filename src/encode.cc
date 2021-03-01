@@ -177,13 +177,13 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetNack &msg) {
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const Subscribe &msg) {
   p << msg.name;
-  p << PacketTag::subscribeReq;
+  p << PacketTag::subscribe;
 
   return p;
 }
 
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p, Subscribe &msg) {
-  if (nextTag(p) != PacketTag::subscribeReq) {
+  if (nextTag(p) != PacketTag::subscribe) {
     std::clog << "Did not find expected PacketTag::subscribe" << std::endl;
     return false;
   }
@@ -216,72 +216,86 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
   case packetTagTrunc(PacketTag::none):
     tag = PacketTag::none;
     break;
-  case packetTagTrunc(PacketTag::subscribeReq):
-    tag = PacketTag::subscribeReq;
-    break;
-  case packetTagTrunc(PacketTag::pubData):
-    tag = PacketTag::pubData;
-    break;
-    //  case packetTagTrunc(PacketTag::pubDataFrag):
-    //    tag = PacketTag::pubDataFrag;
-    //    break;
-  case packetTagTrunc(PacketTag::clientData):
-    tag = PacketTag::clientData;
-    break;
-  case packetTagTrunc(PacketTag::ack):
-    tag = PacketTag::ack;
-    break;
   case packetTagTrunc(PacketTag::sync):
     tag = PacketTag::sync;
     break;
   case packetTagTrunc(PacketTag::syncAck):
     tag = PacketTag::syncAck;
     break;
-  case packetTagTrunc(PacketTag::shortName):
-    tag = PacketTag::shortName;
+
+  case packetTagTrunc(PacketTag::reset):
+    tag = PacketTag::reset;
+    break;
+  case packetTagTrunc(PacketTag::resetRetry):
+    tag = PacketTag::resetRetry;
+    break;
+  case packetTagTrunc(PacketTag::resetRedirect):
+    tag = PacketTag::resetRedirect;
+    break;
+
+  case packetTagTrunc(PacketTag::subscribe):
+    tag = PacketTag::subscribe;
+    break;
+  case packetTagTrunc(PacketTag::clientData):
+    tag = PacketTag::clientData;
+    break;
+  case packetTagTrunc(PacketTag::nack):
+    tag = PacketTag::nack;
+    break;
+  case packetTagTrunc(PacketTag::rate):
+    tag = PacketTag::rate;
+    break;
+  case packetTagTrunc(PacketTag::ack):
+    tag = PacketTag::ack;
     break;
   case packetTagTrunc(PacketTag::relayData):
     tag = PacketTag::relayData;
     break;
-  case packetTagTrunc(PacketTag::relayRateReq):
-    tag = PacketTag::relayRateReq;
+
+  case packetTagTrunc(PacketTag::shortName):
+    tag = PacketTag::shortName;
     break;
+  case packetTagTrunc(PacketTag::dataBlock):
+    tag = PacketTag::dataBlock;
+    break;
+  case packetTagTrunc(PacketTag::encDataBlock):
+    tag = PacketTag::encDataBlock;
+    break;
+
+
   case packetTagTrunc(PacketTag::subData):
     tag = PacketTag::subData;
     break;
-  case packetTagTrunc(PacketTag::rstRetry):
-    tag = PacketTag::rstRetry;
+  case packetTagTrunc(PacketTag::pubData):
+    tag = PacketTag::pubData;
     break;
-  case packetTagTrunc(PacketTag::rstRedirect):
-    tag = PacketTag::rstRedirect;
+
+
+  case packetTagTrunc(PacketTag::headerData):
+    tag = PacketTag::headerData;
     break;
-  case packetTagTrunc(PacketTag::headerMagicData):
-    tag = PacketTag::headerMagicData;
+  case packetTagTrunc(PacketTag::headerSyn):
+    tag = PacketTag::headerSyn;
     break;
-  case packetTagTrunc(PacketTag::headerMagicSyn):
-    tag = PacketTag::headerMagicSyn;
+  case packetTagTrunc(PacketTag::headerSynAck):
+    tag = PacketTag::headerSynAck;
     break;
-  case packetTagTrunc(PacketTag::headerMagicSynAck):
-    tag = PacketTag::headerMagicSynAck;
+  case packetTagTrunc(PacketTag::headerRst):
+    tag = PacketTag::headerRst;
     break;
-  case packetTagTrunc(PacketTag::headerMagicRst):
-    tag = PacketTag::headerMagicRst;
+  case packetTagTrunc(PacketTag::headerDataCrazy):
+    tag = PacketTag::headerDataCrazy;
     break;
-  case packetTagTrunc(PacketTag::headerMagicDataCrazy):
-    tag = PacketTag::headerMagicDataCrazy;
+  case packetTagTrunc(PacketTag::headerRstCrazy):
+    tag = PacketTag::headerRstCrazy;
     break;
-  case packetTagTrunc(PacketTag::headerMagicRstCrazy):
-    tag = PacketTag::headerMagicRstCrazy;
+  case packetTagTrunc(PacketTag::headerSynCrazy):
+    tag = PacketTag::headerSynCrazy;
     break;
-  case packetTagTrunc(PacketTag::headerMagicSynCrazy):
-    tag = PacketTag::headerMagicSynCrazy;
+  case packetTagTrunc(PacketTag::headerSynAckCrazy):
+    tag = PacketTag::headerSynAckCrazy;
     break;
-  case packetTagTrunc(PacketTag::headerMagicSynAckCrazy):
-    tag = PacketTag::headerMagicSynAckCrazy;
-    break;
-    //	case packetTagTrunc(PacketTag::extraMagicVer1):
-    //		tag = PacketTag::extraMagicVer1;
-    //		break;
+
   case packetTagTrunc(PacketTag::badTag):
     tag = PacketTag::badTag;
     break;
@@ -541,12 +555,12 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const NetRstRetry &msg) {
 
   p << msg.cookie;
-  p << PacketTag::rstRetry;
+  p << PacketTag::resetRetry;
   return p;
 }
 
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRstRetry &msg) {
-  if (nextTag(p) != PacketTag::rstRetry) {
+  if (nextTag(p) != PacketTag::resetRetry) {
     std::cerr << "Did not find expected PacketTag::RstRetry" << std::endl;
     return false;
   }
@@ -567,12 +581,12 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   p << msg.port;
   p << msg.origin;
   p << msg.cookie;
-  p << PacketTag::rstRedirect;
+  p << PacketTag::resetRedirect;
   return p;
 }
 
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRstRedirect &msg) {
-  if (nextTag(p) != PacketTag::rstRedirect) {
+  if (nextTag(p) != PacketTag::resetRedirect) {
     std::cerr << "Did not find expected PacketTag::RstRedirect" << std::endl;
     return false;
   }
@@ -597,26 +611,26 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRstRedirect &msg) {
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const NetRateReq &msg) {
   p << msg.bitrateKbps;
-  p << PacketTag::relayRateReq;
+  p << PacketTag::rate;
 
   return p;
 }
 
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRateReq &msg) {
-  if (nextTag(p) != PacketTag::relayRateReq) {
-    // std::clog << "Did not find expected PacketTag::relayRateReq" <<
+  if (nextTag(p) != PacketTag::rate) {
+    // std::clog << "Did not find expected PacketTag::rate" <<
     // std::endl;
     return false;
   }
 
-  PacketTag tag = PacketTag::relayRateReq;
+  PacketTag tag = PacketTag::rate;
   bool ok = true;
 
   ok &= p >> tag;
   ok &= p >> msg.bitrateKbps;
 
   if (!ok) {
-    std::cerr << "problem parsing relayRateReq" << std::endl;
+    std::cerr << "problem parsing rate" << std::endl;
   }
 
   return ok;
@@ -823,6 +837,8 @@ uintVar_t MediaNet::toVarInt(uint64_t v) {
 uint64_t MediaNet::fromVarInt(uintVar_t v) { return static_cast<uint64_t>(v); }
 
 std::ostream &MediaNet::operator<<(std::ostream &stream, Packet &packet) {
+  // TODO need to update this and perhaps change to "toString"
+
   int ptr = (int)packet.fullSize() - 1;
   while (ptr >= 0) {
     const uint8_t *data = &(packet.fullData());
@@ -839,20 +855,20 @@ std::ostream &MediaNet::operator<<(std::ostream &stream, Packet &packet) {
     ptr -= len;
 
     switch (tag) {
-    case PacketTag::headerMagicData:
-    case PacketTag::headerMagicDataCrazy:
+    case PacketTag::headerData:
+    case PacketTag::headerDataCrazy:
       stream << " magicData";
       break;
-    case PacketTag::headerMagicSyn:
-    case PacketTag::headerMagicSynCrazy:
+    case PacketTag::headerSyn:
+    case PacketTag::headerSynCrazy:
       stream << " magicSync";
       break;
-    case PacketTag::headerMagicSynAck:
-    case PacketTag::headerMagicSynAckCrazy:
+    case PacketTag::headerSynAck:
+    case PacketTag::headerSynAckCrazy:
       stream << " magicSyncAck";
       break;
-    case PacketTag::headerMagicRst:
-    case PacketTag::headerMagicRstCrazy:
+    case PacketTag::headerRst:
+    case PacketTag::headerRstCrazy:
       stream << " magicReset";
       break;
     case PacketTag::sync:
@@ -861,11 +877,11 @@ std::ostream &MediaNet::operator<<(std::ostream &stream, Packet &packet) {
     case PacketTag::syncAck:
       stream << " syncAck";
       break;
-    case PacketTag::rstRetry:
-      stream << " rstRetry";
+    case PacketTag::resetRetry:
+      stream << " resetRetry";
       break;
-    case PacketTag::rstRedirect:
-      stream << " rstRedirect";
+    case PacketTag::resetRedirect:
+      stream << " resetRedirect";
       break;
     case PacketTag::shortName:
       stream << " shortName";
