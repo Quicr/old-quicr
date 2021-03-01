@@ -181,8 +181,8 @@ TEST_CASE("ClientData encode/decode") {
   chunkIn.shortName = ShortName(1, 2, 3);
   chunkIn.lifetime = toVarInt(0x1000);
 
-  dataBlockIn.metaDataLen = static_cast<uintVar_t>( 0 );
-  dataBlockIn.dataLen = static_cast<uintVar_t>(sizeof(dataIn));
+  dataBlockIn.metaDataLen = toVarInt( 0 );
+  dataBlockIn.dataLen = toVarInt( dataIn.size() );
 
   auto packet = std::make_unique<Packet>();
   packet << dataIn;
@@ -218,9 +218,9 @@ TEST_CASE("RelayData encode/decode") {
   chunkIn.shortName = ShortName(1, 2, 3);
   chunkIn.lifetime = toVarInt(0x1000);
 
-  dataBlockIn.metaDataLen = static_cast<uintVar_t>( 0 );
+  dataBlockIn.metaDataLen = toVarInt( 0 );
   dataBlockIn.authTagLen = 4;
-  dataBlockIn.cipherDataLen = static_cast<uintVar_t>(sizeof(dataIn));
+  dataBlockIn.cipherDataLen = toVarInt( dataIn.size() );
 
   auto packet = std::make_unique<Packet>();
   packet << dataIn;
