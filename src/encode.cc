@@ -262,15 +262,6 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
     tag = PacketTag::encDataBlock;
     break;
 
-
-  case packetTagTrunc(PacketTag::subData):
-    tag = PacketTag::subData;
-    break;
-  case packetTagTrunc(PacketTag::pubData):
-    tag = PacketTag::pubData;
-    break;
-
-
   case packetTagTrunc(PacketTag::headerData):
     tag = PacketTag::headerData;
     break;
@@ -746,76 +737,6 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p,
   return ok;
 }
 
-///
-/// ClientData
-///
-
-/*
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const ClientData &data) {
-
-  p << data.clientSeqNum;
-  p << PacketTag::clientData;
-
-  return p;
-}
-
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, ClientData &data) {
-  if (nextTag(p) != PacketTag::clientData) {
-    std::clog << "Did not find expected PacketTag::clientData" << std::endl;
-    return false;
-  }
-
-  PacketTag tag = PacketTag::none;
-  bool ok = true;
-
-  ok &= p >> tag;
-  ok &= p >> data.clientSeqNum;
-
-  if (!ok) {
-    std::cerr << "problem parsing ClientData" << std::endl;
-  }
-
-  return ok;
-}
-*/
-
-///
-/// RelayData
-///
-
-/*
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const RelayData &data) {
-
-  p << data.relaySendTimeUs;
-  p << data.relaySeqNum;
-  p << PacketTag::relayData;
-
-  return p;
-}
-
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, RelayData &data) {
-  if (nextTag(p) != PacketTag::relayData) {
-    std::clog << "Did not find expected PacketTag::relayData" << std::endl;
-    return false;
-  }
-
-  PacketTag tag = PacketTag::none;
-  bool ok = true;
-
-  ok &= p >> tag;
-  ok &= p >> data.relaySeqNum;
-  ok &= p >> data.relaySendTimeUs;
-
-  if (!ok) {
-    std::cerr << "problem parsing relayData" << std::endl;
-  }
-
-  return ok;
-}
-*/
-
 
 ///
 /// var-ints
@@ -968,12 +889,7 @@ std::ostream &MediaNet::operator<<(std::ostream &stream, Packet &packet) {
     case PacketTag::shortName:
       stream << " shortName";
       break;
-    case PacketTag::pubData:
-      stream << " pubData(" << len << ")";
-      break;
-      //    case PacketTag::pubDataFrag:
-      //      stream << " pubDataFrag(" << len << ")";
-      //      break;
+
     case PacketTag::clientData:
       stream << " clientData";
       break;
