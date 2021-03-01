@@ -123,7 +123,7 @@ std::unique_ptr<Packet> QuicRClient::recv() {
     assert( dataBlock.metaDataLen == toVarInt(0) ); // TODO implement
 
     // TODO - set packet lifetime
-    
+
     packet->name = namedDataChunk.shortName;
 
     size_t payloadSize = fromVarInt( dataBlock.dataLen );
