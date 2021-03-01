@@ -180,7 +180,7 @@ bool operator>>(std::unique_ptr<Packet> &p, DataBlock &msg);
 struct NamedDataChunk {
   ShortName shortName;
   uintVar_t lifetime;
-  EncryptedDataBlock encryptedDataBlock;
+  //EncryptedDataBlock encryptedDataBlock;
 };
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const NamedDataChunk &msg);
