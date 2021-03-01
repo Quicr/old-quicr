@@ -177,13 +177,13 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetNack &msg) {
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const Subscribe &msg) {
   p << msg.name;
-  p << PacketTag::subscribeReq;
+  p << PacketTag::subscribe;
 
   return p;
 }
 
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p, Subscribe &msg) {
-  if (nextTag(p) != PacketTag::subscribeReq) {
+  if (nextTag(p) != PacketTag::subscribe) {
     std::clog << "Did not find expected PacketTag::subscribe" << std::endl;
     return false;
   }
@@ -216,8 +216,8 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
   case packetTagTrunc(PacketTag::none):
     tag = PacketTag::none;
     break;
-  case packetTagTrunc(PacketTag::subscribeReq):
-    tag = PacketTag::subscribeReq;
+  case packetTagTrunc(PacketTag::subscribe):
+    tag = PacketTag::subscribe;
     break;
   case packetTagTrunc(PacketTag::pubData):
     tag = PacketTag::pubData;
@@ -243,8 +243,8 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
   case packetTagTrunc(PacketTag::relayData):
     tag = PacketTag::relayData;
     break;
-  case packetTagTrunc(PacketTag::relayRateReq):
-    tag = PacketTag::relayRateReq;
+  case packetTagTrunc(PacketTag::rate):
+    tag = PacketTag::rate;
     break;
   case packetTagTrunc(PacketTag::subData):
     tag = PacketTag::subData;
@@ -597,26 +597,26 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRstRedirect &msg) {
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const NetRateReq &msg) {
   p << msg.bitrateKbps;
-  p << PacketTag::relayRateReq;
+  p << PacketTag::rate;
 
   return p;
 }
 
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRateReq &msg) {
-  if (nextTag(p) != PacketTag::relayRateReq) {
-    // std::clog << "Did not find expected PacketTag::relayRateReq" <<
+  if (nextTag(p) != PacketTag::rate) {
+    // std::clog << "Did not find expected PacketTag::rate" <<
     // std::endl;
     return false;
   }
 
-  PacketTag tag = PacketTag::relayRateReq;
+  PacketTag tag = PacketTag::rate;
   bool ok = true;
 
   ok &= p >> tag;
   ok &= p >> msg.bitrateKbps;
 
   if (!ok) {
-    std::cerr << "problem parsing relayRateReq" << std::endl;
+    std::cerr << "problem parsing rate" << std::endl;
   }
 
   return ok;

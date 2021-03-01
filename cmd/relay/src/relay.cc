@@ -30,7 +30,7 @@ void Relay::process() {
   switch (tag) {
   case PacketTag::clientData:
     return processAppMessage(packet);
-  case PacketTag::relayRateReq:
+  case PacketTag::rate:
     return processRateRequest(packet);
   default:
     std::clog << "unknown tag :" << (int)tag << "\n";
@@ -50,7 +50,7 @@ void Relay::processAppMessage(std::unique_ptr<MediaNet::Packet> &packet) {
   auto tag = nextTag(packet);
   if (tag == PacketTag::pubData) {
     return processPub(packet, seqNumTag);
-  } else if (tag == PacketTag::subscribeReq) {
+  } else if (tag == PacketTag::subscribe) {
     return processSub(packet, seqNumTag);
   }
 

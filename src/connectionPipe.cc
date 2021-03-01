@@ -258,6 +258,7 @@ void ServerConnectionPipe::processRst(
 
 void ServerConnectionPipe::sendSyncAck(const MediaNet::IpAddr &to,
                                        uint64_t authSecret) {
+  (void)authSecret; // TODO
   if (dont_send_sync_ack) {
     std::clog << "Server not sending syn-ack\n";
     return;

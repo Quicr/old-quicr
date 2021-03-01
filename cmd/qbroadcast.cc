@@ -39,8 +39,8 @@ void BroadcastRelay::process() {
     return;
   }
 
-  if (nextTag(packet) == PacketTag::relayRateReq) {
-    // std::clog << std::endl << "Got relayRateReq" << std::endl;
+  if (nextTag(packet) == PacketTag::rate) {
+    // std::clog << std::endl << "Got rate" << std::endl;
     processRate(packet);
     return;
   }
@@ -68,7 +68,7 @@ void BroadcastRelay::processAppMessage(
   auto tag = nextTag(packet);
   if (tag == PacketTag::pubData) {
     return processPub(packet, seqNumTag);
-  } else if (tag == PacketTag::subscribeReq) {
+  } else if (tag == PacketTag::subscribe) {
     return processSub(packet, seqNumTag);
   }
 

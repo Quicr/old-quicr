@@ -27,26 +27,25 @@ enum struct PacketTag : uint32_t {
 
   none = packetTagGen(0, 0, true), // must be smallest tag
 
-  sync = packetTagGen(4, -1, true),
-  syncAck = packetTagGen(10, -1, true),
-  reset = packetTagGen(11, -1, true),
-  resetRetry = packetTagGen(11, -1, true),
-  resetRedirect = packetTagGen(12, -1, true),
+  sync = packetTagGen(1, -1, true),
+  syncAck = packetTagGen(2, -1, true),
+  reset = packetTagGen(3, -1, true),
+  resetRetry = packetTagGen(4, -1, true),
+  resetRedirect = packetTagGen(5, -1, true),
 
-  nack = packetTagGen(14, -1, true),
-  relayRateReq = packetTagGen(6, -1, true),
-  ack = packetTagGen(3, -1, true),
-  subscribeReq = packetTagGen(8, -1, true),
+  subscribe = packetTagGen(6, -1, true),
+  clientData = packetTagGen(7, -1, true),
+  nack = packetTagGen(8, -1, true),
+  rate = packetTagGen(9, -1, true),
+  ack = packetTagGen(10, -1, true),
+  relayData = packetTagGen(11, -1, true),
 
-  clientData = packetTagGen(2, -1, true),
-  relayData = packetTagGen(7, -1, true),
-  pubData = packetTagGen(1, -1, true),
-  // pubDataFrag = packetTagGen(9, 255, true),
-  subData = packetTagGen(13, -1, true),
+  shortName = packetTagGen(12, -1, true),
+  dataBlock = packetTagGen(12, -1, true),
+  encDataBlock = packetTagGen(14, -1, true),
 
-  shortName = packetTagGen(5, -1, true),
-
-  // shortName = packetTagGen(5, 18, true),
+  subData = packetTagGen(50, -1, true), // TODO remove
+  pubData = packetTagGen(51, -1, true), // TODO remove
 
   // TODO - Could add nextReservedCodePoints of various lengths and MTI
 
