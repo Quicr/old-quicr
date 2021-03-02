@@ -63,7 +63,6 @@ protected:
 class ClientConnectionPipe : public ConnectionPipe {
 public:
   explicit ClientConnectionPipe(PipeInterface *t);
-  void setAuthInfo(uint32_t sender, uint64_t t);
   bool start(uint16_t port, std::string server,
              PipeInterface *upStream) override;
 
@@ -113,6 +112,7 @@ private:
   // TODO: need to timeout on the entries in this map to
   // avoid DOS attacks
   std::map<MediaNet::IpAddr, std::tuple<timepoint, uint32_t>> cookies;
+  std::map<MediaNet::IpAddr, uint64_t> pathToken;
   std::map<MediaNet::IpAddr, std::unique_ptr<Connection>> connectionMap;
 
   // TODO revisit this (use cryptographic random)

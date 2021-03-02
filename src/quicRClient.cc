@@ -115,9 +115,9 @@ std::unique_ptr<Packet> QuicRClient::recv() {
 bool QuicRClient::open(uint32_t clientID, const std::string relayName,
                        const uint16_t port, uint64_t token) {
   (void)clientID; // TODO
-  (void)token;    // TODO
-  connectionPipe.setAuthInfo(clientID, token);
-
+  pathToken = token;
+  // set to enable other pipes to use it in their header setting
+	firstPipe->setPathToken(token);
   return firstPipe->start(port, relayName, nullptr);
 }
 
@@ -132,10 +132,10 @@ std::unique_ptr<Packet> QuicRClient::createPacket(const ShortName &shortName,
   packet->name = shortName;
   packet->reserve(reservedPayloadSize + 20); // TODO - tune the 20
 
-  packet << PacketTag::headerData;
-  // packet << shortName;
-  // packet << PacketTag::extraMagicVer1;
+  // TODO: revisit API interfaces for application
 
+  auto header = Header {firstPipe->getPathToken(), PacketTag::headerData};
+  packet << header;
   packet->headerSize = (int)(packet->buffer.size());
 
   // std::clog << "Create empty packet " << *packet << std::endl;

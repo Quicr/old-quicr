@@ -50,7 +50,6 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, ShortName &msg) {
 
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const ClientData &msg) {
-  p << msg.header;
 	p << msg.clientSeqNum;
   p << PacketTag::clientData;
 
@@ -67,7 +66,6 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, ClientData &msg) {
   bool ok = true;
   ok &= p >> tag;
   ok &= p >> msg.clientSeqNum;
-	ok &= p >> msg.header;
 
   if (!ok) {
     std::cerr << "problem parsing ClientData" << std::endl;
@@ -81,7 +79,6 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, ClientData &msg) {
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const RelayData &msg) {
 
-  p << msg.header;
 	p << msg.remoteSendTimeUs;
   p << msg.relaySeqNum;
 
@@ -102,7 +99,6 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, RelayData &msg) {
   ok &= p >> tag;
   ok &= p >> msg.relaySeqNum;
   ok &= p >> msg.remoteSendTimeUs;
-	ok &= p >> msg.header;
 
   if (!ok) {
     std::cerr << "problem parsing RelayData" << std::endl;
@@ -116,7 +112,6 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, RelayData &msg) {
 ///
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const NetAck &msg) {
-  p << msg.header;
 	p << msg.ecnVec;
   p << msg.ackVec;
   p << msg.clientSeqNum;
@@ -139,7 +134,6 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetAck &msg) {
   ok &= p >> msg.clientSeqNum;
   ok &= p >> msg.ackVec;
   ok &= p >> msg.ecnVec;
-  ok &= p >> msg.header;
 
   if (!ok) {
     std::cerr << "problem parsing NetAck" << std::endl;
@@ -153,7 +147,6 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetAck &msg) {
 ///
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const NetNack &msg) {
-  p << msg.header;
   p << msg.relaySeqNum;
   p << PacketTag::nack;
 
@@ -170,7 +163,6 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetNack &msg) {
   bool ok = true;
   ok &= p >> tag;
   ok &= p >> msg.relaySeqNum;
-	ok &= p >> msg.header;
 
   if (!ok) {
     std::cerr << "problem parsing NetNack" << std::endl;
@@ -184,7 +176,7 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetNack &msg) {
 ///
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const Subscribe &msg) {
-  p << msg.name;
+	p << msg.name;
   p << PacketTag::subscribe;
 
   return p;
@@ -485,16 +477,17 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p,
 
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
 																							const Header &header) {
-	p << header.pathToken;
 	p << header.headerMagic;
+	p << header.pathToken;
 
+	p->setPathToken(header.pathToken);
 	return p;
 }
 
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p, Header &header) {
 	bool ok = true;
-	ok &= p >> header.headerMagic;
 	ok &= p >> header.pathToken;
+	ok &= p >> header.headerMagic;
 
 	if (!ok) {
 		std::cerr << "problem parsing header" << std::endl;
@@ -507,7 +500,6 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, Header &header) {
 
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const NetSyncReq &msg) {
-	p << msg.header;
 	p << msg.supportedFeaturesVec;
   p << msg.clientTimeMs;
   p << msg.senderId;
@@ -533,7 +525,6 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetSyncReq &msg) {
   ok &= p >> msg.senderId;
   ok &= p >> msg.clientTimeMs;
   ok &= p >> msg.supportedFeaturesVec;
-  ok &= p >> msg.header;
 
   if (!ok) {
     std::cerr << "problem parsing sync" << std::endl;
@@ -547,7 +538,6 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetSyncReq &msg) {
 ///
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const NetSyncAck &msg) {
-  p << msg.header;
   p << msg.useFeaturesVec;
   p << msg.serverTimeMs;
   p << PacketTag::syncAck;
@@ -566,7 +556,7 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetSyncAck &msg) {
   ok &= p >> tag;
   ok &= p >> msg.serverTimeMs;
   ok &= p >> msg.useFeaturesVec;
-	ok &= p >> msg.header;
+
 	if (!ok) {
     std::cerr << "problem parsing syncAck" << std::endl;
   }
@@ -580,7 +570,6 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetSyncAck &msg) {
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const NetRstRetry &msg) {
 
-  p << msg.header;
 	p << msg.cookie;
   p << PacketTag::resetRetry;
   return p;
@@ -596,7 +585,6 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRstRetry &msg) {
   bool ok = true;
   ok &= p >> tag;
   ok &= p >> msg.cookie;
-  ok &= p >> msg.header;
 
   if (!ok) {
     std::cerr << "problem parsing RstRetry" << std::endl;
@@ -607,7 +595,6 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRstRetry &msg) {
 
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const NetRstRedirect &msg) {
-  p << msg.header;
 	p << msg.port;
   p << msg.origin;
   p << msg.cookie;
@@ -627,7 +614,6 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRstRedirect &msg) {
   ok &= p >> msg.cookie;
   ok &= p >> msg.origin;
   ok &= p >> msg.port;
-	ok &= p >> msg.header;
 
   if (!ok) {
     std::cerr << "problem parsing RstRedirect" << std::endl;
@@ -641,7 +627,6 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRstRedirect &msg) {
 ///
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const NetRateReq &msg) {
-  p << msg.header;
 	p << msg.bitrateKbps;
   p << PacketTag::rate;
 
@@ -660,7 +645,7 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRateReq &msg) {
 
   ok &= p >> tag;
   ok &= p >> msg.bitrateKbps;
-  ok &= p >> msg.header;
+
   if (!ok) {
     std::cerr << "problem parsing rate" << std::endl;
   }
@@ -677,7 +662,6 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
 
   p << data.cipherText;
   p << data.authTagLen;
-
   return p;
 }
 
@@ -702,7 +686,6 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p,
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const PubData &data) {
 
-  p << data.header;
 	p << data.encryptedDataBlock;
   p << data.lifetime;
   p << data.name;
@@ -724,7 +707,6 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, PubData &data) {
   ok &= p >> data.name;
   ok &= p >> data.lifetime;
   ok &= p >> data.encryptedDataBlock;
-  ok &= p >> data.header;
 
   if (!ok) {
     std::cerr << "problem parsing pubData" << std::endl;
@@ -740,7 +722,6 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, PubData &data) {
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const SubData &data) {
 
-  p << data.header;
 	p << data.encryptedDataBlock;
   p << data.lifetime;
   p << data.name;
@@ -762,7 +743,6 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, SubData &data) {
   ok &= p >> data.name;
   ok &= p >> data.lifetime;
   ok &= p >> data.encryptedDataBlock;
-	ok &= p >> data.header;
 
   if (!ok) {
     std::cerr << "problem parsing subData" << std::endl;

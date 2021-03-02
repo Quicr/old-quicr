@@ -83,7 +83,7 @@ private:
   PipeInterface *firstPipe;
 
   // uint32_t pubClientID;
-  // uint64_t secToken;
+  uint64_t pathToken;
 };
 
 } // namespace MediaNet

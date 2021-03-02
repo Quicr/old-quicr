@@ -56,7 +56,6 @@ bool operator>>(std::unique_ptr<Packet> &p, Header &msg);
 
 /* SYNC Request */
 struct NetSyncReq {
-	Header header;
   uint32_t cookie;
   std::string origin;
   uint32_t senderId;
@@ -69,7 +68,6 @@ bool operator>>(std::unique_ptr<Packet> &p, NetSyncReq &msg);
 
 /* SYN ACK */
 struct NetSyncAck {
-	Header header;
   uint64_t serverTimeMs;
   uint64_t useFeaturesVec;
 };
@@ -80,7 +78,6 @@ bool operator>>(std::unique_ptr<Packet> &p, NetSyncAck &msg);
 
 /* NetReset*/
 struct NetReset {
-	Header header;
   uint64_t cookie;
 };
 
@@ -100,7 +97,6 @@ bool operator>>(std::unique_ptr<Packet> &p, NetRstRedirect &msg);
 
 /* Rate Request */
 struct NetRateReq {
-	Header header;
   uintVar_t bitrateKbps; // in kilo bits pers second
 };
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
@@ -109,7 +105,6 @@ bool operator>>(std::unique_ptr<Packet> &p, NetRateReq &msg);
 
 /* NetAck */
 struct NetAck {
-	Header header;
   uint32_t ackVec;
   uint32_t ecnVec;
   uint32_t clientSeqNum;
@@ -122,7 +117,6 @@ bool operator>>(std::unique_ptr<Packet> &p, NetAck &msg);
 
 /* NetNack */
 struct NetNack {
-	Header header;
   uint32_t relaySeqNum;
 };
 
@@ -143,7 +137,6 @@ bool operator>>(std::unique_ptr<Packet> &p, Subscribe &msg);
 /// ClientData
 ///
 struct ClientData {
-	Header header;
   uint32_t clientSeqNum;
 };
 
@@ -155,7 +148,6 @@ bool operator>>(std::unique_ptr<Packet> &p, ClientData &msg);
 /// RelayData
 ///
 struct RelayData {
-	Header header;
   uint32_t relaySeqNum;
   uint32_t remoteSendTimeUs;
 };
@@ -167,8 +159,7 @@ bool operator>>(std::unique_ptr<Packet> &p, RelayData &msg);
 /// EncDataBlock
 ///
 struct EncryptedDataBlock {
-  uint8_t authTagLen;
-  // varInt cipherTextAndTagLen;
+  uint16_t authTagLen;
   std::vector<uint8_t> cipherText; // enc + auth
 };
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
@@ -179,7 +170,6 @@ bool operator>>(std::unique_ptr<Packet> &p, EncryptedDataBlock &msg);
 /// PubSubData and friends
 ///
 struct PublishedData {
-	Header header;
   ShortName name;
   uintVar_t lifetime;
   EncryptedDataBlock encryptedDataBlock;

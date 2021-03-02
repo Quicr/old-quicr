@@ -26,7 +26,10 @@ void ConnectionPipe::stop() {
   state = Start{};
   auto packet = std::make_unique<Packet>();
   assert(packet);
+  // headerRst has no defn on its own.
+  // construct header by hand
   packet << PacketTag::headerRst;
+  packet << PipeInterface::pathToken;
   std::clog << "Reset: " << packet->to_hex() << std::endl;
   send(move(packet));
 
@@ -56,6 +59,12 @@ std::unique_ptr<Packet> ClientConnectionPipe::recv() {
     return packet;
   }
 
+  if (packet->getPathToken() != token) {
+  	std::clog << "Path Token mismatch\n";
+  	stop();
+  	return nullptr;
+  }
+
   auto tag = nextTag(packet);
   if (tag == PacketTag::syncAck) {
     //std::clog << "ConnectionPipe: Got syncAck" << std::endl;
@@ -63,17 +72,12 @@ std::unique_ptr<Packet> ClientConnectionPipe::recv() {
     NetSyncAck syncAck{};
     packet >> syncAck;
 
-    // if (token != syncAck.authSecret) {
-    //	std::clog << "Auth token mismatch\n";
-    //	stop();
-    //	return nullptr;
-    //}
-
     // kickoff periodic sync flow
     if (!syncLoopRunning) {
       runSyncLoop();
       syncLoopRunning = true;
     }
+
     state = Connected{};
     // don't need to report syncAck up in the chain
     return nullptr;
@@ -90,28 +94,26 @@ std::unique_ptr<Packet> ClientConnectionPipe::recv() {
   return packet;
 }
 
-void ClientConnectionPipe::setAuthInfo(uint32_t sender, uint64_t token_in) {
-  senderID = sender;
-  assert(senderID > 0);
-  token = token_in;
-}
 
 void ClientConnectionPipe::sendSync() {
   auto packet = std::make_unique<Packet>();
   assert(packet);
-  NetSyncReq synReq{};
-  const auto now = std::chrono::system_clock::now();
-  const auto duration = now.time_since_epoch();
-  synReq.clientTimeMs =
+	const auto now = std::chrono::system_clock::now();
+	const auto duration = now.time_since_epoch();
+
+	auto header = Header{pathToken, PacketTag::headerSyn};
+  packet << header;
+
+	NetSyncReq synReq{};
+	synReq.clientTimeMs =
       std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-  ;
   synReq.senderId = senderID;
   synReq.supportedFeaturesVec = 1;
   synReq.cookie = cookie;
   synReq.origin = "example.com";
   // std::clog << "syncConnection: cookie:" << synReq.cookie << std::endl;
   packet << synReq;
-  // std::clog <<"sync Packet" << packet->to_hex() << std::endl;
+  std::clog <<"sync Packet" << packet->to_hex() << std::endl;
   send(move(packet));
   state = ConnectionPending{};
 }
@@ -140,7 +142,6 @@ void ClientConnectionPipe::runSyncLoop() {
 ///
 /// ServerConnectionPipe
 ///
-bool dont_send_sync_ack = false;
 
 ServerConnectionPipe::Connection::Connection(uint32_t relaySeq,
                                              uint64_t cookie_in)
@@ -258,10 +259,6 @@ void ServerConnectionPipe::processRst(
 void ServerConnectionPipe::sendSyncAck(const MediaNet::IpAddr &to,
                                        uint64_t authSecret) {
   (void)authSecret; // TODO
-  if (dont_send_sync_ack) {
-    std::clog << "Server not sending syn-ack\n";
-    return;
-  }
   auto syncAckPkt = std::make_unique<Packet>();
   auto syncAck = NetSyncAck{};
   const auto now = std::chrono::system_clock::now();

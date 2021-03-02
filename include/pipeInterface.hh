@@ -51,12 +51,23 @@ public:
   virtual void updateBitrateUp(uint64_t minBps, uint64_t startBps,
                                uint64_t maxBps);
 
+  void setPathToken(uint64_t token) {
+  	pathToken = token;
+  }
+
+	uint64_t getPathToken() const {
+		return pathToken;
+	}
+
 protected:
   explicit PipeInterface(PipeInterface *downStream);
   virtual ~PipeInterface();
 
   PipeInterface *downStream;
   PipeInterface *upStream;
+
+  // pathToken common for all the messages
+  uint64_t pathToken;
 };
 
 } // namespace MediaNet
