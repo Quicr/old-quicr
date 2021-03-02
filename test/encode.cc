@@ -107,21 +107,21 @@ TEST_CASE("NetSyncAck encode/decode") {
   CHECK_EQ(ackIn.useFeaturesVec, ackOut.useFeaturesVec);
 }
 
-TEST_CASE("NetRstRetry encode/decode") {
-  NetRstRetry retryIn;
+TEST_CASE("NetResetRetry encode/decode") {
+  NetResetRetry retryIn;
   retryIn.cookie = 0x1234;
 
   auto packet = std::make_unique<Packet>();
   packet << retryIn;
 
-  NetRstRetry retryOut;
+  NetResetRetry retryOut;
   packet >> retryOut;
 
   CHECK_EQ(retryIn.cookie, retryOut.cookie);
 }
 
-TEST_CASE("NetRstRedirect encode/decode") {
-  NetRstRedirect redirectIn;
+TEST_CASE("NetResetRedirect encode/decode") {
+  NetResetRedirect redirectIn;
   redirectIn.port = 0x1000;
   redirectIn.origin = "example.com";
   redirectIn.cookie = 0x1234;
@@ -129,7 +129,7 @@ TEST_CASE("NetRstRedirect encode/decode") {
   auto packet = std::make_unique<Packet>();
   packet << redirectIn;
 
-  NetRstRedirect redirectOut;
+  NetResetRedirect redirectOut;
   packet >> redirectOut;
 
   CHECK_EQ(redirectIn.cookie, redirectOut.cookie);

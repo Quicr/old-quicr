@@ -543,14 +543,14 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetSyncAck &msg) {
 /// NetReset and Types
 ///
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const NetRstRetry &msg) {
+                                              const NetResetRetry &msg) {
 
   p << msg.cookie;
   p << PacketTag::resetRetry;
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRstRetry &msg) {
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetResetRetry &msg) {
   if (nextTag(p) != PacketTag::resetRetry) {
     std::cerr << "Did not find expected PacketTag::RstRetry" << std::endl;
     return false;
@@ -568,7 +568,7 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRstRetry &msg) {
 }
 
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const NetRstRedirect &msg) {
+                                              const NetResetRedirect &msg) {
   p << msg.port;
   p << msg.origin;
   p << msg.cookie;
@@ -576,7 +576,7 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRstRedirect &msg) {
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetResetRedirect &msg) {
   if (nextTag(p) != PacketTag::resetRedirect) {
     std::cerr << "Did not find expected PacketTag::RstRedirect" << std::endl;
     return false;

@@ -23,7 +23,7 @@ std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
 template<std::size_t SIZE>
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const std::array<uint8_t,SIZE> &val) {
-  for(auto v = val.rbegin(); v != val.rend(); ++v) {
+  for(auto v = val.begin(); v != val.end(); ++v) {
     p << *v;
   }
   return p;
@@ -38,8 +38,8 @@ bool operator>>(std::unique_ptr<Packet> &p, std::vector<uint8_t> &val);
 template<std::size_t SIZE>
 bool operator>>(std::unique_ptr<Packet> &p, std::array<uint8_t,SIZE> &val){
   bool ok = true;
-  for(auto& v : val) {
-    ok &= p >> v;
+  for(auto v = val.rbegin(); v != val.rend(); ++v) {
+    ok &= (p >> *v);
   }
   return ok;
 }
@@ -90,22 +90,22 @@ struct NetReset {
   uint32_t cookie;
 };
 
-struct NetRstRetry {
+struct NetResetRetry {
   uint32_t cookie;
 };
 
-struct NetRstRedirect : NetReset {
+struct NetResetRedirect {
   uint32_t cookie;
   std::string origin;
   uint16_t port;
 };
 
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
-                                    const NetRstRetry &msg);
-bool operator>>(std::unique_ptr<Packet> &p, NetRstRetry &msg);
+                                    const NetResetRetry &msg);
+bool operator>>(std::unique_ptr<Packet> &p, NetResetRetry &msg);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
-                                    const NetRstRedirect &msg);
-bool operator>>(std::unique_ptr<Packet> &p, NetRstRedirect &msg);
+                                    const NetResetRedirect &msg);
+bool operator>>(std::unique_ptr<Packet> &p, NetResetRedirect &msg);
 
 /* Rate Request */
 struct NetRateReq {
