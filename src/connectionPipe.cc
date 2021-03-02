@@ -99,7 +99,6 @@ void ClientConnectionPipe::setAuthInfo(uint32_t sender, uint64_t token_in) {
 void ClientConnectionPipe::sendSync() {
   auto packet = std::make_unique<Packet>();
   assert(packet);
-  packet << PacketTag::headerSyn;
   NetSyncReq synReq{};
   const auto now = std::chrono::system_clock::now();
   const auto duration = now.time_since_epoch();

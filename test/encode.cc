@@ -40,6 +40,7 @@ TEST_CASE("RelayData encode/decode") {
   auto packet = std::make_unique<Packet>();
 
   RelayData data_in{};
+  data_in.header = Header{0x1000, PacketTag::relayData};
   data_in.relaySeqNum = 0x1000;
   data_in.remoteSendTimeUs = 0;
 
@@ -50,12 +51,15 @@ TEST_CASE("RelayData encode/decode") {
 
   CHECK_EQ(data_in.remoteSendTimeUs, data_out.remoteSendTimeUs);
   CHECK_EQ(data_in.relaySeqNum, data_out.relaySeqNum);
+  CHECK_EQ(data_in.header.headerMagic, data_out.header.headerMagic);
+  CHECK_EQ(data_in.header.pathToken, data_out.header.pathToken);
 }
 
 TEST_CASE("ClientData encode/decode") {
   auto packet = std::make_unique<Packet>();
 
   ClientData data_in{};
+  data_in.header = Header{0x1000, PacketTag::clientData};
   data_in.clientSeqNum = 0x1000;
 
   packet << data_in;
@@ -64,6 +68,8 @@ TEST_CASE("ClientData encode/decode") {
   packet >> data_out;
 
   CHECK_EQ(data_in.clientSeqNum, data_out.clientSeqNum);
+  CHECK_EQ(data_in.header.headerMagic, data_out.header.headerMagic);
+  CHECK_EQ(data_in.header.pathToken, data_out.header.pathToken);
 }
 
 ///
@@ -73,6 +79,7 @@ TEST_CASE("ClientData encode/decode") {
 
 TEST_CASE("NetSyncReq encode/decode") {
   NetSyncReq req_in;
+  req_in.header = Header{0x1000, PacketTag::headerSyn};
   req_in.cookie = 0xC001E;
   req_in.origin = "example.com";
   req_in.senderId = 0x1234;
@@ -80,6 +87,7 @@ TEST_CASE("NetSyncReq encode/decode") {
   req_in.clientTimeMs = 0xA1B1C1D1;
 
   auto packet = std::make_unique<Packet>();
+  packet->setPathToken(0x1000);
   packet << req_in;
 
   NetSyncReq req_out;
@@ -90,11 +98,14 @@ TEST_CASE("NetSyncReq encode/decode") {
   REQUIRE(req_in.senderId == req_out.senderId);
   REQUIRE(req_in.supportedFeaturesVec == req_out.supportedFeaturesVec);
   REQUIRE(req_in.clientTimeMs == req_out.clientTimeMs);
+	REQUIRE(req_in.header.headerMagic == req_out.header.headerMagic);
+	REQUIRE(req_in.header.pathToken == req_out.header.pathToken);
 }
 
 TEST_CASE("NetSyncAck encode/decode") {
   NetSyncAck ack_in;
-  ack_in.useFeaturesVec = 0x1111;
+	ack_in.header = Header{0x1000, PacketTag::headerSynAck};
+	ack_in.useFeaturesVec = 0x1111;
   ack_in.serverTimeMs = 0x2222;
 
   auto packet = std::make_unique<Packet>();
@@ -105,10 +116,13 @@ TEST_CASE("NetSyncAck encode/decode") {
 
   CHECK_EQ(ack_in.serverTimeMs, ack_out.serverTimeMs);
   CHECK_EQ(ack_in.useFeaturesVec, ack_out.useFeaturesVec);
+  CHECK_EQ(ack_in.header.headerMagic, ack_out.header.headerMagic);
+  CHECK_EQ(ack_in.header.pathToken, ack_out.header.pathToken);
 }
 
 TEST_CASE("NetRstRetry encode/decode") {
   NetRstRetry retry_in;
+  retry_in.header = Header{0x1000, PacketTag::resetRetry};
   retry_in.cookie = 0x1234;
 
   auto packet = std::make_unique<Packet>();
@@ -118,10 +132,13 @@ TEST_CASE("NetRstRetry encode/decode") {
   packet >> retry_out;
 
   CHECK_EQ(retry_in.cookie, retry_out.cookie);
+  CHECK_EQ(retry_in.header.headerMagic, retry_out.header.headerMagic);
+  CHECK_EQ(retry_in.header.pathToken, retry_out.header.pathToken);
 }
 
 TEST_CASE("NetRstRedirect encode/decode") {
   NetRstRedirect redirect_in;
+	redirect_in.header = Header{0x1000, PacketTag::resetRetry};
   redirect_in.port = 0x1000;
   redirect_in.origin = "example.com";
   redirect_in.cookie = 0x1234;
@@ -135,10 +152,13 @@ TEST_CASE("NetRstRedirect encode/decode") {
   CHECK_EQ(redirect_in.cookie, redirect_out.cookie);
   CHECK_EQ(redirect_in.origin, redirect_out.origin);
   CHECK_EQ(redirect_in.port, redirect_out.port);
+	CHECK_EQ(redirect_in.header.headerMagic, redirect_out.header.headerMagic);
+	CHECK_EQ(redirect_in.header.pathToken, redirect_out.header.pathToken);
 }
 
 TEST_CASE("NetRateReq encode/decode") {
   NetRateReq req_in;
+  req_in.header = {0xABCD, PacketTag::headerData};
   req_in.bitrateKbps = toVarInt(0x1000);
 
   auto packet = std::make_unique<Packet>();
@@ -148,10 +168,13 @@ TEST_CASE("NetRateReq encode/decode") {
   packet >> req_out;
 
   CHECK_EQ(req_in.bitrateKbps, req_out.bitrateKbps);
+  CHECK_EQ(req_in.header.headerMagic, req_out.header.headerMagic);
+  CHECK_EQ(req_in.header.pathToken, req_out.header.pathToken);
 }
 
 TEST_CASE("NetAck encode/decode") {
   NetAck ack_in;
+  ack_in.header = Header{0x1000, PacketTag::ack};
   ack_in.ecnVec = 0x1;
   ack_in.ackVec = 0x4;
   ack_in.clientSeqNum = 0x1000;
@@ -167,11 +190,14 @@ TEST_CASE("NetAck encode/decode") {
   CHECK_EQ(ack_in.ackVec, ack_out.ackVec);
   CHECK_EQ(ack_in.netRecvTimeUs, ack_out.netRecvTimeUs);
   CHECK_EQ(ack_in.clientSeqNum, ack_out.clientSeqNum);
+  CHECK_EQ(ack_in.header.headerMagic, ack_out.header.headerMagic);
+  CHECK_EQ(ack_in.header.pathToken, ack_out.header.pathToken);
 }
 
 TEST_CASE("PubData encode/decode") {
   auto cipherText = std::vector<uint8_t>{0x1, 0x2, 0x3, 0x4, 0x5, 0xA};
   PubData data_in;
+  data_in.header = Header{0x1000, PacketTag::pubData};
   data_in.name = ShortName(1, 2, 3);
   data_in.lifetime = toVarInt(0x1000);
   data_in.encryptedDataBlock = EncryptedDataBlock{1, cipherText};
@@ -189,11 +215,14 @@ TEST_CASE("PubData encode/decode") {
            data_out.encryptedDataBlock.authTagLen);
   CHECK_EQ(data_in.encryptedDataBlock.cipherText,
            data_out.encryptedDataBlock.cipherText);
+  CHECK_EQ(data_in.header.headerMagic, data_out.header.headerMagic);
+  CHECK_EQ(data_in.header.pathToken, data_out.header.pathToken);
 }
 
 TEST_CASE("PSubData encode/decode") {
   auto cipherText = std::vector<uint8_t>{0x1, 0x2, 0x3, 0x4, 0x5, 0xA};
   SubData data_in;
+  data_in.header = Header{0x1000, PacketTag::subData};
   data_in.name = ShortName(1, 2, 3);
   data_in.lifetime = toVarInt(0x1000);
   data_in.encryptedDataBlock = EncryptedDataBlock{1, cipherText};
@@ -210,4 +239,6 @@ TEST_CASE("PSubData encode/decode") {
            data_out.encryptedDataBlock.authTagLen);
   CHECK_EQ(data_in.encryptedDataBlock.cipherText,
            data_out.encryptedDataBlock.cipherText);
+  CHECK_EQ(data_in.header.headerMagic, data_out.header.headerMagic);
+  CHECK_EQ(data_in.header.pathToken, data_out.header.pathToken);
 }

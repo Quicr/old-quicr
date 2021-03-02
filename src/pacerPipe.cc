@@ -65,11 +65,8 @@ void PacerPipe::sendRateCommand() {
   auto packet = std::make_unique<Packet>();
   assert(packet);
 
-  packet << PacketTag::headerData;
-  // packet << PacketTag::extraMagicVer1;
-  // packet << PacketTag::extraMagicVer2;
-
   NetRateReq rateReq{};
+  rateReq.header = Header{packet->getPathToken(), PacketTag::headerData};
   rateReq.bitrateKbps = toVarInt(rateCtrl.bwDownTarget() / 1000);
   packet << rateReq;
 

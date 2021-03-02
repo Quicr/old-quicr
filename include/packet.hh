@@ -76,6 +76,14 @@ public:
   void setFEC(bool doFec = true);
   bool getFEC();
 
+  void setPathToken(uint64_t token) {
+  	pathToken = token;
+  }
+
+  uint64_t getPathToken() const {
+  	return pathToken;
+  }
+
   [[nodiscard]] const IpAddr &getSrc() const;
   [[maybe_unused]] void setSrc(const IpAddr &src);
   [[maybe_unused]] [[nodiscard]] const IpAddr &getDst() const;
@@ -117,7 +125,7 @@ private:
 
   bool reliable;
   bool useFEC;
-
+	uint64_t pathToken = 0;
   MediaNet::IpAddr src;
   MediaNet::IpAddr dst;
 };
