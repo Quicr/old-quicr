@@ -30,8 +30,11 @@ bool EncryptPipe::send(std::unique_ptr<Packet> packet) {
   DataBlock dataBlock;
 
   bool ok = true;
+  assert(nextTag(packet) == PacketTag::clientData);
   ok &= packet >> clientData;
   ok &= packet >> namedDataChunk;
+  assert( ok );
+  assert(nextTag(packet) == PacketTag::dataBlock);
   ok &= packet >> dataBlock;
   assert( ok );
 

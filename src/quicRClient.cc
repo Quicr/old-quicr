@@ -23,7 +23,7 @@ QuicRClient::QuicRClient()
       priorityPipe(&pacerPipe), retransmitPipe(&priorityPipe),
       fecPipe(&retransmitPipe), subscribePipe(&fecPipe),
       fragmentPipe(&subscribePipe), encryptPipe(&fragmentPipe),
-      statsPipe(&subscribePipe), // TODO put back in fragment and encyprt pipe
+      statsPipe(&encryptPipe), 
       firstPipe(&statsPipe) {
 
   // TODO - get rid of all other places were defaults get set for mtu, rtt, pps
