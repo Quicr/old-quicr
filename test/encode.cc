@@ -171,7 +171,7 @@ TEST_CASE("NetAck encode/decode") {
 
 
 TEST_CASE("ClientData encode/decode") {
-  auto dataIn = std::vector<uint8_t>{0x1, 0x2, 0x3, 0x4, 0x5, 0xA};
+  auto dataIn = std::array<uint8_t,6>{0x1, 0x2, 0x3, 0x4, 0x5, 0xA};
   ClientData clientDataIn;
   NamedDataChunk chunkIn;
   DataBlock dataBlockIn;
@@ -193,17 +193,20 @@ TEST_CASE("ClientData encode/decode") {
   ClientData clientDataOut;
   NamedDataChunk chunkOut;
   DataBlock dataBlockOut;
+  std::array<uint8_t,dataIn.size()> dataOut;
 
   packet >> clientDataOut;
   packet >> chunkOut;
   packet >> dataBlockOut;
+  packet >> dataOut;
 
   CHECK_EQ(clientDataIn.clientSeqNum, clientDataOut.clientSeqNum);
   CHECK(chunkIn.shortName == chunkOut.shortName);
   CHECK_EQ(chunkIn.lifetime, chunkOut.lifetime);
   CHECK_EQ(dataBlockIn.metaDataLen,dataBlockOut.metaDataLen);
   CHECK_EQ(dataBlockIn.dataLen,dataBlockOut.dataLen);
-
+  CHECK_EQ( dataIn[0], dataOut[0] );
+  CHECK_EQ( dataIn, dataOut );
 }
 
 

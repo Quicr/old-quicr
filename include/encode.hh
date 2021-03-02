@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
+#include <array>
 
 #include "packetTag.hh"
 #include "name.hh"
@@ -19,6 +20,14 @@ std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const std::string &val);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const std::vector<uint8_t> &val);
+template<std::size_t SIZE>
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+                                    const std::array<uint8_t,SIZE> &val) {
+  for(auto v = val.rbegin(); v != val.rend(); ++v) {
+    p << *v;
+  }
+  return p;
+}
 
 bool operator>>(std::unique_ptr<Packet> &p, uint64_t &val);
 bool operator>>(std::unique_ptr<Packet> &p, uint32_t &val);
@@ -26,6 +35,14 @@ bool operator>>(std::unique_ptr<Packet> &p, uint16_t &val);
 bool operator>>(std::unique_ptr<Packet> &p, uint8_t &val);
 bool operator>>(std::unique_ptr<Packet> &p, std::string &val);
 bool operator>>(std::unique_ptr<Packet> &p, std::vector<uint8_t> &val);
+template<std::size_t SIZE>
+bool operator>>(std::unique_ptr<Packet> &p, std::array<uint8_t,SIZE> &val){
+  bool ok = true;
+  for(auto& v : val) {
+    ok &= p >> v;
+  }
+  return ok;
+}
 
 enum class uintVar_t : uint64_t {};
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uintVar_t val);
@@ -156,7 +173,7 @@ bool operator>>(std::unique_ptr<Packet> &p, RelayData &msg);
 struct EncryptedDataBlock {
   uint8_t authTagLen;
   uintVar_t metaDataLen;
-  uintVar_t cipherDataLen;
+  uintVar_t cipherDataLen; // total len following data including tag and meta
 };
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const EncryptedDataBlock &data);
@@ -167,7 +184,7 @@ bool operator>>(std::unique_ptr<Packet> &p, EncryptedDataBlock &msg);
 ///
 struct DataBlock {
   uintVar_t metaDataLen;
-  uintVar_t dataLen;
+  uintVar_t dataLen; // total length of follow data including meta
 };
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
                                     const DataBlock &data);
