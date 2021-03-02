@@ -36,32 +36,32 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
     return downStream->send(move(packet));
   }
 
-  assert(0); // this is broken with new encndoing
+  assert(nextTag(packet) == PacketTag::clientData);
 
-  assert(nextTag(packet) == PacketTag::pubData);
+  ClientData clientData;
+  NamedDataChunk namedDataChunk;
+  EncryptedDataBlock encryptedDataBlock;
+
   bool ok = true;
+  assert(nextTag(packet) == PacketTag::clientData);
+  ok &= packet >> clientData;
+  ok &= packet >> namedDataChunk;
+  assert( ok );
+  assert(nextTag(packet) == PacketTag::encDataBlock);
+  ok &= packet >> encryptedDataBlock;
+  assert( ok );
 
-  PacketTag tag;
-  ShortName name;
-  uintVar_t lifetime;
-  uint8_t authTagLen;
-  uintVar_t payloadSize;
-
-  packet >> tag;
-  packet >> name;
-  packet >> lifetime;
-  packet >> authTagLen;
-  packet >> payloadSize;
+  assert( namedDataChunk.shortName.fragmentID  == 0 );
+  assert( fromVarInt( encryptedDataBlock.metaDataLen ) == 0 ); // TODO
 
   // std::clog << "fragment input size: " << payloadSize << std::endl;
 
-  uint16_t dataSize =
-      mtu - (extraHeaderSizeBytes + (packet->fullSize() - packet->size()));
+  uint16_t dataSize =  mtu - extraHeaderSizeBytes;
   if (dataSize < minPacketPayload) {
     dataSize = minPacketPayload;
   }
   assert(dataSize > 1);
-  // assert(payloadSize == packet->size()); TODO remove
+
 
   size_t numDone = 0;
   size_t numLeft = packet->size();
@@ -79,11 +79,12 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
     numLeft -= numUse;
 
     fragPacket->setFragID(frag, (numLeft == 0));
+    namedDataChunk.shortName = packet->shortName();
+    encryptedDataBlock.cipherDataLen = toVarInt( numUse );
 
-    fragPacket << (uint16_t)numUse;
-
-    fragPacket << packet->shortName();
-    fragPacket << PacketTag::pubData;
+    fragPacket << encryptedDataBlock;
+    fragPacket << namedDataChunk;
+    fragPacket << clientData;
 
     // std::clog << "Send Frag: " << *fragPacket << std::endl;
     // std::clog << "Frag Send:" << fragPacket->shortName() << std::endl;
@@ -113,31 +114,46 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
     // TODO - this is broken now, need to looka at shortname to decide if this
     // is a fragment or not
 
-    if (nextTag(packet) != PacketTag::subData) {
+    if (nextTag(packet) != PacketTag::relayData) {
       return packet;
     }
 
-    while (nextTag(packet) != PacketTag::subData) {
+    bool ok= true;
+    RelayData relayData;
+    ok &= packet >> relayData;
+    if ( !ok ) {
+      //  TODO log bad packet
+      return std::unique_ptr<Packet>(nullptr);
+    }
+
+    while (nextTag(packet) != PacketTag::shortName) {
 
       auto packetCopy = packet->clone();
+      packetCopy << relayData;
 
-      uint16_t payloadSize;
-      PacketTag tag;
-      ShortName name;
+      NamedDataChunk namedDataChunk;
+      EncryptedDataBlock encryptedDataBlock;
+      bool ok = true;
+      ok &= packet >> namedDataChunk;
+      ok &= packet >> encryptedDataBlock;
+      if ( !ok ) {
+        //  TODO log bad packet
+        return std::unique_ptr<Packet>(nullptr);
+      }
 
-      packet >> tag;
-      packet >> name;
-      packet >> payloadSize;
-      assert(packet->size() >= payloadSize);
+      uint16_t payloadSize = fromVarInt( encryptedDataBlock.cipherDataLen );
+      assert(packet->size() >= payloadSize); // TODO - change log error
+
       packet->resize(packet->size() - payloadSize);
 
-      packetCopy->name = name;
+      packetCopy->name = namedDataChunk.shortName;
+      // TODO - set lifetime in packetCopy
 
       // std::clog << "Frag Recv:" << name << " size=" << packet->size() <<
       // *packet << std::endl;
 
       auto p = std::pair<MediaNet::ShortName, std::unique_ptr<Packet>>(
-          name, move(packetCopy));
+          namedDataChunk.shortName, move(packetCopy));
       {
         std::lock_guard<std::mutex> lock(fragListMutex);
         fragList.insert(move(p));
@@ -151,7 +167,7 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
       int numFrag = 0;
       while (haveAll) {
         frag++;
-        ShortName fragName = name;
+        ShortName fragName = namedDataChunk.shortName;
         fragName.fragmentID = frag * 2;
         if (fragList.find(fragName) != fragList.end()) {
           // exists but is not the last fragment
@@ -169,7 +185,7 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
       if (haveAll) {
         // form the new packet from all fragments and return
         // std::clog << "HAVE ALL for: " << name << std::endl;
-        ShortName fragName = name;
+        ShortName fragName = namedDataChunk.shortName;
 
         auto result = std::unique_ptr<Packet>(nullptr);
 
@@ -182,20 +198,19 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
           assert(fragPacket);
           fragList.erase(fragPair);
 
-          uint16_t dataSize;
-          ShortName fragName;
-          PacketTag tag;
+          RelayData relayData;
+          NamedDataChunk namedDataChunk;
+          EncryptedDataBlock encryptedDataBlock;
 
-          // std::clog << "Adding fragment Name: " << fragPacket->shortName() <<
-          // std::endl;
+          fragPacket >> relayData;
+          fragPacket >> namedDataChunk;
+          fragPacket >> encryptedDataBlock;
 
-          fragPacket >> tag;
-          fragPacket >> fragName;
-          fragPacket >> dataSize;
+          //std::clog << "Adding fragment Name: " << namedDataChunk.shortName << std::endl;
 
-          assert(fragPacket);
+          uint32_t dataSize = fromVarInt( encryptedDataBlock.cipherDataLen );
+
           assert(fragPacket->size() > 0);
-          assert(tag == PacketTag::subData);
           assert(dataSize > 0);
           assert(dataSize <= fragPacket->size());
 
@@ -220,14 +235,15 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
         }
 
         assert(result);
-        name.fragmentID = 0;
-        uint16_t payloadSize = result->size();
-        result << payloadSize;
+        namedDataChunk.shortName.fragmentID = 0;
 
-        result << name;
-        result << PacketTag::pubData;
+        encryptedDataBlock.cipherDataLen = toVarInt( result->size() );
 
-        result->name = name;
+        result << encryptedDataBlock;
+        result << namedDataChunk;
+        result << relayData;
+
+        result->name = namedDataChunk.shortName;
         result->setFragID(0, true);
 
         return result;
