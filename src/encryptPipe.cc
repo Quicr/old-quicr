@@ -25,15 +25,18 @@ bool EncryptPipe::send(std::unique_ptr<Packet> packet) {
   assert(downStream);
   // return downStream->send(std::move(packet));
 
-  auto tag = PacketTag::badTag;
-  uint16_t payloadSize = 0;
-  ShortName name;
-  // strip out [tag, name, payload len]
-  packet >> tag;
-  assert(tag == PacketTag::pubData);
-  packet >> name;
-  // TODO - probably need more here - this looks wrong
-  packet >> payloadSize;
+  ClientData clientData;
+  NamedDataChunk namedDataChunk;
+  DataBlock dataBlock;
+
+  bool ok = true;
+  ok &= packet >> clientData;
+  ok &= packet >> namedDataChunk;
+  ok &= packet >> dataBlock;
+  assert( ok );
+
+  assert( fromVarInt( dataBlock.metaDataLen ) == 0 );
+  uint16_t payloadSize = fromVarInt( dataBlock.dataLen );
 
   auto encrypted = protect(packet, payloadSize);
   // std::cout << "Payload Original Size/Encrypted Size:" << payloadSize << "/"
@@ -41,12 +44,17 @@ bool EncryptPipe::send(std::unique_ptr<Packet> packet) {
 
   // re-insert encrypted portion
   uint8_t *dst = &(packet->data());
-  packet->resize(encrypted.size() +
-                 22); // 22 - (2) for payloadSize + (19) name + (1) tag
+  packet->resize( encrypted.size() );
   std::copy(encrypted.begin(), encrypted.end(), dst);
-  packet << (uint16_t)encrypted.size();
-  packet << name;
-  packet << tag; // TODO - chance to  PacketTag::appDataEncrypted
+
+  EncryptedDataBlock encryptedDataBlock;
+  encryptedDataBlock.metaDataLen = dataBlock.metaDataLen;
+  encryptedDataBlock.cipherDataLen = toVarInt( encrypted.size() );
+  encryptedDataBlock.authTagLen = 0 ;
+
+  packet << encryptedDataBlock;
+  packet << namedDataChunk;
+  packet << clientData;
 
   // std::cout << "Full Encrypted Packet with header: "<< packet->size() << "
   // bytes\n";
@@ -64,29 +72,42 @@ std::unique_ptr<Packet> EncryptPipe::recv() {
   auto packet = downStream->recv();
   if (packet) {
     auto tag = nextTag(packet);
-    if (tag == PacketTag::pubData) {
-      ShortName name;
-      uint16_t payloadSize = 0;
-      packet >> tag;
-      packet >> name;
-      packet >> payloadSize;
-      assert(payloadSize);
+    if (tag == PacketTag::relayData) {
 
-      // TDOO - Cullen look at this seems wrong
-      packet->headerSize = packet->fullSize() - payloadSize -
-                           22; // 22 - (2) payloadSize + (19) name +  (1) tag
+      RelayData relayData;
+      NamedDataChunk namedDataChunk;
+      EncryptedDataBlock encryptedDataBlock;
+
+      bool ok = true;
+
+      ok &= packet >> relayData;
+      ok &= packet >> namedDataChunk;
+      ok &= packet >> encryptedDataBlock;
+
+      if ( !ok ) {
+        // todo should log bad packet
+        return std::unique_ptr<Packet>(nullptr);
+      }
+
+      assert( fromVarInt( encryptedDataBlock.metaDataLen ) == 0 ); // TODO
+      uint16_t payloadSize = fromVarInt( encryptedDataBlock.cipherDataLen );
+      assert(payloadSize>0);
 
       auto decrypted = unprotect(packet, payloadSize);
-      // std::cout << "Payload Original Size/Decrypted Size:" << payloadSize <<
-      // "/" << decrypted.size() << "\n";
 
-      packet->resize(decrypted.size() + 22);
+      // TODO - how does decrypt auth error get hangled
+
+      packet->resize( decrypted.size() );
       std::copy(decrypted.begin(), decrypted.end(), &packet->data());
-      packet << (uint16_t)decrypted.size();
-      packet << name;
-      packet << tag;
-      // std::cout << "Full Decrypted Packet with header: "<< packet->size() <<
-      // " bytes\n";
+
+      DataBlock dataBlock;
+      dataBlock.metaDataLen = encryptedDataBlock.metaDataLen;
+      dataBlock.dataLen = toVarInt( decrypted.size() );
+
+      packet << dataBlock;
+      packet << namedDataChunk;
+      packet << relayData;
+
       return packet;
     }
   }
