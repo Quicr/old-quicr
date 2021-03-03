@@ -82,7 +82,7 @@ std::unique_ptr<Packet> QuicRClient::recv() {
       std::clog << "quicr recv very bad size = " << packet->size() << std::endl;
       continue;
     }
-    
+
     if (nextTag(packet) == PacketTag::headerData) {
       // std::clog << "quicr empty message " << std::endl;
       continue;
