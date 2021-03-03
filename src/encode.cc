@@ -79,7 +79,7 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, ClientData &msg) {
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const RelayData &msg) {
 
-  p << msg.remoteSendTimeUs;
+  p << msg.relaySendTimeUs;
   p << msg.relaySeqNum;
 
   p << PacketTag::relayData;
@@ -98,7 +98,7 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, RelayData &msg) {
   bool ok = true;
   ok &= p >> tag;
   ok &= p >> msg.relaySeqNum;
-  ok &= p >> msg.remoteSendTimeUs;
+  ok &= p >> msg.relaySendTimeUs;
 
   if (!ok) {
     std::cerr << "problem parsing RelayData" << std::endl;
@@ -115,7 +115,7 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   p << msg.ecnVec;
   p << msg.ackVec;
   p << msg.clientSeqNum;
-  p << msg.netRecvTimeUs;
+  p << msg.recvTimeUs;
   p << PacketTag::ack;
 
   return p;
@@ -130,7 +130,7 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetAck &msg) {
   PacketTag tag = PacketTag::none;
   bool ok = true;
   ok &= p >> tag;
-  ok &= p >> msg.netRecvTimeUs;
+  ok &= p >> msg.recvTimeUs;
   ok &= p >> msg.clientSeqNum;
   ok &= p >> msg.ackVec;
   ok &= p >> msg.ecnVec;
@@ -261,15 +261,6 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
   case packetTagTrunc(PacketTag::encDataBlock):
     tag = PacketTag::encDataBlock;
     break;
-
-
-  case packetTagTrunc(PacketTag::subData):
-    tag = PacketTag::subData;
-    break;
-  case packetTagTrunc(PacketTag::pubData):
-    tag = PacketTag::pubData;
-    break;
-
 
   case packetTagTrunc(PacketTag::headerData):
     tag = PacketTag::headerData;
@@ -552,14 +543,14 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetSyncAck &msg) {
 /// NetReset and Types
 ///
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const NetRstRetry &msg) {
+                                              const NetResetRetry &msg) {
 
   p << msg.cookie;
   p << PacketTag::resetRetry;
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRstRetry &msg) {
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetResetRetry &msg) {
   if (nextTag(p) != PacketTag::resetRetry) {
     std::cerr << "Did not find expected PacketTag::RstRetry" << std::endl;
     return false;
@@ -577,7 +568,7 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRstRetry &msg) {
 }
 
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const NetRstRedirect &msg) {
+                                              const NetResetRedirect &msg) {
   p << msg.port;
   p << msg.origin;
   p << msg.cookie;
@@ -585,7 +576,7 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRstRedirect &msg) {
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetResetRedirect &msg) {
   if (nextTag(p) != PacketTag::resetRedirect) {
     std::cerr << "Did not find expected PacketTag::RstRedirect" << std::endl;
     return false;
@@ -637,14 +628,17 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRateReq &msg) {
 }
 
 ///
-/// NetMsgPublish
+/// EncryptedDataBlock
 ///
 
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const EncryptedDataBlock &data) {
 
-  p << data.cipherText;
+  p << data.cipherDataLen;
+  p << data.metaDataLen;
   p << data.authTagLen;
+
+  p << PacketTag::encDataBlock;
 
   return p;
 }
@@ -652,9 +646,19 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p,
                           EncryptedDataBlock &data) {
 
+  if (nextTag(p) != PacketTag::encDataBlock) {
+    // std::clog << "Did not find expected PacketTag::encDataBlock" <<
+    // std::endl;
+    return false;
+  }
+
+  PacketTag tag = PacketTag::encDataBlock;
   bool ok = true;
+
+  ok &= p >> tag;
   ok &= p >> data.authTagLen;
-  ok &= p >> data.cipherText;
+  ok &= p >> data.metaDataLen;
+  ok &= p >> data.cipherDataLen;
 
   if (!ok) {
     std::cerr << "problem parsing EncryptedDataBlock" << std::endl;
@@ -663,77 +667,76 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p,
   return ok;
 }
 
+
 ///
-/// PubData
+/// DataBlock
 ///
+
 
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const PubData &data) {
+                                              const DataBlock &data) {
 
-  p << data.encryptedDataBlock;
-  p << data.lifetime;
-  p << data.name;
-  p << PacketTag::pubData;
+  p << data.dataLen;
+  p << data.metaDataLen;
+  p << PacketTag::dataBlock;
 
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, PubData &data) {
-  if (nextTag(p) != PacketTag::pubData) {
-    std::clog << "Did not find expected PacketTag::pubData" << std::endl;
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p,
+                          DataBlock &data) {
+
+  if (nextTag(p) != PacketTag::dataBlock) {
+    // std::clog << "Did not find expected PacketTag::encDataBlock" <<
+    // std::endl;
     return false;
   }
 
-  PacketTag tag = PacketTag::none;
+  PacketTag tag = PacketTag::dataBlock;
   bool ok = true;
 
   ok &= p >> tag;
-  ok &= p >> data.name;
-  ok &= p >> data.lifetime;
-  ok &= p >> data.encryptedDataBlock;
+  ok &= p >> data.metaDataLen;
+  ok &= p >> data.dataLen;
 
   if (!ok) {
-    std::cerr << "problem parsing pubData" << std::endl;
+    std::cerr << "problem parsing EncryptedDataBlock" << std::endl;
   }
 
   return ok;
 }
 
+
+
 ///
-/// SubData
+/// NamedDataChunk
 ///
+
 
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const SubData &data) {
+                                              const NamedDataChunk &data) {
 
-  p << data.encryptedDataBlock;
   p << data.lifetime;
-  p << data.name;
-  p << PacketTag::subData;
+  p << data.shortName;
 
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, SubData &data) {
-  if (nextTag(p) != PacketTag::subData) {
-    std::clog << "Did not find expected PacketTag::subData" << std::endl;
-    return false;
-  }
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p,
+                          NamedDataChunk &data) {
 
-  PacketTag tag = PacketTag::none;
   bool ok = true;
 
-  ok &= p >> tag;
-  ok &= p >> data.name;
+  ok &= p >> data.shortName;
   ok &= p >> data.lifetime;
-  ok &= p >> data.encryptedDataBlock;
 
   if (!ok) {
-    std::cerr << "problem parsing subData" << std::endl;
+    std::cerr << "problem parsing NamedDataChunk" << std::endl;
   }
 
   return ok;
 }
+
 
 ///
 /// var-ints
@@ -886,12 +889,7 @@ std::ostream &MediaNet::operator<<(std::ostream &stream, Packet &packet) {
     case PacketTag::shortName:
       stream << " shortName";
       break;
-    case PacketTag::pubData:
-      stream << " pubData(" << len << ")";
-      break;
-      //    case PacketTag::pubDataFrag:
-      //      stream << " pubDataFrag(" << len << ")";
-      //      break;
+
     case PacketTag::clientData:
       stream << " clientData";
       break;
@@ -912,6 +910,6 @@ size_t Packet::size() const { return buffer.size() - headerSize; }
 
 [[maybe_unused]] uint8_t Packet::getPriority() const { return priority; }
 
-void Packet::setPriority(uint8_t priority) { Packet::priority = priority; }
+void Packet::setPriority(uint8_t priorityVal ) { Packet::priority = priorityVal; }
 
-bool Packet::getFEC() { return useFEC; }
+bool Packet::getFEC() const { return useFEC; }

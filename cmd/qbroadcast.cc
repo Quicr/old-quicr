@@ -66,7 +66,7 @@ void BroadcastRelay::processAppMessage(
   // auto tag = PacketTag::none;
   // packet >> tag;
   auto tag = nextTag(packet);
-  if (tag == PacketTag::pubData) {
+  if (tag == PacketTag::clientData) {
     return processPub(packet, seqNumTag);
   } else if (tag == PacketTag::subscribe) {
     return processSub(packet, seqNumTag);
@@ -89,7 +89,7 @@ void BroadcastRelay::processSub(std::unique_ptr<MediaNet::Packet> &packet,
   ack << PacketTag::headerData;
   NetAck ackTag{};
   ackTag.clientSeqNum = clientSeqNumTag.clientSeqNum;
-  ackTag.netRecvTimeUs = nowUs;
+  ackTag.recvTimeUs = nowUs;
   ack << ackTag;
 
   // save the subscription
@@ -120,10 +120,15 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
   std::clog << ".";
 
   // save the name for publish
-  PacketTag tag;
-  packet >> tag;
-  ShortName name;
-  packet >> name;
+  ClientData clientData;
+  NamedDataChunk namedDataChunk;
+  EncryptedDataBlock encryptedDataBlock;
+
+  bool ok = true;
+
+  ok &= packet >> clientData;
+  ok &= packet >> namedDataChunk;
+  ok &= packet >> encryptedDataBlock;
 
   uint16_t payloadSize;
   packet >> payloadSize;
@@ -142,52 +147,51 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
   if (prevAckSeqNum > 0) {
     NetAck prevAckTag{};
     prevAckTag.clientSeqNum = prevAckSeqNum;
-    prevAckTag.netRecvTimeUs = prevRecvTimeUs;
+    prevAckTag.recvTimeUs = prevRecvTimeUs;
     ack << prevAckTag;
   }
 
   NetAck ackTag{};
   ackTag.clientSeqNum = seqNumTag.clientSeqNum;
-  ackTag.netRecvTimeUs = nowUs;
+  ackTag.recvTimeUs = nowUs;
   ack << ackTag;
 
   qServer.send(move(ack));
 
   prevAckSeqNum = ackTag.clientSeqNum;
-  prevRecvTimeUs = ackTag.netRecvTimeUs;
+  prevRecvTimeUs = ackTag.recvTimeUs;
 
   // TODO - loop over connections and remove ones with old last Syn time
 
   // TODO: push this into server class
-  packet << payloadSize;
-  packet << name;
-  packet << tag;
+  packet << encryptedDataBlock;
+  packet << namedDataChunk;
 
   // for each connection, make copy and forward
   for (auto const &[addr, con] : connectionMap) {
-    auto subData = packet->clone(); // TODO - just clone header stuff
+    auto relayDataPacket = packet->clone(); // TODO - just clone header stuff
 
-    subData->setDst(con->address);
+    relayDataPacket->setDst(con->address);
 
-    RelayData netRelaySeqNum;
-    netRelaySeqNum.relaySeqNum = con->relaySeqNum++;
-    netRelaySeqNum.remoteSendTimeUs = nowUs;
+    RelayData relayData;
+    relayData.relaySeqNum = con->relaySeqNum++;
+    relayData.relaySendTimeUs = nowUs;
 
-    subData << netRelaySeqNum;
+    relayDataPacket << relayData;
 
-    // std::clog << "Relay send: " << *subData << std::endl;
+    // std::clog << "Relay send: " << *relayDataPacket << std::endl;
 
     bool simLoss = false;
 
     if (false) {
       //  simulate 10% packet loss
-      if ((netRelaySeqNum.relaySeqNum % 10) == 7) {
+      if ((relayData.relaySeqNum % 10) == 7) {
         simLoss = true;
       }
     }
 
     if (!simLoss) {
-      qServer.send(move(subData));
+      qServer.send(move(relayDataPacket));
       std::clog << "*";
     } else {
       std::clog << "-";

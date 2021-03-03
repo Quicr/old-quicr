@@ -166,7 +166,7 @@ void PacerPipe::runNetRecv() {
       NetAck ackTag{};
       packet >> ackTag;
       bool congested = false; // TODO - add to ACK
-      rateCtrl.recvAck(ackTag.clientSeqNum, ackTag.netRecvTimeUs, nowUs,
+      rateCtrl.recvAck(ackTag.clientSeqNum, ackTag.recvTimeUs, nowUs,
                        congested, haveAck);
       haveAck = false; // treat redundant ACK as received but not acks
     }
@@ -181,7 +181,7 @@ void PacerPipe::runNetRecv() {
       // including ethernet frame
 
       bool congested = false; // TODO - add
-      rateCtrl.recvPacket(relaySeqNum.relaySeqNum, relaySeqNum.remoteSendTimeUs,
+      rateCtrl.recvPacket(relaySeqNum.relaySeqNum, relaySeqNum.relaySendTimeUs,
                           nowUs, bits, congested);
     }
 

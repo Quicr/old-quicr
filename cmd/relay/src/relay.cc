@@ -48,7 +48,7 @@ void Relay::processAppMessage(std::unique_ptr<MediaNet::Packet> &packet) {
   // auto tag = PacketTag::none;
   // packet >> tag;
   auto tag = nextTag(packet);
-  if (tag == PacketTag::pubData) {
+  if (tag == PacketTag::clientData) {
     return processPub(packet, seqNumTag);
   } else if (tag == PacketTag::subscribe) {
     return processSub(packet, seqNumTag);
@@ -72,7 +72,7 @@ void Relay::processSub(std::unique_ptr<MediaNet::Packet> &packet,
   ackPacket << PacketTag::headerData;
   NetAck ack{};
   ack.clientSeqNum = clientSeqNumTag.clientSeqNum;
-  ack.netRecvTimeUs = nowUs;
+  ack.recvTimeUs = nowUs;
   ackPacket << ack;
 
   // save the subscription
@@ -96,12 +96,19 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
   std::clog << ".";
 
   // save the name for publish
-  PacketTag tag;
-  packet >> tag;
-  ShortName name;
-  packet >> name;
+  ClientData clientData;
+  NamedDataChunk namedDataChunk;
+  EncryptedDataBlock encryptedDataBlock;
 
-  uint16_t payloadSize;
+  bool ok = true;
+
+  ok &= packet >> clientData;
+  ok &= packet >> namedDataChunk;
+  ok &= packet >> encryptedDataBlock;
+
+  assert( fromVarInt( encryptedDataBlock.metaDataLen) == 0 );// TODO
+
+  uint16_t payloadSize = fromVarInt( encryptedDataBlock.cipherDataLen );
   packet >> payloadSize;
   if (payloadSize > packet->size()) {
     std::clog << "relay recv bad data size " << payloadSize << " "
@@ -119,53 +126,52 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
   if (prevAckSeqNum > 0) {
     NetAck prevAckTag{};
     prevAckTag.clientSeqNum = prevAckSeqNum;
-    prevAckTag.netRecvTimeUs = prevRecvTimeUs;
+    prevAckTag.recvTimeUs = prevRecvTimeUs;
     ack << prevAckTag;
   }
 
   NetAck ackTag{};
   ackTag.clientSeqNum = clientSeqNumTag.clientSeqNum;
-  ackTag.netRecvTimeUs = nowUs;
+  ackTag.recvTimeUs = nowUs;
   ack << ackTag;
 
   qServer.send(move(ack));
 
   prevAckSeqNum = ackTag.clientSeqNum;
-  prevRecvTimeUs = ackTag.netRecvTimeUs;
+  prevRecvTimeUs = ackTag.recvTimeUs;
 
   // find the matching subscribers
-  auto subscribers = fib->lookupSubscription(name);
+  auto subscribers = fib->lookupSubscription( namedDataChunk.shortName );
 
   // std::clog << "Name:" << name << " has:" << subscribers.size() << "
   // subscribers\n";
 
-  packet << payloadSize;
-  packet << name;
-  packet << tag;
+  packet << encryptedDataBlock;
+  packet << namedDataChunk;
 
   for (auto &subscriber : subscribers) {
-    auto subData = packet->clone(); // TODO - just clone header stuff
-    subData->setDst(subscriber.face);
+    auto relayDataPacket = packet->clone(); // TODO - just clone header stuff
+    relayDataPacket->setDst(subscriber.face);
 
-    RelayData netRelaySeqNum{};
-    netRelaySeqNum.relaySeqNum = subscriber.relaySeqNum++;
-    netRelaySeqNum.remoteSendTimeUs = nowUs;
+    RelayData relayData{};
+    relayData.relaySeqNum = subscriber.relaySeqNum++;
+    relayData.relaySendTimeUs = nowUs;
 
-    subData << netRelaySeqNum;
+    relayDataPacket << relayData;
 
-    // std::clog << "Relay send: " << subData->size() << std::endl;
+    // std::clog << "Relay send: " << relayDataPacket->size() << std::endl;
 
     bool simLoss = false;
 
     if (false) {
       //  simulate 10% packet loss
-      if ((netRelaySeqNum.relaySeqNum % 10) == 7) {
+      if ((relayData.relaySeqNum % 10) == 7) {
         simLoss = true;
       }
     }
 
     if (!simLoss) {
-      qServer.send(move(subData));
+      qServer.send(move(relayDataPacket));
       std::clog << "*";
     } else {
       std::clog << "-";

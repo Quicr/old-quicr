@@ -12,11 +12,11 @@ using namespace MediaNet;
 ///
 
 TEST_CASE("string encode/decode") {
-  std::string origin_in = "This is a string with : , * () + - !";
+  std::string originIn = "This is a string with : , * () + - !";
   auto packet = std::make_unique<Packet>();
-  std::string origin_out;
-  packet >> origin_out;
-  CHECK_EQ(origin_in, origin_in);
+  std::string originOut;
+  packet >> originOut;
+  CHECK_EQ(originIn, originIn);
 }
 
 TEST_CASE("ShortName encode/decode") {
@@ -30,40 +30,40 @@ TEST_CASE("ShortName encode/decode") {
   auto packet = std::make_unique<Packet>();
   packet << name;
 
-  ShortName name_out{};
-  packet >> name_out;
+  ShortName nameOut{};
+  packet >> nameOut;
 
-  CHECK_EQ(name, name_out);
+  CHECK_EQ(name, nameOut);
 }
 
 TEST_CASE("RelayData encode/decode") {
   auto packet = std::make_unique<Packet>();
 
-  RelayData data_in{};
-  data_in.relaySeqNum = 0x1000;
-  data_in.remoteSendTimeUs = 0;
+  RelayData dataIn{};
+  dataIn.relaySeqNum = 0x1000;
+  dataIn.relaySendTimeUs = 0;
 
-  packet << data_in;
+  packet << dataIn;
 
-  RelayData data_out{};
-  packet >> data_out;
+  RelayData dataOut{};
+  packet >> dataOut;
 
-  CHECK_EQ(data_in.remoteSendTimeUs, data_out.remoteSendTimeUs);
-  CHECK_EQ(data_in.relaySeqNum, data_out.relaySeqNum);
+  CHECK_EQ(dataIn.relaySendTimeUs, dataOut.relaySendTimeUs);
+  CHECK_EQ(dataIn.relaySeqNum, dataOut.relaySeqNum);
 }
 
 TEST_CASE("ClientData encode/decode") {
   auto packet = std::make_unique<Packet>();
 
-  ClientData data_in{};
-  data_in.clientSeqNum = 0x1000;
+  ClientData dataIn{};
+  dataIn.clientSeqNum = 0x1000;
 
-  packet << data_in;
+  packet << dataIn;
 
-  ClientData data_out{};
-  packet >> data_out;
+  ClientData dataOut{};
+  packet >> dataOut;
 
-  CHECK_EQ(data_in.clientSeqNum, data_out.clientSeqNum);
+  CHECK_EQ(dataIn.clientSeqNum, dataOut.clientSeqNum);
 }
 
 ///
@@ -72,142 +72,179 @@ TEST_CASE("ClientData encode/decode") {
 // TODO: match hex encoding
 
 TEST_CASE("NetSyncReq encode/decode") {
-  NetSyncReq req_in;
-  req_in.cookie = 0xC001E;
-  req_in.origin = "example.com";
-  req_in.senderId = 0x1234;
-  req_in.supportedFeaturesVec = 0xABCD;
-  req_in.clientTimeMs = 0xA1B1C1D1;
+  NetSyncReq reqIn;
+  reqIn.cookie = 0xC001E;
+  reqIn.origin = "example.com";
+  reqIn.senderId = 0x1234;
+  reqIn.supportedFeaturesVec = 0xABCD;
+  reqIn.clientTimeMs = 0xA1B1C1D1;
 
   auto packet = std::make_unique<Packet>();
-  packet << req_in;
+  packet << reqIn;
 
-  NetSyncReq req_out;
-  packet >> req_out;
+  NetSyncReq reqOut;
+  packet >> reqOut;
 
-  REQUIRE(req_in.cookie == req_out.cookie);
-  REQUIRE(req_in.origin == req_out.origin);
-  REQUIRE(req_in.senderId == req_out.senderId);
-  REQUIRE(req_in.supportedFeaturesVec == req_out.supportedFeaturesVec);
-  REQUIRE(req_in.clientTimeMs == req_out.clientTimeMs);
+  REQUIRE(reqIn.cookie == reqOut.cookie);
+  REQUIRE(reqIn.origin == reqOut.origin);
+  REQUIRE(reqIn.senderId == reqOut.senderId);
+  REQUIRE(reqIn.supportedFeaturesVec == reqOut.supportedFeaturesVec);
+  REQUIRE(reqIn.clientTimeMs == reqOut.clientTimeMs);
 }
 
 TEST_CASE("NetSyncAck encode/decode") {
-  NetSyncAck ack_in;
-  ack_in.useFeaturesVec = 0x1111;
-  ack_in.serverTimeMs = 0x2222;
+  NetSyncAck ackIn;
+  ackIn.useFeaturesVec = 0x1111;
+  ackIn.serverTimeMs = 0x2222;
 
   auto packet = std::make_unique<Packet>();
-  packet << ack_in;
+  packet << ackIn;
 
-  NetSyncAck ack_out;
-  packet >> ack_out;
+  NetSyncAck ackOut;
+  packet >> ackOut;
 
-  CHECK_EQ(ack_in.serverTimeMs, ack_out.serverTimeMs);
-  CHECK_EQ(ack_in.useFeaturesVec, ack_out.useFeaturesVec);
+  CHECK_EQ(ackIn.serverTimeMs, ackOut.serverTimeMs);
+  CHECK_EQ(ackIn.useFeaturesVec, ackOut.useFeaturesVec);
 }
 
-TEST_CASE("NetRstRetry encode/decode") {
-  NetRstRetry retry_in;
-  retry_in.cookie = 0x1234;
+TEST_CASE("NetResetRetry encode/decode") {
+  NetResetRetry retryIn;
+  retryIn.cookie = 0x1234;
 
   auto packet = std::make_unique<Packet>();
-  packet << retry_in;
+  packet << retryIn;
 
-  NetRstRetry retry_out;
-  packet >> retry_out;
+  NetResetRetry retryOut;
+  packet >> retryOut;
 
-  CHECK_EQ(retry_in.cookie, retry_out.cookie);
+  CHECK_EQ(retryIn.cookie, retryOut.cookie);
 }
 
-TEST_CASE("NetRstRedirect encode/decode") {
-  NetRstRedirect redirect_in;
-  redirect_in.port = 0x1000;
-  redirect_in.origin = "example.com";
-  redirect_in.cookie = 0x1234;
+TEST_CASE("NetResetRedirect encode/decode") {
+  NetResetRedirect redirectIn;
+  redirectIn.port = 0x1000;
+  redirectIn.origin = "example.com";
+  redirectIn.cookie = 0x1234;
 
   auto packet = std::make_unique<Packet>();
-  packet << redirect_in;
+  packet << redirectIn;
 
-  NetRstRedirect redirect_out;
-  packet >> redirect_out;
+  NetResetRedirect redirectOut;
+  packet >> redirectOut;
 
-  CHECK_EQ(redirect_in.cookie, redirect_out.cookie);
-  CHECK_EQ(redirect_in.origin, redirect_out.origin);
-  CHECK_EQ(redirect_in.port, redirect_out.port);
+  CHECK_EQ(redirectIn.cookie, redirectOut.cookie);
+  CHECK_EQ(redirectIn.origin, redirectOut.origin);
+  CHECK_EQ(redirectIn.port, redirectOut.port);
 }
 
 TEST_CASE("NetRateReq encode/decode") {
-  NetRateReq req_in;
-  req_in.bitrateKbps = toVarInt(0x1000);
+  NetRateReq reqIn;
+  reqIn.bitrateKbps = toVarInt(0x1000);
 
   auto packet = std::make_unique<Packet>();
-  packet << req_in;
+  packet << reqIn;
 
-  NetRateReq req_out;
-  packet >> req_out;
+  NetRateReq reqOut;
+  packet >> reqOut;
 
-  CHECK_EQ(req_in.bitrateKbps, req_out.bitrateKbps);
+  CHECK_EQ(reqIn.bitrateKbps, reqOut.bitrateKbps);
 }
 
 TEST_CASE("NetAck encode/decode") {
-  NetAck ack_in;
-  ack_in.ecnVec = 0x1;
-  ack_in.ackVec = 0x4;
-  ack_in.clientSeqNum = 0x1000;
-  ack_in.netRecvTimeUs = 0x2000;
+  NetAck ackIn;
+  ackIn.ecnVec = 0x1;
+  ackIn.ackVec = 0x4;
+  ackIn.clientSeqNum = 0x1000;
+  ackIn.recvTimeUs = 0x2000;
 
   auto packet = std::make_unique<Packet>();
-  packet << ack_in;
+  packet << ackIn;
 
-  NetAck ack_out;
-  packet >> ack_out;
+  NetAck ackOut;
+  packet >> ackOut;
 
-  CHECK_EQ(ack_in.ecnVec, ack_out.ecnVec);
-  CHECK_EQ(ack_in.ackVec, ack_out.ackVec);
-  CHECK_EQ(ack_in.netRecvTimeUs, ack_out.netRecvTimeUs);
-  CHECK_EQ(ack_in.clientSeqNum, ack_out.clientSeqNum);
+  CHECK_EQ(ackIn.ecnVec, ackOut.ecnVec);
+  CHECK_EQ(ackIn.ackVec, ackOut.ackVec);
+  CHECK_EQ(ackIn.recvTimeUs, ackOut.recvTimeUs);
+  CHECK_EQ(ackIn.clientSeqNum, ackOut.clientSeqNum);
 }
 
-TEST_CASE("PubData encode/decode") {
-  auto cipherText = std::vector<uint8_t>{0x1, 0x2, 0x3, 0x4, 0x5, 0xA};
-  PubData data_in;
-  data_in.name = ShortName(1, 2, 3);
-  data_in.lifetime = toVarInt(0x1000);
-  data_in.encryptedDataBlock = EncryptedDataBlock{1, cipherText};
+
+TEST_CASE("ClientData encode/decode") {
+  auto dataIn = std::array<uint8_t,6>{0x1, 0x2, 0x3, 0x4, 0x5, 0xA};
+  ClientData clientDataIn;
+  NamedDataChunk chunkIn;
+  DataBlock dataBlockIn;
+
+  clientDataIn.clientSeqNum= 23;
+
+  chunkIn.shortName = ShortName(1, 2, 3);
+  chunkIn.lifetime = toVarInt(0x1000);
+
+  dataBlockIn.metaDataLen = toVarInt( 0 );
+  dataBlockIn.dataLen = toVarInt( dataIn.size() );
 
   auto packet = std::make_unique<Packet>();
-  // TODO packet << ciperText;
-  packet << data_in;
+  packet << dataIn;
+  packet << dataBlockIn;
+  packet << chunkIn;
+  packet << clientDataIn;
 
-  PubData data_out{};
-  packet >> data_out;
+  ClientData clientDataOut;
+  NamedDataChunk chunkOut;
+  DataBlock dataBlockOut;
+  std::array<uint8_t,dataIn.size()> dataOut;
 
-  CHECK(data_in.name == data_out.name);
-  CHECK_EQ(data_in.lifetime, data_out.lifetime);
-  CHECK_EQ(data_in.encryptedDataBlock.authTagLen,
-           data_out.encryptedDataBlock.authTagLen);
-  CHECK_EQ(data_in.encryptedDataBlock.cipherText,
-           data_out.encryptedDataBlock.cipherText);
+  packet >> clientDataOut;
+  packet >> chunkOut;
+  packet >> dataBlockOut;
+  packet >> dataOut;
+
+  CHECK_EQ(clientDataIn.clientSeqNum, clientDataOut.clientSeqNum);
+  CHECK(chunkIn.shortName == chunkOut.shortName);
+  CHECK_EQ(chunkIn.lifetime, chunkOut.lifetime);
+  CHECK_EQ(dataBlockIn.metaDataLen,dataBlockOut.metaDataLen);
+  CHECK_EQ(dataBlockIn.dataLen,dataBlockOut.dataLen);
+  CHECK_EQ( dataIn[0], dataOut[0] );
+  CHECK_EQ( dataIn, dataOut );
 }
 
-TEST_CASE("PSubData encode/decode") {
-  auto cipherText = std::vector<uint8_t>{0x1, 0x2, 0x3, 0x4, 0x5, 0xA};
-  SubData data_in;
-  data_in.name = ShortName(1, 2, 3);
-  data_in.lifetime = toVarInt(0x1000);
-  data_in.encryptedDataBlock = EncryptedDataBlock{1, cipherText};
+
+TEST_CASE("RelayData encode/decode") {
+  auto dataIn = std::vector<uint8_t>{0x1, 0x2, 0x3, 0x4, 0x5, 0xA};
+  RelayData relayDataIn;
+  NamedDataChunk chunkIn;
+  EncryptedDataBlock dataBlockIn;
+
+  relayDataIn.relaySeqNum= 23;
+
+  chunkIn.shortName = ShortName(1, 2, 3);
+  chunkIn.lifetime = toVarInt(0x1000);
+
+  dataBlockIn.metaDataLen = toVarInt( 0 );
+  dataBlockIn.authTagLen = 4;
+  dataBlockIn.cipherDataLen = toVarInt( dataIn.size() );
 
   auto packet = std::make_unique<Packet>();
-  packet << data_in;
+  packet << dataIn;
+  packet << dataBlockIn;
+  packet << chunkIn;
+  packet << relayDataIn;
 
-  SubData data_out{};
-  packet >> data_out;
+  RelayData relayDataOut;
+  NamedDataChunk chunkOut;
+  EncryptedDataBlock dataBlockOut;
 
-  CHECK(data_in.name == data_out.name);
-  CHECK_EQ(data_in.lifetime, data_out.lifetime);
-  CHECK_EQ(data_in.encryptedDataBlock.authTagLen,
-           data_out.encryptedDataBlock.authTagLen);
-  CHECK_EQ(data_in.encryptedDataBlock.cipherText,
-           data_out.encryptedDataBlock.cipherText);
+  packet >> relayDataOut;
+  packet >> chunkOut;
+  packet >> dataBlockOut;
+
+  CHECK_EQ(relayDataIn.relaySeqNum, relayDataOut.relaySeqNum);
+  CHECK(chunkIn.shortName == chunkOut.shortName);
+  CHECK_EQ(chunkIn.lifetime, chunkOut.lifetime);
+  CHECK_EQ(dataBlockIn.metaDataLen,dataBlockOut.metaDataLen);
+  CHECK_EQ(dataBlockIn.authTagLen,dataBlockOut.authTagLen);
+  CHECK_EQ(dataBlockIn.cipherDataLen,dataBlockOut.cipherDataLen);
+
 }
+

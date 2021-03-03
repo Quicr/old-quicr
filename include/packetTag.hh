@@ -44,11 +44,6 @@ enum struct PacketTag : uint32_t {
   dataBlock = packetTagGen(13, -1, true),
   encDataBlock = packetTagGen(14, -1, true),
 
-  subData = packetTagGen(50, -1, true), // TODO remove
-  pubData = packetTagGen(51, -1, true), // TODO remove
-
-  // TODO - Could add nextReservedCodePoints of various lengths and MTI
-
   // This block of headerMagic values selected to multiplex with STUN/DTLS/RTP
   headerData = packetTagGen(80, 0, true),
   headerDataCrazy = packetTagGen(81, 0, true),
@@ -58,8 +53,6 @@ enum struct PacketTag : uint32_t {
   headerSynAckCrazy = packetTagGen(85, 0, true),
   headerRst = packetTagGen(86, 0, true),
   headerRstCrazy = packetTagGen(87, 0, true),
-
-  // extraMagicVer1 = packetTagGen(12538, 0, false),
 
   badTag = packetTagGen(16383, 0,
                         true), // must not have any tag values greater than this

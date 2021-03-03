@@ -78,7 +78,7 @@ std::unique_ptr<Packet> ClientConnectionPipe::recv() {
     // don't need to report syncAck up in the chain
     return nullptr;
   } else if (tag == PacketTag::resetRetry) {
-    NetRstRetry rstRetry{};
+    NetResetRetry rstRetry{};
     packet >> rstRetry;
     std::clog << "ConnectionPipe: Got resetRetry: cookie " << rstRetry.cookie
               << std::endl;
@@ -210,7 +210,7 @@ void ServerConnectionPipe::processSyn(
                     std::make_tuple(std::chrono::steady_clock::now(), cookie));
 
     auto rstPkt = std::make_unique<Packet>();
-    NetRstRetry rstRetry{};
+    NetResetRetry rstRetry{};
     rstRetry.cookie = cookie;
     rstPkt << PacketTag::headerRst;
     rstPkt << rstRetry;

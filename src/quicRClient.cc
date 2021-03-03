@@ -23,7 +23,7 @@ QuicRClient::QuicRClient()
       priorityPipe(&pacerPipe), retransmitPipe(&priorityPipe),
       fecPipe(&retransmitPipe), subscribePipe(&fecPipe),
       fragmentPipe(&subscribePipe), encryptPipe(&fragmentPipe),
-      statsPipe(&subscribePipe), // TODO put back in fragment and encyprt pipe
+      statsPipe(&encryptPipe),
       firstPipe(&statsPipe) {
 
   // TODO - get rid of all other places were defaults get set for mtu, rtt, pps
@@ -45,9 +45,22 @@ void QuicRClient::setCryptoKey(sframe::MLSContext::EpochID epoch,
 bool QuicRClient::publish(std::unique_ptr<Packet> packet) {
   size_t payloadSize = packet->size();
   assert(payloadSize < 63 * 1200);
-  packet << (uint16_t)payloadSize;
-  packet << packet->name;
-  packet << PacketTag::pubData;
+
+  ClientData clientData;
+  clientData.clientSeqNum=0;
+
+  NamedDataChunk namedDataChunk;
+  namedDataChunk.shortName = packet->shortName();
+  namedDataChunk.lifetime = toVarInt(0); // TODO
+
+  DataBlock dataBlock;
+  dataBlock.metaDataLen = toVarInt(0);
+  dataBlock.dataLen = toVarInt(packet->size());
+
+  packet << dataBlock;
+  packet << namedDataChunk;
+  packet << clientData;
+
   return firstPipe->send(move(packet));
 }
 
@@ -78,7 +91,7 @@ std::unique_ptr<Packet> QuicRClient::recv() {
       continue;
     }
 
-    if (tag != PacketTag::pubData) {
+    if (tag != PacketTag::relayData) {
       // TODO log bad data
       std::clog << "quicr recv bad tag: " << (((uint16_t)(tag)) >> 8)
                 << std::endl;
@@ -91,13 +104,31 @@ std::unique_ptr<Packet> QuicRClient::recv() {
       continue;
     }
 
-    ShortName name;
-    packet >> name;
-    //std::clog << "quicr recv data from " << name << std::endl;
+    RelayData relayData;
+    NamedDataChunk namedDataChunk;
+    DataBlock dataBlock;
 
-    uint16_t payloadSize;
-    packet >> payloadSize;
-    if (payloadSize > packet->size()) {
+    bool ok = true;
+
+    ok &= packet >> relayData;
+    ok &= packet >> namedDataChunk;
+    ok &= packet >> dataBlock;
+
+    if (!ok) {
+      // TODO log bad data
+      std::clog << "quicr recv bad relay data ="  << std::endl;
+      continue;
+    }
+
+    assert( dataBlock.metaDataLen == toVarInt(0) ); // TODO implement
+
+    // TODO - set packet lifetime
+
+    packet->name = namedDataChunk.shortName;
+
+    size_t payloadSize = fromVarInt( dataBlock.dataLen );
+
+    if ( payloadSize > packet->size()) {
       std::clog << "quicr recv bad data size " << payloadSize << " "
                 << packet->size() << std::endl;
       continue;
