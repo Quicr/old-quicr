@@ -93,7 +93,7 @@ std::unique_ptr<Packet> EncryptPipe::recv() {
       assert( fromVarInt( encryptedDataBlock.metaDataLen ) == 0 ); // TODO
       uint16_t payloadSize = fromVarInt( encryptedDataBlock.cipherDataLen );
       assert(payloadSize>0);
-
+			packet->headerSize = 1; // TODO make it constant
       auto decrypted = unprotect(packet, payloadSize);
 
       // TODO - how does decrypt auth error get hangled
@@ -141,7 +141,7 @@ sframe::bytes EncryptPipe::unprotect(const std::unique_ptr<Packet> &packet,
 
   gsl::span<uint8_t> buffer_ref = packet->buffer;
   // start decryption from data (excluding header)
-  auto ciphertext = buffer_ref.subspan(packet->headerSize, payloadSize);
+	auto ciphertext = buffer_ref.subspan(packet->headerSize, payloadSize);
   auto pt_out = sframe::bytes(ciphertext.size());
   auto pt = mls_context.unprotect(pt_out, ciphertext);
   // TODO see if we can reuse pt_out
