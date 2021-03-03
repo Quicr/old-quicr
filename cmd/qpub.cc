@@ -26,8 +26,8 @@ int main(int argc, char *argv[]) {
   }
 
   QuicRClient qClient;
-	qClient.setCryptoKey(1, sframe::bytes(8, uint8_t(1)));
-	qClient.open(1, relayName, 5004, 1);
+  qClient.setCryptoKey(1, sframe::bytes(8, uint8_t(1)));
+  qClient.open(1, relayName, 5004, 1);
 
   while (!qClient.ready()) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -40,8 +40,7 @@ int main(int argc, char *argv[]) {
   const int transportHeaderBytes = 65;
 
   int numToSend = 20 * packetsPerSecond;
-
-	int packetCount = 0;
+  int packetCount = 0;
   auto startTimePoint = std::chrono::steady_clock::now();
 
   auto name = ShortName::fromString(argv[2]);

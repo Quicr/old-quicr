@@ -59,7 +59,6 @@ std::unique_ptr<Packet> ClientConnectionPipe::recv() {
   auto tag = nextTag(packet);
   if (tag == PacketTag::syncAck) {
   	std::clog << "ConnectionPipe: Got syncAck" <<  std::endl;
-
   	NetSyncAck syncAck{};
     packet >> syncAck;
 
@@ -209,8 +208,7 @@ void ServerConnectionPipe::processSyn(
     rstPkt << PacketTag::headerRst;
     rstPkt << rstRetry;
     rstPkt->setDst(packet->getSrc());
-		std::clog << "new connection attempt, generate cookie:" << cookie
-							<< std::endl;
+    std::clog << "new connection attempt, generate cookie:" << cookie << std::endl;
     send(std::move(rstPkt));
     return;
   }
@@ -223,8 +221,7 @@ void ServerConnectionPipe::processSyn(
     auto rstPkt = std::make_unique<Packet>();
     rstPkt << PacketTag::headerRst;
     rstPkt->setDst(packet->getSrc());
-		std::clog << "incorrect cookie: found:" << sync.cookie
-							<< ", expected:" << cookie << std::endl;
+    std::clog << "incorrect cookie: found:" << sync.cookie << ", expected:" << cookie << std::endl;
 		send(std::move(rstPkt));
     return;
   }
