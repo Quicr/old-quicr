@@ -83,17 +83,15 @@ std::unique_ptr<Packet> QuicRClient::recv() {
       continue;
     }
 
-    PacketTag tag;
-    packet >> tag;
-
-    if (tag == PacketTag::headerData) {
+    if (nextTag(packet) == PacketTag::headerData) {
       // std::clog << "quicr empty message " << std::endl;
       continue;
     }
 
-    if (tag != PacketTag::relayData) {
+    // implies NamedDataChunk
+    if (nextTag(packet) != PacketTag::shortName) {
       // TODO log bad data
-      std::clog << "quicr recv bad tag: " << (((uint16_t)(tag)) >> 8)
+      std::clog << "quicr recv bad tag: " << (((uint16_t)(nextTag(packet))) >> 8)
                 << std::endl;
       continue;
     }
@@ -104,13 +102,11 @@ std::unique_ptr<Packet> QuicRClient::recv() {
       continue;
     }
 
-    RelayData relayData;
     NamedDataChunk namedDataChunk;
     DataBlock dataBlock;
 
     bool ok = true;
 
-    ok &= packet >> relayData;
     ok &= packet >> namedDataChunk;
     ok &= packet >> dataBlock;
 

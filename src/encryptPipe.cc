@@ -75,15 +75,13 @@ std::unique_ptr<Packet> EncryptPipe::recv() {
   auto packet = downStream->recv();
   if (packet) {
     auto tag = nextTag(packet);
-    if (tag == PacketTag::relayData) {
+    if (tag == PacketTag::shortName) {
 
-      RelayData relayData;
       NamedDataChunk namedDataChunk;
       EncryptedDataBlock encryptedDataBlock;
 
       bool ok = true;
 
-      ok &= packet >> relayData;
       ok &= packet >> namedDataChunk;
       ok &= packet >> encryptedDataBlock;
 
@@ -95,7 +93,7 @@ std::unique_ptr<Packet> EncryptPipe::recv() {
       assert( fromVarInt( encryptedDataBlock.metaDataLen ) == 0 ); // TODO
       uint16_t payloadSize = fromVarInt( encryptedDataBlock.cipherDataLen );
       assert(payloadSize>0);
-
+      packet->headerSize = 1; // TODO make it constant
       auto decrypted = unprotect(packet, payloadSize);
 
       // TODO - how does decrypt auth error get hangled
@@ -109,7 +107,6 @@ std::unique_ptr<Packet> EncryptPipe::recv() {
 
       packet << dataBlock;
       packet << namedDataChunk;
-      packet << relayData;
 
       return packet;
     }
