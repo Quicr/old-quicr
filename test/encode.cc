@@ -245,6 +245,5 @@ TEST_CASE("RelayData encode/decode") {
   CHECK_EQ(dataBlockIn.metaDataLen,dataBlockOut.metaDataLen);
   CHECK_EQ(dataBlockIn.authTagLen,dataBlockOut.authTagLen);
   CHECK_EQ(dataBlockIn.cipherDataLen,dataBlockOut.cipherDataLen);
-
 }
 

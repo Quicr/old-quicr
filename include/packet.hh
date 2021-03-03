@@ -35,6 +35,7 @@ struct IpAddr {
   bool operator<(const IpAddr &rhs) const;
 };
 
+// static constexpr QUICR_HEADER_SIZE_BYTES = 9; // (1) magic + (8) pathToken
 class Packet {
   // friend std::ostream &operator<<(std::ostream &os, const Packet &dt);
   // friend MediaNet::PacketTag MediaNet::nextTag(std::unique_ptr<Packet> &p);

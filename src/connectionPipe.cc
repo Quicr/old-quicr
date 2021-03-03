@@ -27,7 +27,7 @@ void ConnectionPipe::stop() {
   auto packet = std::make_unique<Packet>();
   assert(packet);
   packet << PacketTag::headerRst;
-  std::clog << "Reset: " << packet->to_hex() << std::endl;
+  std::clog << "ConnectionPipe:Stop: Reset: " << packet->to_hex() << std::endl;
   send(move(packet));
 
   PipeInterface::stop();
@@ -58,16 +58,10 @@ std::unique_ptr<Packet> ClientConnectionPipe::recv() {
 
   auto tag = nextTag(packet);
   if (tag == PacketTag::syncAck) {
-    //std::clog << "ConnectionPipe: Got syncAck" << std::endl;
+  	std::clog << "ConnectionPipe: Got syncAck" <<  std::endl;
 
-    NetSyncAck syncAck{};
+  	NetSyncAck syncAck{};
     packet >> syncAck;
-
-    // if (token != syncAck.authSecret) {
-    //	std::clog << "Auth token mismatch\n";
-    //	stop();
-    //	return nullptr;
-    //}
 
     // kickoff periodic sync flow
     if (!syncLoopRunning) {
@@ -86,7 +80,7 @@ std::unique_ptr<Packet> ClientConnectionPipe::recv() {
     sendSync();
     return nullptr;
   }
-  // TODO support servr reset/redirect
+
   return packet;
 }
 
@@ -112,7 +106,7 @@ void ClientConnectionPipe::sendSync() {
   synReq.origin = "example.com";
   // std::clog << "syncConnection: cookie:" << synReq.cookie << std::endl;
   packet << synReq;
-  // std::clog <<"sync Packet" << packet->to_hex() << std::endl;
+  // std::clog <<"sync Packet: " << packet->to_hex() << std::endl;
   send(move(packet));
   state = ConnectionPending{};
 }
@@ -215,9 +209,9 @@ void ServerConnectionPipe::processSyn(
     rstPkt << PacketTag::headerRst;
     rstPkt << rstRetry;
     rstPkt->setDst(packet->getSrc());
+		std::clog << "new connection attempt, generate cookie:" << cookie
+							<< std::endl;
     send(std::move(rstPkt));
-    std::clog << "new connection attempt, generate cookie:" << cookie
-              << std::endl;
     return;
   }
 
@@ -229,9 +223,9 @@ void ServerConnectionPipe::processSyn(
     auto rstPkt = std::make_unique<Packet>();
     rstPkt << PacketTag::headerRst;
     rstPkt->setDst(packet->getSrc());
-    send(std::move(rstPkt));
-    std::clog << "incorrect cookie: found:" << sync.cookie
-              << ", expected:" << cookie << std::endl;
+		std::clog << "incorrect cookie: found:" << sync.cookie
+							<< ", expected:" << cookie << std::endl;
+		send(std::move(rstPkt));
     return;
   }
 
@@ -248,7 +242,7 @@ void ServerConnectionPipe::processRst(
     std::unique_ptr<MediaNet::Packet> &packet) {
   auto conIndex = connectionMap.find(packet->getSrc());
   if (conIndex == connectionMap.end()) {
-    std::clog << "Reset recieved for unknown connection\n";
+    std::clog << "Reset receieved for unknown connection\n";
     return;
   }
   connectionMap.erase(conIndex);
@@ -273,5 +267,6 @@ void ServerConnectionPipe::sendSyncAck(const MediaNet::IpAddr &to,
   syncAckPkt << PacketTag::headerSynAck;
   syncAckPkt << syncAck;
   syncAckPkt->setDst(to);
+  // std::clog << "SyncAck: " << syncAckPkt->to_hex() << std::endl;
   send(std::move(syncAckPkt));
 }

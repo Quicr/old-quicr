@@ -109,7 +109,6 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
   assert( fromVarInt( encryptedDataBlock.metaDataLen) == 0 );// TODO
 
   uint16_t payloadSize = fromVarInt( encryptedDataBlock.cipherDataLen );
-  packet >> payloadSize;
   if (payloadSize > packet->size()) {
     std::clog << "relay recv bad data size " << payloadSize << " "
               << packet->size() << std::endl;

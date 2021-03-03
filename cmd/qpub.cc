@@ -40,7 +40,8 @@ int main(int argc, char *argv[]) {
   const int transportHeaderBytes = 65;
 
   int numToSend = 20 * packetsPerSecond;
-  int packetCount = 0;
+
+	int packetCount = 0;
   auto startTimePoint = std::chrono::steady_clock::now();
 
   auto name = ShortName::fromString(argv[2]);
