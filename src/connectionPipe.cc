@@ -38,7 +38,7 @@ void ConnectionPipe::stop() {
 ///
 
 ClientConnectionPipe::ClientConnectionPipe(PipeInterface *t)
-    : ConnectionPipe(t), senderID(0), token(0) {}
+    : ConnectionPipe(t), senderID(0), pathToken(0) {}
 
 bool ClientConnectionPipe::start(uint16_t port, std::string server,
                                  PipeInterface *upStream) {
@@ -48,6 +48,11 @@ bool ClientConnectionPipe::start(uint16_t port, std::string server,
     runSyncLoop();
   }
   return ret;
+}
+
+bool ClientConnectionPipe::send(std::unique_ptr<Packet> packet) {
+	// insert pathToken in the header
+	return send(move(packet));
 }
 
 std::unique_ptr<Packet> ClientConnectionPipe::recv() {
@@ -86,7 +91,7 @@ std::unique_ptr<Packet> ClientConnectionPipe::recv() {
 void ClientConnectionPipe::setAuthInfo(uint32_t sender, uint64_t token_in) {
   senderID = sender;
   assert(senderID > 0);
-  token = token_in;
+  pathToken = token_in;
 }
 
 void ClientConnectionPipe::sendSync() {

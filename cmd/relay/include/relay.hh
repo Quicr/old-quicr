@@ -8,6 +8,7 @@
 
 #include "fib.hh"
 #include "packet.hh"
+#include "encode.hh"
 #include "quicRServer.hh"
 
 class Relay {

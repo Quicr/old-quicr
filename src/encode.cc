@@ -5,7 +5,34 @@
 #include "packet.hh"
 
 using namespace MediaNet;
+///
+/// Message Header
+///
 
+std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
+																		const Packet::Header &hdr) {
+
+	p << hdr.tag;
+	p << hdr.pathToken;
+	return p;
+}
+
+bool MediaNet::operator>>(std::unique_ptr<Packet> &p, Packet::Header &hdr) {
+	bool ok = true;
+	ok &= p >> hdr.pathToken;
+	ok &= p >> hdr.tag;
+
+	if (!ok) {
+		std::cerr << "problem parsing message header" << std::endl;
+	}
+
+	return ok;
+}
+
+
+///
+/// Shortname
+///
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
                                               const ShortName &msg) {
 

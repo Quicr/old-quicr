@@ -2,9 +2,9 @@
 
 #include "encryptPipe.hh"
 #include "packet.hh"
+#include "encode.hh"
 #include <cassert>
 #include <iostream>
-#include <sstream>
 
 using namespace MediaNet;
 
