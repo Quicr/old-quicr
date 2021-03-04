@@ -110,7 +110,7 @@ public:
 private:
   void processSyn(std::unique_ptr<MediaNet::Packet> &packet);
   void processRst(std::unique_ptr<MediaNet::Packet> &packet);
-  void sendSyncAck(const MediaNet::IpAddr &to, uint64_t authSecret);
+  void sendSyncAck(const MediaNet::IpAddr &to, uint32_t authSecret);
 
   // TODO: need to timeout on the entries in this map to
   // avoid DOS attacks

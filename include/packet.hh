@@ -15,7 +15,8 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-
+#include <array>
+#include "packetTag.hh"
 #include "name.hh"
 
 namespace MediaNet {
@@ -50,8 +51,9 @@ class Packet {
   friend EncryptPipe;
 
 public:
+
 	struct Header {
-		uint32_t tag;
+		PacketTag tag;
 		uint32_t pathToken;
 	};
 
@@ -59,12 +61,10 @@ public:
   void copy(const Packet &p);
   [[nodiscard]] std::unique_ptr<Packet> clone() const;
 
-
   uint8_t &data() { return buffer.at(headerSize); }
   uint8_t &fullData() { return buffer.at(0); }
 
-  //[[nodiscard]] const uint8_t &constData() const { return
-  // buffer.at(headerSize); }
+
   [[nodiscard]] size_t size() const;
   [[nodiscard]] size_t fullSize() const { return buffer.size(); }
   void resize(int size) { buffer.resize(headerSize + size); }
@@ -80,28 +80,29 @@ public:
   bool getFEC() const;
 
   uint32_t getPathToken() const {
-  	std::array<uint8_t , 4> tokenBytes = {};
+  	std::array<uint8_t , 4> tokenBytes = {0,0,0,0};
   	const int START = 1;
   	const int END = 5;
 		// bytes 1 to 5
 		std::copy(buffer.begin() + START, buffer.begin() + END, tokenBytes.begin());
-		return (tokenBytes[3] << 24)
-		+ (tokenBytes[2] << 16)
-		+ (tokenBytes[1] << 8)
-		+ (tokenBytes[0] << 0);
+		return (tokenBytes[3] << 24) + (tokenBytes[2] << 16) + (tokenBytes[1] << 8) + (tokenBytes[0] << 0);
 	}
 
-	void setPathToken(uint32_t token) const {
-		std::array<uint8_t , 4> tokenBytes = {};;
+	void setPathToken(uint32_t token)  {
+		std::array<uint8_t , 4> tokenBytes = {0,0,0,0};
 		tokenBytes[0] = uint8_t((token >> 0) & 0xFF);
 		tokenBytes[1] = uint8_t((token >> 8) & 0xFF);
 		tokenBytes[2] = uint8_t((token >> 16) & 0xFF);
 		tokenBytes[3] = uint8_t((token >> 24) & 0xFF);
 
-		const int START = 1;
-		// overwrit bytes 1 to 5
-		std::copy(tokenBytes.begin(), tokenBytes.end(), buffer.begin()+START);
+		int index = 1;
+		for(auto &v : tokenBytes) {
+			buffer[index] = v;
+			index++;
+		}
+
 	}
+
   [[nodiscard]] const IpAddr &getSrc() const;
   [[maybe_unused]] void setSrc(const IpAddr &src);
   [[maybe_unused]] [[nodiscard]] const IpAddr &getDst() const;
