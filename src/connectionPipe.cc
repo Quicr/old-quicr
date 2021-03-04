@@ -97,7 +97,8 @@ void ClientConnectionPipe::setAuthInfo(uint32_t sender, uint64_t token_in) {
 void ClientConnectionPipe::sendSync() {
   auto packet = std::make_unique<Packet>();
   assert(packet);
-  packet << PacketTag::headerSyn;
+  auto header = Packet::Header{PacketTag::headerSyn, pathToken};
+  packet << header;
   NetSyncReq synReq{};
   const auto now = std::chrono::system_clock::now();
   const auto duration = now.time_since_epoch();
@@ -265,8 +266,8 @@ void ServerConnectionPipe::sendSyncAck(const MediaNet::IpAddr &to,
   const auto duration = now.time_since_epoch();
   syncAck.serverTimeMs =
       std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-  // syncAck.authSecret = authSecret;
-  syncAckPkt << PacketTag::headerSynAck;
+  auto header = Packet::Header{PacketTag::headerSynAck, authSecret};
+  syncAckPkt << header;
   syncAckPkt << syncAck;
   syncAckPkt->setDst(to);
   // std::clog << "SyncAck: " << syncAckPkt->to_hex() << std::endl;

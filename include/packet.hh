@@ -79,6 +79,29 @@ public:
   void setFEC(bool doFec = true);
   bool getFEC() const;
 
+  uint32_t getPathToken() const {
+  	std::array<uint8_t , 4> tokenBytes = {};
+  	const int START = 1;
+  	const int END = 5;
+		// bytes 1 to 5
+		std::copy(buffer.begin() + START, buffer.begin() + END, tokenBytes.begin());
+		return (tokenBytes[3] << 24)
+		+ (tokenBytes[2] << 16)
+		+ (tokenBytes[1] << 8)
+		+ (tokenBytes[0] << 0);
+	}
+
+	void setPathToken(uint32_t token) const {
+		std::array<uint8_t , 4> tokenBytes = {};;
+		tokenBytes[0] = uint8_t((token >> 0) & 0xFF);
+		tokenBytes[1] = uint8_t((token >> 8) & 0xFF);
+		tokenBytes[2] = uint8_t((token >> 16) & 0xFF);
+		tokenBytes[3] = uint8_t((token >> 24) & 0xFF);
+
+		const int START = 1;
+		// overwrit bytes 1 to 5
+		std::copy(tokenBytes.begin(), tokenBytes.end(), buffer.begin()+START);
+	}
   [[nodiscard]] const IpAddr &getSrc() const;
   [[maybe_unused]] void setSrc(const IpAddr &src);
   [[maybe_unused]] [[nodiscard]] const IpAddr &getDst() const;
