@@ -14,7 +14,7 @@ SubscribePipe::SubscribePipe(PipeInterface *t) : PipeInterface(t) {}
 
 bool SubscribePipe::subscribe(const ShortName &name) {
 
-  subscribeList.push_back(name);
+  subscribeList.emplace(name, true);
 
   // send subscribe packet
   auto packet = std::make_unique<Packet>();
@@ -44,7 +44,6 @@ std::unique_ptr<Packet> SubscribePipe::recv() {
     //packet->size() << std::endl;
     if (packet->fullSize() > 19 + QUICR_HEADER_SIZE_BYTES) {
       if (packet->buffer.at(19 + QUICR_HEADER_SIZE_BYTES - 1) == packetTagTrunc(PacketTag::shortName)) {
-
       	const auto idx = 19 + QUICR_HEADER_SIZE_BYTES - 1;
       	auto sn = packetTagTrunc(PacketTag::shortName);
       	auto& val = packet->buffer.at(idx);
@@ -56,8 +55,12 @@ std::unique_ptr<Packet> SubscribePipe::recv() {
           // assert(0); // TODO - remove and log bad packet
           return std::unique_ptr<Packet>(nullptr);
         }
+        if (!subscribeList.count(name)) {
+        	std::clog << "short name mismatch\n";
+        	return nullptr;
+        }
         packet->name = name;
-
+        std::clog << "recevied: name:"<< packet->name << std::endl;
         // std::clog << "Sub Recv: " << packet->shortName() << std::endl;
       }
     }
