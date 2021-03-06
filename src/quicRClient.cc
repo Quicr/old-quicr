@@ -77,14 +77,17 @@ std::unique_ptr<Packet> QuicRClient::recv() {
       return packet;
     }
 
-    if (packet->size() < 1) {
-      // TODO log bad data
-      std::clog << "quicr recv very bad size = " << packet->size() << std::endl;
-      continue;
+    if (packet->fullSize() <= 0) {
+			std::clog << "quicr recv very bad size = " << packet->fullSize() << std::endl;
+			continue;
     }
 
-    if (nextTag(packet) == PacketTag::headerData) {
-      // std::clog << "quicr empty message " << std::endl;
+    auto tag = nextTag(packet);
+
+    if (nextTag(packet) == PacketTag::header) {
+    	// Packet::Header header;
+    	// packet >> header;
+      //std::clog << "quicr empty message, header tag: " << ((uint16_t)(header.tag) >> 8) << std::endl;
       continue;
     }
 
@@ -135,7 +138,7 @@ std::unique_ptr<Packet> QuicRClient::recv() {
     bad = false;
   }
 
-  //std::clog << "QuicR received packet size=" << packet->size() << std::endl;
+  // std::clog << "QuicR received packet size=" << packet->size() << std::endl;
   return packet;
 }
 
@@ -159,10 +162,8 @@ std::unique_ptr<Packet> QuicRClient::createPacket(const ShortName &shortName,
   packet->name = shortName;
   packet->reserve(reservedPayloadSize + 20); // TODO - tune the 20
 
-  packet << PacketTag::headerData;
-  // packet << shortName;
-  // packet << PacketTag::extraMagicVer1;
-
+	auto hdr = Packet::Header(PacketTag::headerData);
+  packet << hdr;
   packet->headerSize = (int)(packet->buffer.size());
 
   // std::clog << "Create empty packet " << *packet << std::endl;

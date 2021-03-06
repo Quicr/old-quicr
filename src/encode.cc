@@ -14,11 +14,20 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
 
 	p << hdr.tag;
 	p << hdr.pathToken;
+	p << PacketTag::header;
 	return p;
 }
 
 bool MediaNet::operator>>(std::unique_ptr<Packet> &p, Packet::Header &hdr) {
 	bool ok = true;
+
+	if (nextTag(p) != PacketTag::header) {
+		std::cerr << "Did not find expected PacketTag::shortName" << std::endl;
+		return false;
+	}
+
+	PacketTag tag = PacketTag::none;
+	ok &= p >> tag;
 	ok &= p >> hdr.pathToken;
 	ok &= p >> hdr.tag;
 
@@ -288,7 +297,6 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
   case packetTagTrunc(PacketTag::encDataBlock):
     tag = PacketTag::encDataBlock;
     break;
-
   case packetTagTrunc(PacketTag::headerData):
     tag = PacketTag::headerData;
     break;
@@ -313,7 +321,9 @@ PacketTag MediaNet::nextTag(uint16_t truncTag) {
   case packetTagTrunc(PacketTag::headerSynAckCrazy):
     tag = PacketTag::headerSynAckCrazy;
     break;
-
+  case packetTagTrunc(PacketTag::header):
+  	tag = PacketTag::header;
+  	break;
   case packetTagTrunc(PacketTag::badTag):
     tag = PacketTag::badTag;
     break;

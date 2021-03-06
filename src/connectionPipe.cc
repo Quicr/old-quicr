@@ -51,8 +51,9 @@ bool ClientConnectionPipe::start(uint16_t port, std::string server,
 }
 
 bool ClientConnectionPipe::send(std::unique_ptr<Packet> packet) {
-	// insert pathToken in the header
-	return send(move(packet));
+	// insert path token
+	packet->setPathToken(pathToken);
+	return PipeInterface::send(std::move(packet));
 }
 
 std::unique_ptr<Packet> ClientConnectionPipe::recv() {
@@ -162,11 +163,28 @@ bool ServerConnectionPipe::start(uint16_t port, std::string server,
   return ret;
 }
 
+bool ServerConnectionPipe::send(std::unique_ptr<Packet> packet) {
+	// insert path token
+	packet->setPathToken(pathTokens.at(packet->getDst()));
+	return ConnectionPipe::send(std::move(packet));
+}
+
 std::unique_ptr<Packet> ServerConnectionPipe::recv() {
   auto packet = PipeInterface::recv();
   if (packet == nullptr) {
     return packet;
   }
+
+  auto token = packet->getPathToken();
+  auto it = pathTokens.find(packet->getSrc());
+  if (it != pathTokens.end()) {
+  	if (token != it->second) {
+  		std::clog << IpAddr::toString(packet->getSrc()) << " token changed\n";
+  	}
+  }
+
+  // overwrite by default
+  pathTokens[packet->getSrc()] = token;
 
   auto tag = nextTag(packet);
 
@@ -209,9 +227,10 @@ void ServerConnectionPipe::processSyn(
                     std::make_tuple(std::chrono::steady_clock::now(), cookie));
 
     auto rstPkt = std::make_unique<Packet>();
+    auto header = Packet::Header(PacketTag::headerRst, pathTokens.at(packet->getSrc()));
     NetResetRetry rstRetry{};
     rstRetry.cookie = cookie;
-    rstPkt << PacketTag::headerRst;
+    rstPkt << header;
     rstPkt << rstRetry;
     rstPkt->setDst(packet->getSrc());
     std::clog << "new connection attempt, generate cookie:" << cookie << std::endl;

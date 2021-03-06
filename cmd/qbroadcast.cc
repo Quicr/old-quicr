@@ -86,7 +86,8 @@ void BroadcastRelay::processSub(std::unique_ptr<MediaNet::Packet> &packet,
   // ack the packet
   auto ack = std::make_unique<Packet>();
   ack->setDst(packet->getSrc());
-  ack << PacketTag::headerData;
+  auto hdr = Packet::Header(PacketTag::headerData);
+  ack << hdr;
   NetAck ackTag{};
   ackTag.clientSeqNum = clientSeqNumTag.clientSeqNum;
   ackTag.recvTimeUs = nowUs;
@@ -141,7 +142,8 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
   auto ack = std::make_unique<Packet>();
   ack->setDst(packet->getSrc());
 
-  ack << PacketTag::headerData;
+  auto hdr = Packet::Header(PacketTag::headerData);
+  ack << hdr;
 
   // TODO - get rid of prev Ack tag and use ack vector
   if (prevAckSeqNum > 0) {

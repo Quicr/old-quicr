@@ -43,8 +43,10 @@ enum struct PacketTag : uint32_t {
   shortName = packetTagGen(12, -1, true),
   dataBlock = packetTagGen(13, -1, true),
   encDataBlock = packetTagGen(14, -1, true),
+	header = packetTagGen(15, 0, true), // tag for the header itself
 
-  // This block of headerMagic values selected to multiplex with STUN/DTLS/RTP
+
+	// This block of headerMagic values selected to multiplex with STUN/DTLS/RTP
   headerData = packetTagGen(80, 0, true),
   headerDataCrazy = packetTagGen(81, 0, true),
   headerSyn = packetTagGen(82, 0, true),

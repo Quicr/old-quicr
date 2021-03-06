@@ -21,8 +21,8 @@ bool SubscribePipe::subscribe(const ShortName &name) {
   packet->reserve(100); // TODO tune
 
   auto subReq = Subscribe{name};
-  // TODO: moving setting header magic into a function
-  packet << PacketTag::headerData;
+	auto hdr = Packet::Header(PacketTag::headerData);
+  packet << hdr;
   packet << subReq;
 
   std::cout << "Subscribe: " << packet->to_hex() << std::endl;
@@ -41,12 +41,15 @@ std::unique_ptr<Packet> SubscribePipe::recv() {
 
   if (packet) {
     // std::clog << "Sub recv: fullSize=" << packet->fullSize() << " size=" <<
-    // packet->size() << std::endl;
-    if (packet->fullSize() > 19) {
-      if (packet->buffer.at(19) == packetTagTrunc(PacketTag::shortName)) {
+    //packet->size() << std::endl;
+    if (packet->fullSize() > 19 + QUICR_HEADER_SIZE_BYTES) {
+      if (packet->buffer.at(19 + QUICR_HEADER_SIZE_BYTES - 1) == packetTagTrunc(PacketTag::shortName)) {
 
+      	const auto idx = 19 + QUICR_HEADER_SIZE_BYTES - 1;
+      	auto sn = packetTagTrunc(PacketTag::shortName);
+      	auto& val = packet->buffer.at(idx);
         auto clone = packet->clone();
-        clone->resize(20);
+        clone->resize(19);
         ShortName name{};
         bool ok = (clone >> name);
         if (!ok) {

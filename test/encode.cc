@@ -46,7 +46,7 @@ TEST_CASE("message header encode/decode") {
 	token = packet->getPathToken();
 	REQUIRE_EQ(token, 0x2000);
 
-	Packet::Header header_out;
+	Packet::Header header_out{};
 	packet >> header_out;
   REQUIRE_EQ(header_out.pathToken, 0x2000);
   REQUIRE_EQ(header_in.tag, header_out.tag);

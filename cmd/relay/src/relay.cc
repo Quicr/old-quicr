@@ -69,7 +69,8 @@ void Relay::processSub(std::unique_ptr<MediaNet::Packet> &packet,
   // ack the packet
   auto ackPacket = std::make_unique<Packet>();
   ackPacket->setDst(packet->getSrc());
-  ackPacket << PacketTag::headerData;
+	auto hdr = Packet::Header(PacketTag::headerData);
+  ackPacket << hdr;
   NetAck ack{};
   ack.clientSeqNum = clientSeqNumTag.clientSeqNum;
   ack.recvTimeUs = nowUs;
@@ -118,8 +119,11 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
   // TODO: refactor ack logic
   auto ack = std::make_unique<Packet>();
   ack->setDst(packet->getSrc());
-
-  ack << PacketTag::headerData;
+  // TODO: set the token in connPipe once qServer uses
+  // ConnectionPipe
+  auto token = packet->getPathToken();
+	auto hdr = Packet::Header(PacketTag::headerData, token);
+  ack << hdr;
 
   // TODO - get rid of prev Ack tag and use ack vector
   if (prevAckSeqNum > 0) {
@@ -151,7 +155,6 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
   for (auto &subscriber : subscribers) {
     auto relayDataPacket = packet->clone(); // TODO - just clone header stuff
     relayDataPacket->setDst(subscriber.face);
-
     RelayData relayData{};
     relayData.relaySeqNum = subscriber.relaySeqNum++;
     relayData.relaySendTimeUs = nowUs;

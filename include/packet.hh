@@ -35,7 +35,7 @@ struct IpAddr {
   bool operator<(const IpAddr &rhs) const;
 };
 
-static constexpr int QUICR_HEADER_SIZE_BYTES = 5; // (1) magic + (4) pathToken
+static constexpr int QUICR_HEADER_SIZE_BYTES = 6; // (1) magic + (4) pathToken + (1) tag
 
 class Packet {
   // friend std::ostream &operator<<(std::ostream &os, const Packet &dt);
@@ -55,6 +55,10 @@ public:
 	struct Header {
 		PacketTag tag;
 		uint32_t pathToken;
+
+		Header(){}
+		explicit Header(PacketTag tag);
+		Header(PacketTag tag, uint32_t token);
 	};
 
   Packet();

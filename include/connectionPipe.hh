@@ -105,7 +105,10 @@ public:
   explicit ServerConnectionPipe(PipeInterface *t);
   bool start(uint16_t port, std::string server,
              PipeInterface *upStream) override;
-  std::unique_ptr<Packet> recv() override;
+
+	// Overrides from PipelineInterface
+	bool send(std::unique_ptr<Packet>) override;
+	std::unique_ptr<Packet> recv() override;
 
 private:
   void processSyn(std::unique_ptr<MediaNet::Packet> &packet);
@@ -116,7 +119,8 @@ private:
   // avoid DOS attacks
   std::map<MediaNet::IpAddr, std::tuple<timepoint, uint32_t>> cookies;
   std::map<MediaNet::IpAddr, std::unique_ptr<Connection>> connectionMap;
-	std::map<MediaNet::IpAddr, uint32_t> pathTokens;
+  std::map<MediaNet::IpAddr, uint32_t> pathTokens;
+
   // TODO revisit this (use cryptographic random)
   std::mt19937 randomGen;
   std::uniform_int_distribution<uint32_t> randomDist;

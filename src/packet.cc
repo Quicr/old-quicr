@@ -23,7 +23,13 @@
 
 using namespace MediaNet;
 
-Packet::Packet() : headerSize(0), priority(1), reliable(false), useFEC(false) {
+Packet::Header::Header(PacketTag tag_in)
+  : tag(tag_in), pathToken(0) {}
+
+Packet::Header::Header(PacketTag tag_in, uint32_t token)
+				: tag(tag_in), pathToken(token) {}
+
+Packet::Packet() : headerSize(QUICR_HEADER_SIZE_BYTES), priority(1), reliable(false), useFEC(false) {
   src.addrLen = 0;
   dst.addrLen = 0;
   buffer.reserve(1480 /* MTU estimate */);
