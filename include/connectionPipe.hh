@@ -68,8 +68,8 @@ public:
              PipeInterface *upStream) override;
 
   // Overrides from PipelineInterface
-	bool send(std::unique_ptr<Packet>) override;
-	std::unique_ptr<Packet> recv() override;
+  bool send(std::unique_ptr<Packet>) override;
+  std::unique_ptr<Packet> recv() override;
 
 private:
   static constexpr int syn_timeout_msec = 1000;
@@ -105,10 +105,9 @@ public:
   explicit ServerConnectionPipe(PipeInterface *t);
   bool start(uint16_t port, std::string server,
              PipeInterface *upStream) override;
-
-	// Overrides from PipelineInterface
-	bool send(std::unique_ptr<Packet>) override;
-	std::unique_ptr<Packet> recv() override;
+  // Overrides from PipelineInterface
+  bool send(std::unique_ptr<Packet>) override;
+  std::unique_ptr<Packet> recv() override;
 
 private:
   void processSyn(std::unique_ptr<MediaNet::Packet> &packet);

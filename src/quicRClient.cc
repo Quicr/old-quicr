@@ -78,11 +78,14 @@ std::unique_ptr<Packet> QuicRClient::recv() {
     }
 
     if (packet->fullSize() <= 0) {
-			std::clog << "quicr recv very bad size = " << packet->fullSize() << std::endl;
-			continue;
+    	std::clog << "quicr recv very bad size = " << packet->fullSize() << std::endl;
+    	continue;
     }
 
-    auto tag = nextTag(packet);
+		if (packet->size() == 0) {
+			//std::clog << "quicr recv very zero buffer size, tag = " << ((uint16_t)(nextTag(packet)) >> 8) << std::endl;
+			return packet;
+		}
 
     if (nextTag(packet) == PacketTag::header) {
     	// Packet::Header header;
@@ -138,7 +141,7 @@ std::unique_ptr<Packet> QuicRClient::recv() {
     bad = false;
   }
 
-  std::clog << "QuicR received packet size=" << packet->size() << std::endl;
+  //std::clog << "QuicR received packet size=" << packet->size() << std::endl;
   return packet;
 }
 

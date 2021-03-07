@@ -64,8 +64,7 @@ bool PacerPipe::send(std::unique_ptr<Packet> p) {
 void PacerPipe::sendRateCommand() {
   auto packet = std::make_unique<Packet>();
   assert(packet);
-
-	auto hdr = Packet::Header(PacketTag::headerData);
+  auto hdr = Packet::Header(PacketTag::headerData);
   packet << hdr;
   // packet << PacketTag::extraMagicVer1;
   // packet << PacketTag::extraMagicVer2;

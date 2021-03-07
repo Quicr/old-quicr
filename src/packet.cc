@@ -20,6 +20,7 @@
 #include "packet.hh"
 #include <iomanip>
 #include <sstream>
+#include <array>
 
 using namespace MediaNet;
 
@@ -124,7 +125,6 @@ void Packet::setFragID(const uint8_t fragmentID, bool lastFrag) {
   assert(fragmentID <= 63);
 
   name.fragmentID = fragmentID * 2 + (lastFrag ? 1 : 0);
-  std::clog <<"Setting fragId:" << fragmentID << "lastFrag?" << lastFrag << "compute:" << name.fragmentID;
 #if 0 // TODO REMOVE
    if (buffer.size() > 19) {
     assert(buffer.at(19) == packetTagTrunc(PacketTag::shortName));
@@ -134,7 +134,8 @@ void Packet::setFragID(const uint8_t fragmentID, bool lastFrag) {
 }
 
 uint32_t Packet::getPathToken() const {
-	std::array<uint8_t , 4> tokenBytes = {0,0,0,0};
+	std::array<uint8_t, 4> tokenBytes = {0,0,0,0};
+	// [headerMagic (1)|pathToken (4) |headerTag(1)]
 	const int START = 1;
 	const int END = 5;
 	// bytes 1 to 5
@@ -143,7 +144,7 @@ uint32_t Packet::getPathToken() const {
 }
 
 void Packet::setPathToken(uint32_t token)  {
-	std::array<uint8_t , 4> tokenBytes = {0,0,0,0};
+	std::array<uint8_t, 4> tokenBytes = {0,0,0,0};
 	tokenBytes[0] = uint8_t((token >> 0) & 0xFF);
 	tokenBytes[1] = uint8_t((token >> 8) & 0xFF);
 	tokenBytes[2] = uint8_t((token >> 16) & 0xFF);
@@ -154,5 +155,4 @@ void Packet::setPathToken(uint32_t token)  {
 		buffer[index] = v;
 		index++;
 	}
-
 }

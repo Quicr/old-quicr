@@ -11,7 +11,6 @@ using namespace MediaNet;
 
 std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
 																		const Packet::Header &hdr) {
-
 	p << hdr.tag;
 	p << hdr.pathToken;
 	p << PacketTag::header;

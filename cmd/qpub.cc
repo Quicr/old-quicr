@@ -40,7 +40,6 @@ int main(int argc, char *argv[]) {
   const int transportHeaderBytes = 65;
 
   int numToSend = 20 * packetsPerSecond;
-  //int numToSend = 10;
   int packetCount = 0;
   auto startTimePoint = std::chrono::steady_clock::now();
 

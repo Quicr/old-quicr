@@ -21,7 +21,7 @@ bool SubscribePipe::subscribe(const ShortName &name) {
   packet->reserve(100); // TODO tune
 
   auto subReq = Subscribe{name};
-	auto hdr = Packet::Header(PacketTag::headerData);
+  auto hdr = Packet::Header(PacketTag::headerData);
   packet << hdr;
   packet << subReq;
 
@@ -43,15 +43,15 @@ std::unique_ptr<Packet> SubscribePipe::recv() {
     // std::clog << "Sub recv: fullSize=" << packet->fullSize() << " size=" <<
     //packet->size() << std::endl;
     if(nextTag(packet) == PacketTag::shortName) {
-			NamedDataChunk name{};
-			bool ok = (packet >> name);
-			if (!ok) {
-				// assert(0); // TODO - remove and log bad packet
-				return nullptr;
-			}
-			packet->name = name.shortName;
-			packet << name;
+		NamedDataChunk name{};
+		bool ok = (packet >> name);
+		if (!ok) {
+			// assert(0); // TODO - remove and log bad packet
+			return nullptr;
 		}
+		packet->name = name.shortName;
+		packet << name;
+	}
   }
 
   return packet;

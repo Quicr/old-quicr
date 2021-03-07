@@ -15,7 +15,6 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#include <array>
 #include "packetTag.hh"
 #include "name.hh"
 
@@ -51,7 +50,6 @@ class Packet {
   friend EncryptPipe;
 
 public:
-
 	struct Header {
 		PacketTag tag;
 		uint32_t pathToken;
@@ -83,7 +81,7 @@ public:
   bool getFEC() const;
 
   uint32_t getPathToken() const;
-	void setPathToken(uint32_t token);
+  void setPathToken(uint32_t token);
 
   [[nodiscard]] const IpAddr &getSrc() const;
   [[maybe_unused]] void setSrc(const IpAddr &src);
