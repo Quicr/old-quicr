@@ -75,7 +75,6 @@ public:
   void resizeFull(int size) { buffer.resize(size); }
 
   void reserve(int s) { buffer.reserve(headerSize + s); }
-  // bool empty( ) { return (size()  <= 0); }
 
   void setReliable(bool reliable = true);
   [[nodiscard]] bool isReliable() const;
@@ -83,29 +82,8 @@ public:
   void setFEC(bool doFec = true);
   bool getFEC() const;
 
-  uint32_t getPathToken() const {
-  	std::array<uint8_t , 4> tokenBytes = {0,0,0,0};
-  	const int START = 1;
-  	const int END = 5;
-		// bytes 1 to 5
-		std::copy(buffer.begin() + START, buffer.begin() + END, tokenBytes.begin());
-		return (tokenBytes[3] << 24) + (tokenBytes[2] << 16) + (tokenBytes[1] << 8) + (tokenBytes[0] << 0);
-	}
-
-	void setPathToken(uint32_t token)  {
-		std::array<uint8_t , 4> tokenBytes = {0,0,0,0};
-		tokenBytes[0] = uint8_t((token >> 0) & 0xFF);
-		tokenBytes[1] = uint8_t((token >> 8) & 0xFF);
-		tokenBytes[2] = uint8_t((token >> 16) & 0xFF);
-		tokenBytes[3] = uint8_t((token >> 24) & 0xFF);
-
-		int index = 1;
-		for(auto &v : tokenBytes) {
-			buffer[index] = v;
-			index++;
-		}
-
-	}
+  uint32_t getPathToken() const;
+	void setPathToken(uint32_t token);
 
   [[nodiscard]] const IpAddr &getSrc() const;
   [[maybe_unused]] void setSrc(const IpAddr &src);

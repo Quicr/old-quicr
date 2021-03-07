@@ -42,28 +42,16 @@ std::unique_ptr<Packet> SubscribePipe::recv() {
   if (packet) {
     // std::clog << "Sub recv: fullSize=" << packet->fullSize() << " size=" <<
     //packet->size() << std::endl;
-    if (packet->fullSize() > 19 + QUICR_HEADER_SIZE_BYTES) {
-      if (packet->buffer.at(19 + QUICR_HEADER_SIZE_BYTES - 1) == packetTagTrunc(PacketTag::shortName)) {
-      	const auto idx = 19 + QUICR_HEADER_SIZE_BYTES - 1;
-      	auto sn = packetTagTrunc(PacketTag::shortName);
-      	auto& val = packet->buffer.at(idx);
-        auto clone = packet->clone();
-        clone->resize(19);
-        ShortName name{};
-        bool ok = (clone >> name);
-        if (!ok) {
-          // assert(0); // TODO - remove and log bad packet
-          return std::unique_ptr<Packet>(nullptr);
-        }
-        if (!subscribeList.count(name)) {
-        	std::clog << "short name mismatch\n";
-        	return nullptr;
-        }
-        packet->name = name;
-        std::clog << "recevied: name:"<< packet->name << std::endl;
-        // std::clog << "Sub Recv: " << packet->shortName() << std::endl;
-      }
-    }
+    if(nextTag(packet) == PacketTag::shortName) {
+			NamedDataChunk name{};
+			bool ok = (packet >> name);
+			if (!ok) {
+				// assert(0); // TODO - remove and log bad packet
+				return nullptr;
+			}
+			packet->name = name.shortName;
+			packet << name;
+		}
   }
 
   return packet;

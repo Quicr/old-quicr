@@ -31,12 +31,10 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
   const int minPacketPayload = 56;     // TODO move
 
   if (packet->fullSize() + extraHeaderSizeBytes <= mtu) {
-    // std::clog << "no fragment as size=" << packet->fullSize() << " mtu=" <<
-    // mtu << std::endl;
+    std::clog << "no fragment as size=" << packet->fullSize() << " mtu=" <<
+    mtu << std::endl;
     return downStream->send(move(packet));
   }
-
-  assert(nextTag(packet) == PacketTag::clientData);
 
   ClientData clientData;
   NamedDataChunk namedDataChunk;
@@ -54,7 +52,6 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
   assert( namedDataChunk.shortName.fragmentID  == 0 );
   assert( fromVarInt( encryptedDataBlock.metaDataLen ) == 0 ); // TODO
 
-  // std::clog << "fragment input size: " << payloadSize << std::endl;
 
   uint16_t dataSize =  mtu - extraHeaderSizeBytes;
   if (dataSize < minPacketPayload) {
@@ -62,14 +59,13 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
   }
   assert(dataSize > 1);
 
-
   size_t numDone = 0;
   size_t numLeft = packet->size();
   uint8_t frag = 1;
 
   while (numLeft > 0) {
     size_t numUse = std::min(size_t(dataSize), numLeft);
-
+    std::clog << "numleft:" << numLeft << " datasize:" << dataSize <<  " numuse" << numUse << std::endl;
     std::unique_ptr<Packet> fragPacket = packet->clone();
 
     fragPacket->resize(numUse);
@@ -87,7 +83,7 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
     fragPacket << clientData;
 
     // std::clog << "Send Frag: " << *fragPacket << std::endl;
-    // std::clog << "Frag Send:" << fragPacket->shortName() << std::endl;
+    std::clog << frag << ": Frag Send:" << fragPacket->shortName() << std::endl;
 
     ok &= downStream->send(move(fragPacket));
 
@@ -114,10 +110,11 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
     // TODO - this is broken now, need to looka at shortname to decide if this
     // is a fragment or not
 
-    if (nextTag(packet) != PacketTag::relayData) {
+    if (nextTag(packet) != PacketTag::shortName) {
       return packet;
     }
 
+    /*
     bool ok= true;
     RelayData relayData;
     ok &= packet >> relayData;
@@ -125,12 +122,9 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
       //  TODO log bad packet
       return std::unique_ptr<Packet>(nullptr);
     }
+    */
 
-    while (nextTag(packet) != PacketTag::shortName) {
-
-      auto packetCopy = packet->clone();
-      packetCopy << relayData;
-
+    while (nextTag(packet) == PacketTag::shortName) {
       NamedDataChunk namedDataChunk;
       EncryptedDataBlock encryptedDataBlock;
       bool ok = true;
@@ -140,23 +134,34 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
         //  TODO log bad packet
         return std::unique_ptr<Packet>(nullptr);
       }
+			if (namedDataChunk.shortName.fragmentID == 0) {
+				// packet wasn't fragmented
+				// TODO (1): add explicit marking instead of checking fragmentID?
+				// TODO (2): hide the pop and push back tag semantics behind an api
+				//std::clog << "frag recv: unfragmented:" << namedDataChunk.shortName << std::endl;
+				packet << encryptedDataBlock;
+				packet << namedDataChunk;
+				return packet;
+			}
 
       uint16_t payloadSize = fromVarInt( encryptedDataBlock.cipherDataLen );
       assert(packet->size() >= payloadSize); // TODO - change log error
-
       packet->resize(packet->size() - payloadSize);
 
-      packetCopy->name = namedDataChunk.shortName;
+			auto packetCopy = packet->clone();
+			packetCopy->name = namedDataChunk.shortName;
       // TODO - set lifetime in packetCopy
 
-      // std::clog << "Frag Recv:" << name << " size=" << packet->size() <<
+      std::clog << "Frag Recv:" << namedDataChunk.shortName << " size=" << packet->size() << std::endl;
       // *packet << std::endl;
 
-      auto p = std::pair<MediaNet::ShortName, std::unique_ptr<Packet>>(
-          namedDataChunk.shortName, move(packetCopy));
+      //auto p = std::pair<MediaNet::ShortName, std::unique_ptr<Packet>>(
+      //    namedDataChunk.shortName, move(packetCopy));
       {
         std::lock_guard<std::mutex> lock(fragListMutex);
-        fragList.insert(move(p));
+        std::clog << "fragList: added:" << namedDataChunk.shortName << std::endl;
+        fragList.emplace(namedDataChunk.shortName, move(packetCopy));
+        //fragList.insert(move(p));
       }
 
       // TODO - clear out old fragments
@@ -167,6 +172,7 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
       int numFrag = 0;
       while (haveAll) {
         frag++;
+        std::clog << "processing frag: " << frag << std::endl;
         ShortName fragName = namedDataChunk.shortName;
         fragName.fragmentID = frag * 2;
         if (fragList.find(fragName) != fragList.end()) {
@@ -184,7 +190,7 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
 
       if (haveAll) {
         // form the new packet from all fragments and return
-        // std::clog << "HAVE ALL for: " << name << std::endl;
+        std::clog << "HAVE ALL for: " << namedDataChunk.shortName << std::endl;
         ShortName fragName = namedDataChunk.shortName;
 
         auto result = std::unique_ptr<Packet>(nullptr);
@@ -198,15 +204,13 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
           assert(fragPacket);
           fragList.erase(fragPair);
 
-          RelayData relayData;
           NamedDataChunk namedDataChunk;
           EncryptedDataBlock encryptedDataBlock;
 
-          fragPacket >> relayData;
           fragPacket >> namedDataChunk;
           fragPacket >> encryptedDataBlock;
 
-          //std::clog << "Adding fragment Name: " << namedDataChunk.shortName << std::endl;
+          std::clog << "(HAVEALL)Adding fragment Name: " << namedDataChunk.shortName << std::endl;
 
           uint32_t dataSize = fromVarInt( encryptedDataBlock.cipherDataLen );
 
@@ -241,11 +245,10 @@ std::unique_ptr<Packet> FragmentPipe::recv() {
 
         result << encryptedDataBlock;
         result << namedDataChunk;
-        result << relayData;
 
         result->name = namedDataChunk.shortName;
         result->setFragID(0, true);
-
+				std::clog << "(HAVEALL) returning assembled frame\n";
         return result;
       }
     }

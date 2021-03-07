@@ -124,10 +124,35 @@ void Packet::setFragID(const uint8_t fragmentID, bool lastFrag) {
   assert(fragmentID <= 63);
 
   name.fragmentID = fragmentID * 2 + (lastFrag ? 1 : 0);
+  std::clog <<"Setting fragId:" << fragmentID << "lastFrag?" << lastFrag << "compute:" << name.fragmentID;
 #if 0 // TODO REMOVE
    if (buffer.size() > 19) {
     assert(buffer.at(19) == packetTagTrunc(PacketTag::shortName));
     buffer.at(18) = fragmentID;
   }
 #endif
+}
+
+uint32_t Packet::getPathToken() const {
+	std::array<uint8_t , 4> tokenBytes = {0,0,0,0};
+	const int START = 1;
+	const int END = 5;
+	// bytes 1 to 5
+	std::copy(buffer.begin() + START, buffer.begin() + END, tokenBytes.begin());
+	return (tokenBytes[3] << 24) + (tokenBytes[2] << 16) + (tokenBytes[1] << 8) + (tokenBytes[0] << 0);
+}
+
+void Packet::setPathToken(uint32_t token)  {
+	std::array<uint8_t , 4> tokenBytes = {0,0,0,0};
+	tokenBytes[0] = uint8_t((token >> 0) & 0xFF);
+	tokenBytes[1] = uint8_t((token >> 8) & 0xFF);
+	tokenBytes[2] = uint8_t((token >> 16) & 0xFF);
+	tokenBytes[3] = uint8_t((token >> 24) & 0xFF);
+
+	int index = 1;
+	for(auto &v : tokenBytes) {
+		buffer[index] = v;
+		index++;
+	}
+
 }
