@@ -1,12 +1,12 @@
 
 #include <cassert>
 
-#include "encode.hh"
-#include "quicRServer.hh"
+#include "quicr/encode.hh"
+#include "quicr/quicRServer.hh"
 
-#include "connectionPipe.hh"
-#include "fakeLossPipe.hh"
-#include "udpPipe.hh"
+#include "quicr/connectionPipe.hh"
+#include "quicr/fakeLossPipe.hh"
+#include "quicr/udpPipe.hh"
 
 using namespace MediaNet;
 // TODO: Add other elements for pipeline - loss,spinBit, rateCtrl

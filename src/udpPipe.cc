@@ -20,8 +20,8 @@
 #include <ws2tcpip.h>
 #endif
 
-#include "packet.hh"
-#include "udpPipe.hh"
+#include "quicr/packet.hh"
+#include "quicr/udpPipe.hh"
 
 using namespace MediaNet;
 

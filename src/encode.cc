@@ -1,8 +1,8 @@
 #include <cassert>
 #include <iostream>
 
-#include "encode.hh"
-#include "packet.hh"
+#include "quicr/encode.hh"
+#include "quicr/packet.hh"
 
 using namespace MediaNet;
 ///

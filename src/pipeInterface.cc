@@ -1,7 +1,7 @@
 
 #include <cassert>
 
-#include "pipeInterface.hh"
+#include "quicr/pipeInterface.hh"
 
 using namespace MediaNet;
 

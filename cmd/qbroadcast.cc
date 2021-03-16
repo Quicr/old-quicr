@@ -2,9 +2,9 @@
 #include <iostream>
 #include <thread>
 
-#include "encode.hh"
+#include "quicr/encode.hh"
 #include "qbroadcast.hh"
-#include "quicRServer.hh"
+#include "quicr/quicRServer.hh"
 
 using namespace MediaNet;
 

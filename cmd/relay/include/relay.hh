@@ -7,9 +7,9 @@
 #include <random>
 
 #include "fib.hh"
-#include "packet.hh"
-#include "encode.hh"
-#include "quicRServer.hh"
+#include "quicr/packet.hh"
+#include "quicr/encode.hh"
+#include "quicr/quicRServer.hh"
 
 class Relay {
 

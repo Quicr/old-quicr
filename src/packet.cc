@@ -17,7 +17,7 @@
 #include <ws2tcpip.h>
 #endif
 
-#include "packet.hh"
+#include "quicr/packet.hh"
 #include <iomanip>
 #include <sstream>
 #include <array>
