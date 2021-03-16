@@ -2,9 +2,9 @@
 #include <random>
 #include <thread>
 
-#include "connectionPipe.hh"
-#include "encode.hh"
-#include "packet.hh"
+#include "quicr/connectionPipe.hh"
+#include "quicr/encode.hh"
+#include "quicr/packet.hh"
 
 using namespace MediaNet;
 

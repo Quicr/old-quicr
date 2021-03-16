@@ -1,19 +1,19 @@
 
 #include <cassert>
 
-#include "encode.hh"
-#include "quicRClient.hh"
+#include "quicr/encode.hh"
+#include "quicr/quicRClient.hh"
 
-#include "connectionPipe.hh"
-#include "crazyBitPipe.hh"
-#include "encryptPipe.hh"
-#include "fecPipe.hh"
-#include "fragmentPipe.hh"
-#include "pacerPipe.hh"
-#include "priorityPipe.hh"
-#include "retransmitPipe.hh"
-#include "subscribePipe.hh"
-#include "udpPipe.hh"
+#include "quicr/connectionPipe.hh"
+#include "quicr/crazyBitPipe.hh"
+#include "quicr/encryptPipe.hh"
+#include "quicr/fecPipe.hh"
+#include "quicr/fragmentPipe.hh"
+#include "quicr/pacerPipe.hh"
+#include "quicr/priorityPipe.hh"
+#include "quicr/retransmitPipe.hh"
+#include "quicr/subscribePipe.hh"
+#include "quicr/udpPipe.hh"
 
 using namespace MediaNet;
 

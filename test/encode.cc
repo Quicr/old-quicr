@@ -1,9 +1,9 @@
 #include <doctest/doctest.h>
 #include <memory>
 
-#include "encode.hh"
-#include "name.hh"
-#include "packet.hh"
+#include "quicr/encode.hh"
+#include "quicr/name.hh"
+#include "quicr/packet.hh"
 
 using namespace MediaNet;
 

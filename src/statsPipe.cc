@@ -3,7 +3,7 @@
 #include <cassert>
 #include <iostream>
 
-#include "statsPipe.hh"
+#include "quicr/statsPipe.hh"
 
 using namespace MediaNet;
 

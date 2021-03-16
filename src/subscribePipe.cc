@@ -3,10 +3,10 @@
 #include <cassert>
 #include <iostream>
 
-#include "encode.hh"
-#include "name.hh"
-#include "packet.hh"
-#include "subscribePipe.hh"
+#include "quicr/encode.hh"
+#include "quicr/name.hh"
+#include "quicr/packet.hh"
+#include "quicr/subscribePipe.hh"
 
 using namespace MediaNet;
 

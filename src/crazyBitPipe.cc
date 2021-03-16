@@ -4,8 +4,8 @@
 #include <chrono>
 #include <iostream>
 
-#include "crazyBitPipe.hh"
-#include "packet.hh"
+#include "quicr/crazyBitPipe.hh"
+#include "quicr/packet.hh"
 
 using namespace MediaNet;
 

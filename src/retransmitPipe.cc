@@ -3,9 +3,9 @@
 #include <cassert>
 #include <iostream>
 
-#include "encode.hh"
-#include "packet.hh"
-#include "retransmitPipe.hh"
+#include "quicr/encode.hh"
+#include "quicr/packet.hh"
+#include "quicr/retransmitPipe.hh"
 
 using namespace MediaNet;
 

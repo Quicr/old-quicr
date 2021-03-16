@@ -2,9 +2,9 @@
 #include <cassert>
 #include <thread>
 
-#include "encode.hh"
-#include "pacerPipe.hh"
-#include "packet.hh"
+#include "quicr/encode.hh"
+#include "quicr/pacerPipe.hh"
+#include "quicr/packet.hh"
 
 using namespace MediaNet;
 

@@ -2,8 +2,8 @@
 #include <iostream>
 #include <thread>
 
-#include "encode.hh"
-#include <quicRClient.hh>
+#include "quicr/encode.hh"
+#include <quicr/quicRClient.hh>
 
 using namespace MediaNet;
 

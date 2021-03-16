@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cassert>
 
-#include "name.hh"
+#include "quicr/name.hh"
 
 using namespace MediaNet;
 
