@@ -2,9 +2,9 @@
 
 #include "encryptPipe.hh"
 #include "packet.hh"
+#include "encode.hh"
 #include <cassert>
 #include <iostream>
-#include <sstream>
 
 using namespace MediaNet;
 
@@ -93,7 +93,7 @@ std::unique_ptr<Packet> EncryptPipe::recv() {
       assert( fromVarInt( encryptedDataBlock.metaDataLen ) == 0 ); // TODO
       uint16_t payloadSize = fromVarInt( encryptedDataBlock.cipherDataLen );
       assert(payloadSize>0);
-      packet->headerSize = 1; // TODO make it constant
+      packet->headerSize = QUICR_HEADER_SIZE_BYTES; // TODO make it constant
       auto decrypted = unprotect(packet, payloadSize);
 
       // TODO - how does decrypt auth error get hangled

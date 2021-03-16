@@ -14,15 +14,15 @@ SubscribePipe::SubscribePipe(PipeInterface *t) : PipeInterface(t) {}
 
 bool SubscribePipe::subscribe(const ShortName &name) {
 
-  subscribeList.push_back(name);
+  subscribeList.emplace(name, true);
 
   // send subscribe packet
   auto packet = std::make_unique<Packet>();
   packet->reserve(100); // TODO tune
 
   auto subReq = Subscribe{name};
-  // TODO: moving setting header magic into a function
-  packet << PacketTag::headerData;
+  auto hdr = Packet::Header(PacketTag::headerData);
+  packet << hdr;
   packet << subReq;
 
   std::cout << "Subscribe: " << packet->to_hex() << std::endl;
@@ -41,23 +41,17 @@ std::unique_ptr<Packet> SubscribePipe::recv() {
 
   if (packet) {
     // std::clog << "Sub recv: fullSize=" << packet->fullSize() << " size=" <<
-    // packet->size() << std::endl;
-    if (packet->fullSize() > 19) {
-      if (packet->buffer.at(19) == packetTagTrunc(PacketTag::shortName)) {
-
-        auto clone = packet->clone();
-        clone->resize(20);
-        ShortName name{};
-        bool ok = (clone >> name);
-        if (!ok) {
-          // assert(0); // TODO - remove and log bad packet
-          return std::unique_ptr<Packet>(nullptr);
-        }
-        packet->name = name;
-
-        // std::clog << "Sub Recv: " << packet->shortName() << std::endl;
-      }
-    }
+    //packet->size() << std::endl;
+    if(nextTag(packet) == PacketTag::shortName) {
+		NamedDataChunk name{};
+		bool ok = (packet >> name);
+		if (!ok) {
+			// assert(0); // TODO - remove and log bad packet
+			return nullptr;
+		}
+		packet->name = name.shortName;
+		packet << name;
+	}
   }
 
   return packet;

@@ -36,6 +36,22 @@ TEST_CASE("ShortName encode/decode") {
   CHECK_EQ(name, nameOut);
 }
 
+TEST_CASE("message header encode/decode") {
+	auto header_in = Packet::Header{PacketTag::headerSyn, 1};
+	auto packet = std::make_unique<Packet>();
+	packet << header_in;
+	auto token = packet->getPathToken();
+	REQUIRE_EQ(token, header_in.pathToken);
+	packet->setPathToken(0x2000);
+	token = packet->getPathToken();
+	REQUIRE_EQ(token, 0x2000);
+
+	Packet::Header header_out{};
+	packet >> header_out;
+  REQUIRE_EQ(header_out.pathToken, 0x2000);
+  REQUIRE_EQ(header_in.tag, header_out.tag);
+}
+
 TEST_CASE("RelayData encode/decode") {
   auto packet = std::make_unique<Packet>();
 
@@ -246,4 +262,3 @@ TEST_CASE("RelayData encode/decode") {
   CHECK_EQ(dataBlockIn.authTagLen,dataBlockOut.authTagLen);
   CHECK_EQ(dataBlockIn.cipherDataLen,dataBlockOut.cipherDataLen);
 }
-

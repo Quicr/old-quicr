@@ -67,6 +67,8 @@ public:
   bool start(uint16_t port, std::string server,
              PipeInterface *upStream) override;
 
+  // Overrides from PipelineInterface
+  bool send(std::unique_ptr<Packet>) override;
   std::unique_ptr<Packet> recv() override;
 
 private:
@@ -78,7 +80,7 @@ private:
 
   uint8_t syncs_awaiting_response = 0;
   uint32_t senderID;
-  uint64_t token;
+  uint32_t pathToken = 0;
   uint64_t cookie = 0;
   bool syncLoopRunning = false;
 };
@@ -103,17 +105,20 @@ public:
   explicit ServerConnectionPipe(PipeInterface *t);
   bool start(uint16_t port, std::string server,
              PipeInterface *upStream) override;
+  // Overrides from PipelineInterface
+  bool send(std::unique_ptr<Packet>) override;
   std::unique_ptr<Packet> recv() override;
 
 private:
   void processSyn(std::unique_ptr<MediaNet::Packet> &packet);
   void processRst(std::unique_ptr<MediaNet::Packet> &packet);
-  void sendSyncAck(const MediaNet::IpAddr &to, uint64_t authSecret);
+  void sendSyncAck(const MediaNet::IpAddr &to, uint32_t authSecret);
 
   // TODO: need to timeout on the entries in this map to
   // avoid DOS attacks
   std::map<MediaNet::IpAddr, std::tuple<timepoint, uint32_t>> cookies;
   std::map<MediaNet::IpAddr, std::unique_ptr<Connection>> connectionMap;
+  std::map<MediaNet::IpAddr, uint32_t> pathTokens;
 
   // TODO revisit this (use cryptographic random)
   std::mt19937 randomGen;

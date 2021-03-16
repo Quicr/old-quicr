@@ -7,10 +7,9 @@
 
 #include "packetTag.hh"
 #include "name.hh"
+#include "packet.hh"
 
 namespace MediaNet {
-
-class Packet;
 
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint64_t val);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, uint32_t val);
@@ -56,6 +55,13 @@ PacketTag nextTag(uint16_t truncTag);
 
 bool operator>>(std::unique_ptr<Packet> &p, PacketTag &tag);
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p, PacketTag tag);
+
+/* Message Header */
+std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,
+																		const Packet::Header &msg);
+
+bool operator>>(std::unique_ptr<Packet> &p, Packet::Header &msg);
+
 
 /* ShortName */
 std::unique_ptr<Packet> &operator<<(std::unique_ptr<Packet> &p,

@@ -38,7 +38,7 @@ void ConnectionPipe::stop() {
 ///
 
 ClientConnectionPipe::ClientConnectionPipe(PipeInterface *t)
-    : ConnectionPipe(t), senderID(0), token(0) {}
+    : ConnectionPipe(t), senderID(0), pathToken(0) {}
 
 bool ClientConnectionPipe::start(uint16_t port, std::string server,
                                  PipeInterface *upStream) {
@@ -48,6 +48,12 @@ bool ClientConnectionPipe::start(uint16_t port, std::string server,
     runSyncLoop();
   }
   return ret;
+}
+
+bool ClientConnectionPipe::send(std::unique_ptr<Packet> packet) {
+	// insert path token
+	packet->setPathToken(pathToken);
+	return PipeInterface::send(std::move(packet));
 }
 
 std::unique_ptr<Packet> ClientConnectionPipe::recv() {
@@ -86,13 +92,14 @@ std::unique_ptr<Packet> ClientConnectionPipe::recv() {
 void ClientConnectionPipe::setAuthInfo(uint32_t sender, uint64_t token_in) {
   senderID = sender;
   assert(senderID > 0);
-  token = token_in;
+  pathToken = token_in;
 }
 
 void ClientConnectionPipe::sendSync() {
   auto packet = std::make_unique<Packet>();
   assert(packet);
-  packet << PacketTag::headerSyn;
+  auto header = Packet::Header{PacketTag::headerSyn, pathToken};
+  packet << header;
   NetSyncReq synReq{};
   const auto now = std::chrono::system_clock::now();
   const auto duration = now.time_since_epoch();
@@ -156,11 +163,28 @@ bool ServerConnectionPipe::start(uint16_t port, std::string server,
   return ret;
 }
 
+bool ServerConnectionPipe::send(std::unique_ptr<Packet> packet) {
+	// insert path token
+	packet->setPathToken(pathTokens.at(packet->getDst()));
+	return ConnectionPipe::send(std::move(packet));
+}
+
 std::unique_ptr<Packet> ServerConnectionPipe::recv() {
   auto packet = PipeInterface::recv();
   if (packet == nullptr) {
     return packet;
   }
+
+  auto token = packet->getPathToken();
+  auto it = pathTokens.find(packet->getSrc());
+  if (it != pathTokens.end()) {
+  	if (token != it->second) {
+  		std::clog << IpAddr::toString(packet->getSrc()) << " token changed\n";
+  	}
+  }
+
+  // overwrite by default
+  pathTokens[packet->getSrc()] = token;
 
   auto tag = nextTag(packet);
 
@@ -203,9 +227,10 @@ void ServerConnectionPipe::processSyn(
                     std::make_tuple(std::chrono::steady_clock::now(), cookie));
 
     auto rstPkt = std::make_unique<Packet>();
+    auto header = Packet::Header(PacketTag::headerRst, pathTokens.at(packet->getSrc()));
     NetResetRetry rstRetry{};
     rstRetry.cookie = cookie;
-    rstPkt << PacketTag::headerRst;
+    rstPkt << header;
     rstPkt << rstRetry;
     rstPkt->setDst(packet->getSrc());
     std::clog << "new connection attempt, generate cookie:" << cookie << std::endl;
@@ -248,7 +273,7 @@ void ServerConnectionPipe::processRst(
 }
 
 void ServerConnectionPipe::sendSyncAck(const MediaNet::IpAddr &to,
-                                       uint64_t authSecret) {
+                                       uint32_t authSecret) {
   (void)authSecret; // TODO
   if (dont_send_sync_ack) {
     std::clog << "Server not sending syn-ack\n";
@@ -260,8 +285,8 @@ void ServerConnectionPipe::sendSyncAck(const MediaNet::IpAddr &to,
   const auto duration = now.time_since_epoch();
   syncAck.serverTimeMs =
       std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-  // syncAck.authSecret = authSecret;
-  syncAckPkt << PacketTag::headerSynAck;
+  auto header = Packet::Header{PacketTag::headerSynAck, authSecret};
+  syncAckPkt << header;
   syncAckPkt << syncAck;
   syncAckPkt->setDst(to);
   // std::clog << "SyncAck: " << syncAckPkt->to_hex() << std::endl;

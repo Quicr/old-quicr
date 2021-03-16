@@ -15,8 +15,8 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-
-#include "encode.hh"
+#include <memory>
+#include "packetTag.hh"
 #include "name.hh"
 
 namespace MediaNet {
@@ -35,7 +35,8 @@ struct IpAddr {
   bool operator<(const IpAddr &rhs) const;
 };
 
-// static constexpr QUICR_HEADER_SIZE_BYTES = 9; // (1) magic + (8) pathToken
+static constexpr int QUICR_HEADER_SIZE_BYTES = 6; // (1) magic + (4) pathToken + (1) tag
+
 class Packet {
   // friend std::ostream &operator<<(std::ostream &os, const Packet &dt);
   // friend MediaNet::PacketTag MediaNet::nextTag(std::unique_ptr<Packet> &p);
@@ -50,32 +51,38 @@ class Packet {
   friend EncryptPipe;
 
 public:
+	struct Header {
+		PacketTag tag;
+		uint32_t pathToken;
+
+		Header(){}
+		explicit Header(PacketTag tag);
+		Header(PacketTag tag, uint32_t token);
+	};
+
   Packet();
   void copy(const Packet &p);
   [[nodiscard]] std::unique_ptr<Packet> clone() const;
 
-  // void push( PacketTag tag, const std::vector<uint8_t> value );
-  // PacketTag peek();
-  // std::vector<uint8_t> pop( PacketTag tag );
-
   uint8_t &data() { return buffer.at(headerSize); }
   uint8_t &fullData() { return buffer.at(0); }
 
-  //[[nodiscard]] const uint8_t &constData() const { return
-  // buffer.at(headerSize); }
+
   [[nodiscard]] size_t size() const;
   [[nodiscard]] size_t fullSize() const { return buffer.size(); }
   void resize(int size) { buffer.resize(headerSize + size); }
   void resizeFull(int size) { buffer.resize(size); }
 
-  void reserve(int s) { buffer.reserve(s + headerSize); }
-  // bool empty( ) { return (size()  <= 0); }
+  void reserve(int s) { buffer.reserve(headerSize + s); }
 
   void setReliable(bool reliable = true);
   [[nodiscard]] bool isReliable() const;
 
   void setFEC(bool doFec = true);
   bool getFEC() const;
+
+  uint32_t getPathToken() const;
+  void setPathToken(uint32_t token);
 
   [[nodiscard]] const IpAddr &getSrc() const;
   [[maybe_unused]] void setSrc(const IpAddr &src);
@@ -107,8 +114,8 @@ public:
   std::string to_hex();
 
 private:
-  std::vector<uint8_t> buffer; // TODO make private
-  int headerSize;
+  std::vector<uint8_t> buffer;
+  int headerSize = QUICR_HEADER_SIZE_BYTES;
 
   MediaNet::ShortName name;
 

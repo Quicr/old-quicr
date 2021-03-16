@@ -2,7 +2,7 @@
 
 #include <cstdint>
 #include <memory>
-#include <vector>
+#include <map>
 
 #include "packet.hh"
 #include "pipeInterface.hh"
@@ -17,7 +17,7 @@ public:
   std::unique_ptr<Packet> recv() override;
 
 private:
-  std::vector<MediaNet::ShortName> subscribeList;
+  std::map<MediaNet::ShortName, bool> subscribeList;
 };
 
 } // namespace MediaNet
