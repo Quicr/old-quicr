@@ -9,6 +9,7 @@
 #include <string>
 #include <thread>
 #include <variant>
+#include <chrono>
 
 #include "packet.hh"
 #include "pipeInterface.hh"
