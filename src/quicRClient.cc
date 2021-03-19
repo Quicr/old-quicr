@@ -220,7 +220,10 @@ void QuicRClient::setBitrateUp(uint64_t minBps, uint64_t startBps,
 ///
 void QuicRClient::runTimerThread() {
 	while(!shutDown) {
-		firstPipe->timepoint_now(std::chrono::steady_clock::now());
+		auto now = std::chrono::steady_clock::now();
+		firstPipe->timepoint_now(now);
+		//auto after = std::chrono::steady_clock::now();
+		//std::clog <<"timer-elapsed-count:" << std::chrono::duration_cast<std::chrono::milliseconds>(after-now).count() << std::endl;
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 }

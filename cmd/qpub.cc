@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
     do {
       auto ack = qClient.recv();
       if (ack) {
-        std::clog << "got an ack" << std::endl;
+        // std::clog << "got an ack" << std::endl;
       } else {
         break;
       }
