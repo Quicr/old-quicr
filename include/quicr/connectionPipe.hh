@@ -15,17 +15,6 @@
 
 namespace MediaNet {
 
-using WaitHandler = std::function<void()>;
-struct Timer {
-  static void wait(int msec, WaitHandler &&callback) {
-    std::thread([=]() {
-      auto wait_time = std::chrono::milliseconds(msec);
-      std::this_thread::sleep_for(wait_time);
-      callback();
-    }).detach();
-  }
-};
-
 ///
 /// ConnectionPipe
 ///
