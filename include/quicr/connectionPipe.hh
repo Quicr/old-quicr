@@ -13,8 +13,6 @@
 #include "packet.hh"
 #include "pipeInterface.hh"
 
-#include <chrono>
-
 namespace MediaNet {
 
 ///
