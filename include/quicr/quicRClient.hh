@@ -33,8 +33,9 @@ public:
                     uint64_t token);
   virtual bool ready() const;
   virtual void close();
+	virtual void setCurrentTime(const std::chrono::time_point<std::chrono::steady_clock>& now);
 
-  // Initialize sframe context with the base secret provided by MLS key
+	// Initialize sframe context with the base secret provided by MLS key
   // exchange Note: This is hard coded secret until we bring in MLS
   void setCryptoKey(sframe::MLSContext::EpochID epoch,
                     const sframe::bytes &mls_epoch_secret);
@@ -68,7 +69,15 @@ void setDecryptionKey(uint32_t clientID, std::vector<uint8_t> salt,
   //               uint32_t senderID=0, uint8_t sourceID=0 );
 
 private:
-  UdpPipe udpPipe;
+
+	// timer thread
+	// TODO: if app can provide its own timepoint, this
+	// thread shouldn't be run
+	void runTimerThread();
+	std::thread timerThread;
+
+
+	UdpPipe udpPipe;
   FakeLossPipe fakeLossPipe;
   CrazyBitPipe crazyBitPipe;
   ClientConnectionPipe connectionPipe;
@@ -84,6 +93,7 @@ private:
 
   // uint32_t pubClientID;
   // uint64_t secToken;
+  bool shutDown = false;
 };
 
 } // namespace MediaNet

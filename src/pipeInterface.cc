@@ -35,6 +35,11 @@ void PipeInterface::stop() {
   }
 }
 
+void PipeInterface::timepoint_now(const std::chrono::time_point<std::chrono::steady_clock> &now) {
+	assert(downStream);
+	return downStream->timepoint_now(now);
+}
+
 bool PipeInterface::send(std::unique_ptr<Packet> packet) {
   assert(downStream);
   return downStream->send(move(packet));

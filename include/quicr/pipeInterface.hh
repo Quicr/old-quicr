@@ -51,6 +51,8 @@ public:
   virtual void updateBitrateUp(uint64_t minBps, uint64_t startBps,
                                uint64_t maxBps);
 
+  virtual void timepoint_now(const std::chrono::time_point<std::chrono::steady_clock>& now);
+
 protected:
   explicit PipeInterface(PipeInterface *downStream);
   virtual ~PipeInterface();

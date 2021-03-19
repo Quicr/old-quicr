@@ -70,19 +70,19 @@ public:
   // Overrides from PipelineInterface
   bool send(std::unique_ptr<Packet>) override;
   std::unique_ptr<Packet> recv() override;
+	void timepoint_now(const std::chrono::time_point<std::chrono::steady_clock>& now) override;
 
 private:
   static constexpr int syn_timeout_msec = 1000;
   static constexpr int max_connection_retry_cnt = 5;
 
-  void runSyncLoop();
   void sendSync();
 
   uint8_t syncs_awaiting_response = 0;
   uint32_t senderID;
   uint32_t pathToken = 0;
   uint64_t cookie = 0;
-  bool syncLoopRunning = false;
+	std::chrono::time_point<std::chrono::steady_clock> last_sync_point;
 };
 
 ///

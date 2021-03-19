@@ -45,7 +45,6 @@ bool ClientConnectionPipe::start(uint16_t port, std::string server,
   bool ret = ConnectionPipe::start(port, server, upStream);
   if (ret) {
     sendSync();
-    runSyncLoop();
   }
   return ret;
 }
@@ -68,11 +67,6 @@ std::unique_ptr<Packet> ClientConnectionPipe::recv() {
   	NetSyncAck syncAck{};
     packet >> syncAck;
 
-    // kickoff periodic sync flow
-    if (!syncLoopRunning) {
-      runSyncLoop();
-      syncLoopRunning = true;
-    }
     state = Connected{};
     // don't need to report syncAck up in the chain
     return nullptr;
@@ -89,6 +83,23 @@ std::unique_ptr<Packet> ClientConnectionPipe::recv() {
   return packet;
 }
 
+void ClientConnectionPipe::timepoint_now(const std::chrono::time_point<std::chrono::steady_clock>& now) {
+  // verify if time expired since last sync point
+  auto expended = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_sync_point).count();
+	if (expended >= syn_timeout_msec) {
+		if (std::holds_alternative<ConnectionPending>(state)) {
+			if (syncs_awaiting_response >= max_connection_retry_cnt) {
+				stop();
+				return;
+			}
+			syncs_awaiting_response++;
+			return;
+		}
+		// trigger new sync point
+		sendSync();
+	}
+}
+
 void ClientConnectionPipe::setAuthInfo(uint32_t sender, uint64_t token_in) {
   senderID = sender;
   assert(senderID > 0);
@@ -101,11 +112,11 @@ void ClientConnectionPipe::sendSync() {
   auto header = Packet::Header{PacketTag::headerSyn, pathToken};
   packet << header;
   NetSyncReq synReq{};
-  const auto now = std::chrono::system_clock::now();
+  const auto now = std::chrono::steady_clock::now();
+	last_sync_point = now;
   const auto duration = now.time_since_epoch();
   synReq.clientTimeMs =
       std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-  ;
   synReq.senderId = senderID;
   synReq.supportedFeaturesVec = 1;
   synReq.cookie = cookie;
@@ -115,27 +126,6 @@ void ClientConnectionPipe::sendSync() {
   // std::clog <<"sync Packet: " << packet->to_hex() << std::endl;
   send(move(packet));
   state = ConnectionPending{};
-}
-
-void ClientConnectionPipe::runSyncLoop() {
-  if (!syncLoopRunning) {
-    syncLoopRunning = true;
-  }
-
-  auto resync_callback = [=]() {
-    // check status and send a resync event
-    if (std::holds_alternative<ConnectionPending>(state)) {
-      if (syncs_awaiting_response >= max_connection_retry_cnt) {
-        stop();
-        return;
-      }
-      syncs_awaiting_response++;
-    }
-    runSyncLoop();
-  };
-
-  sendSync();
-  Timer::wait(syn_timeout_msec, std::move(resync_callback));
 }
 
 ///

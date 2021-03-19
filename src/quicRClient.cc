@@ -35,7 +35,14 @@ QuicRClient::~QuicRClient() { firstPipe->stop(); }
 
 bool QuicRClient::ready() const { return firstPipe->ready(); }
 
-void QuicRClient::close() { firstPipe->stop(); }
+void QuicRClient::close() {
+	shutDown = true;
+	firstPipe->stop();
+}
+
+void QuicRClient::setCurrentTime(const std::chrono::time_point<std::chrono::steady_clock> &now) {
+  firstPipe->timepoint_now(now);
+}
 
 void QuicRClient::setCryptoKey(sframe::MLSContext::EpochID epoch,
                                const sframe::bytes &mls_epoch_secret) {
@@ -151,7 +158,14 @@ bool QuicRClient::open(uint32_t clientID, const std::string relayName,
   (void)token;    // TODO
   connectionPipe.setAuthInfo(clientID, token);
 
-  return firstPipe->start(port, relayName, nullptr);
+
+  auto ret = firstPipe->start(port, relayName, nullptr);
+  if (ret) {
+		// kick off timer thread
+		timerThread = std::thread([this]() { this->runTimerThread(); });
+	}
+
+  return ret;
 }
 
 uint64_t QuicRClient::getTargetUpstreamBitrate() {
@@ -199,4 +213,14 @@ void QuicRClient::setBitrateUp(uint64_t minBps, uint64_t startBps,
                                uint64_t maxBps) {
   assert(firstPipe);
   firstPipe->updateBitrateUp(minBps, startBps, maxBps);
+}
+
+///
+/// Private implementation
+///
+void QuicRClient::runTimerThread() {
+	while(!shutDown) {
+		firstPipe->timepoint_now(std::chrono::steady_clock::now());
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	}
 }
