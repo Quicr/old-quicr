@@ -7,7 +7,6 @@
 #include <optional>
 #include <random>
 #include <string>
-#include <thread>
 #include <variant>
 
 #include "packet.hh"

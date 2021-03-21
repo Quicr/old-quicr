@@ -1,6 +1,5 @@
 
 #include <cassert>
-#include <thread>
 
 #include "quicr/encode.hh"
 #include "quicr/pacerPipe.hh"

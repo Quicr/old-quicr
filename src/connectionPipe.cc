@@ -1,6 +1,5 @@
 #include <cassert>
 #include <random>
-#include <thread>
 
 #include "quicr/connectionPipe.hh"
 #include "quicr/encode.hh"
