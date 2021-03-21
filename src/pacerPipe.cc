@@ -2,8 +2,8 @@
 #include <cassert>
 #include <thread>
 
-#include "quicr/encode.hh"
-#include "quicr/pacerPipe.hh"
+#include "encode.hh"
+#include "pacerPipe.hh"
 #include "quicr/packet.hh"
 
 using namespace MediaNet;

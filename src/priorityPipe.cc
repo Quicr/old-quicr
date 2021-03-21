@@ -3,8 +3,8 @@
 #include <cassert>
 #include <iostream>
 
+#include "priorityPipe.hh"
 #include "quicr/packet.hh"
-#include "quicr/priorityPipe.hh"
 
 using namespace MediaNet;
 

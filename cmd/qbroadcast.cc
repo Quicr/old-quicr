@@ -2,7 +2,7 @@
 #include <iostream>
 #include <thread>
 
-#include "quicr/encode.hh"
+#include "../src/encode.hh"
 #include "qbroadcast.hh"
 #include "quicr/quicRServer.hh"
 

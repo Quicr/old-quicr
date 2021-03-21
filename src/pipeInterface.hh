@@ -3,7 +3,7 @@
 #include <memory>
 #include <string>
 
-#include "packet.hh"
+#include "quicr/packet.hh"
 
 namespace MediaNet {
 

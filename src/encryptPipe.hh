@@ -3,8 +3,8 @@
 #include <cstdint>
 #include <memory>
 
-#include "packet.hh"
 #include "pipeInterface.hh"
+#include "quicr/packet.hh"
 
 #include <sframe/sframe.h>
 

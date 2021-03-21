@@ -21,7 +21,7 @@
 #endif
 
 #include "quicr/packet.hh"
-#include "quicr/udpPipe.hh"
+#include "udpPipe.hh"
 
 using namespace MediaNet;
 

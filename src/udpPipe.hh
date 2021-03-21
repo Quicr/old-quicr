@@ -14,8 +14,8 @@
 #include <cstdint>
 #include <string>
 
-#include "packet.hh"
 #include "pipeInterface.hh"
+#include "quicr/packet.hh"
 
 namespace MediaNet {
 

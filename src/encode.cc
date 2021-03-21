@@ -1,7 +1,7 @@
 #include <cassert>
 #include <iostream>
 
-#include "quicr/encode.hh"
+#include "encode.hh"
 #include "quicr/packet.hh"
 
 using namespace MediaNet;

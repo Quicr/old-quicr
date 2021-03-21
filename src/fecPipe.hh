@@ -5,8 +5,8 @@
 #include <memory>
 #include <utility> // for pair
 
-#include "packet.hh"
 #include "pipeInterface.hh"
+#include "quicr/packet.hh"
 
 namespace MediaNet {
 

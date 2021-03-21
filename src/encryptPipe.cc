@@ -1,8 +1,8 @@
 
 
-#include "quicr/encryptPipe.hh"
+#include "encryptPipe.hh"
+#include "encode.hh"
 #include "quicr/packet.hh"
-#include "quicr/encode.hh"
 #include <cassert>
 #include <iostream>
 

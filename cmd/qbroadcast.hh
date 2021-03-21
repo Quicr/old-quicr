@@ -5,9 +5,9 @@
 #include <map>
 #include <random>
 
+#include "../src/udpPipe.hh"
 #include "quicr/packet.hh"
 #include "quicr/quicRServer.hh"
-#include "quicr/udpPipe.hh"
 
 class Connection {
 public:

@@ -4,7 +4,7 @@
 #include <iomanip>
 #include <iostream>
 
-#include "quicr/rateCtrl.hh"
+#include "rateCtrl.hh"
 
 using namespace MediaNet;
 

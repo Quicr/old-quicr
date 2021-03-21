@@ -5,20 +5,20 @@
 #include <string>
 //#include <utility> // for pair
 
-#include "connectionPipe.hh"
-#include "crazyBitPipe.hh"
-#include "encryptPipe.hh"
-#include "fakeLossPipe.hh"
-#include "fecPipe.hh"
-#include "fragmentPipe.hh"
-#include "pacerPipe.hh"
+#include "../../src/connectionPipe.hh"
+#include "../../src/crazyBitPipe.hh"
+#include "../../src/encryptPipe.hh"
+#include "../../src/fakeLossPipe.hh"
+#include "../../src/fecPipe.hh"
+#include "../../src/fragmentPipe.hh"
+#include "../../src/pacerPipe.hh"
+#include "../../src/pipeInterface.hh"
+#include "../../src/priorityPipe.hh"
+#include "../../src/retransmitPipe.hh"
+#include "../../src/statsPipe.hh"
+#include "../../src/subscribePipe.hh"
+#include "../../src/udpPipe.hh"
 #include "packet.hh"
-#include "pipeInterface.hh"
-#include "priorityPipe.hh"
-#include "retransmitPipe.hh"
-#include "statsPipe.hh"
-#include "subscribePipe.hh"
-#include "udpPipe.hh"
 
 namespace MediaNet {
 

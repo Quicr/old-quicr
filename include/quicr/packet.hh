@@ -12,12 +12,12 @@
 #include <ws2tcpip.h>
 #endif
 
+#include "../../src/packetTag.hh"
+#include "shortName.hh"
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
-#include "packetTag.hh"
-#include "name.hh"
 
 namespace MediaNet {
 

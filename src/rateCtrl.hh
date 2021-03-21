@@ -3,8 +3,8 @@
 #include <chrono>
 #include <cstdint>
 
-#include "packet.hh"
 #include "pipeInterface.hh"
+#include "quicr/packet.hh"
 
 using namespace MediaNet;
 

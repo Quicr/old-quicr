@@ -4,7 +4,7 @@
 #include <chrono>
 #include <iostream>
 
-#include "quicr/fecPipe.hh"
+#include "fecPipe.hh"
 #include "quicr/packet.hh"
 
 using namespace MediaNet;

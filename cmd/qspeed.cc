@@ -5,7 +5,7 @@
 #include <iostream>
 #include <thread>
 
-#include "quicr/encode.hh"
+#include "../src/encode.hh"
 #include <quicr/quicRClient.hh>
 
 using namespace MediaNet;
