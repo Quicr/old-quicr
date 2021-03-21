@@ -21,7 +21,7 @@ void FragmentPipe::updateStat(PipeInterface::StatName stat, uint64_t value) {
 }
 
 bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
-  assert(downStream);
+  assert(nextPipe);
 
   // std::clog << "Frag::Send packet " << *packet << std::endl;
 
@@ -33,7 +33,7 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
   if (packet->fullSize() + extraHeaderSizeBytes <= mtu) {
     // std::clog << "no fragment as size=" << packet->fullSize() << " mtu=" <<
     // mtu << std::endl;
-    return downStream->send(move(packet));
+    return nextPipe->send(move(packet));
   }
 
   ClientData clientData;
@@ -84,7 +84,7 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
     // std::clog << "Send Frag: " << *fragPacket << std::endl;
     // std::clog << frag << ": Frag Send:" << fragPacket->shortName() << std::endl;
 
-    ok &= downStream->send(move(fragPacket));
+    ok &= nextPipe->send(move(fragPacket));
 
     frag++;
 
@@ -97,11 +97,11 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
 std::unique_ptr<Packet> FragmentPipe::recv() {
   // TODO - cache fragments and reassemble then pass on the when full packet is
   // received
-  assert(downStream);
+  assert(nextPipe);
 
   while (true) {
 
-    auto packet = downStream->recv();
+    auto packet = nextPipe->recv();
     if (!packet) {
       return packet;
     }

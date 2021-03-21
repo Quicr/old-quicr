@@ -25,7 +25,7 @@ public:
     bad // must be last
   };
 
-  virtual bool start(uint16_t port, std::string server,
+  virtual bool start(uint16_t port, const std::string& server,
                      PipeInterface *upStream);
   [[nodiscard]] virtual bool ready() const;
   virtual void stop();
@@ -52,14 +52,15 @@ public:
   virtual void updateBitrateUp(uint64_t minBps, uint64_t startBps,
                                uint64_t maxBps);
 
-  virtual void timepoint_now(const std::chrono::time_point<std::chrono::steady_clock>& now);
+  virtual void
+  runUpdates(const std::chrono::time_point<std::chrono::steady_clock>& now);
 
 protected:
   explicit PipeInterface(PipeInterface *downStream);
   virtual ~PipeInterface();
 
-  PipeInterface *downStream;
-  PipeInterface *upStream;
+  PipeInterface *nextPipe;
+  PipeInterface *prevPipe;
 };
 
 } // namespace MediaNet

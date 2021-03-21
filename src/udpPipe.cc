@@ -165,10 +165,10 @@ std::unique_ptr<Packet> UdpPipe::recv() {
   return packet;
 }
 
-bool UdpPipe::start(const uint16_t serverPort, const std::string serverName,
+bool UdpPipe::start(const uint16_t serverPort, const std::string& serverName,
                     PipeInterface *upTransport) {
   std::lock_guard<std::mutex> lock(socketMutex);
-  upStream = upTransport;
+  prevPipe = upTransport;
 
   // set up network
 #if defined(_WIN32)

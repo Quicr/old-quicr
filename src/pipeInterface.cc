@@ -5,71 +5,74 @@
 
 using namespace MediaNet;
 
-PipeInterface::PipeInterface(PipeInterface *t)
-    : downStream(t), upStream(nullptr) {}
+PipeInterface::PipeInterface(PipeInterface *nxtPipe)
+    : nextPipe(nxtPipe), prevPipe(nullptr) {}
 
 PipeInterface::~PipeInterface() {}
 
-bool PipeInterface::start(const uint16_t port, const std::string server,
+bool PipeInterface::start(const uint16_t port, const std::string& server,
                           PipeInterface *upStreamLink) {
-  assert(downStream);
-  // assert(upStreamLink);
-  upStream = upStreamLink;
-  if (downStream) {
-    return downStream->start(port, server, this);
+  prevPipe = upStreamLink;
+  if (nextPipe) {
+    return nextPipe->start(port, server, this);
   }
 
   return true;
 }
 
 bool PipeInterface::ready() const {
-  if (downStream) {
-    return downStream->ready();
+  if (nextPipe) {
+    return nextPipe->ready();
   }
   return true;
 }
 
 void PipeInterface::stop() {
-  if (downStream) {
-    downStream->stop();
+  if (nextPipe) {
+    nextPipe->stop();
   }
 }
 
-void PipeInterface::timepoint_now(const std::chrono::time_point<std::chrono::steady_clock> &now) {
-	assert(downStream);
-	return downStream->timepoint_now(now);
+void PipeInterface::runUpdates(const std::chrono::time_point<std::chrono::steady_clock> &now) {
+  if (nextPipe) {
+    return nextPipe->runUpdates(now);
+  }
 }
 
 bool PipeInterface::send(std::unique_ptr<Packet> packet) {
-  assert(downStream);
-  return downStream->send(move(packet));
+  if (nextPipe) {
+    return nextPipe->send(move(packet));
+  }
+  return false;
 }
 
 std::unique_ptr<Packet> PipeInterface::recv() {
-  assert(downStream);
-  return downStream->recv();
+  if (nextPipe) {
+    return nextPipe->recv();
+  }
+  return std::unique_ptr<Packet>(nullptr);
 }
 
 bool PipeInterface::fromDownstream(std::unique_ptr<Packet> packet) {
-  assert(upStream);
-  return upStream->fromDownstream(move(packet));
+  assert(prevPipe);
+  return prevPipe->fromDownstream(move(packet));
 }
 
 void PipeInterface::updateStat(PipeInterface::StatName stat, uint64_t value) {
-  if (upStream) {
-    upStream->updateStat(stat, value);
+  if (prevPipe) {
+    prevPipe->updateStat(stat, value);
   }
 }
 
 void PipeInterface::ack(ShortName name) {
-  if (upStream) {
-    upStream->ack(name);
+  if (prevPipe) {
+    prevPipe->ack(name);
   }
 }
 
 void PipeInterface::updateRTT(uint16_t minRtMs, uint16_t bigRtMs) {
-  if (downStream) {
-    downStream->updateRTT(minRtMs, bigRtMs);
+  if (nextPipe) {
+    nextPipe->updateRTT(minRtMs, bigRtMs);
   }
 }
 
@@ -78,14 +81,14 @@ std::unique_ptr<Packet> PipeInterface::toDownstream() {
 }
 
 void PipeInterface::updateMTU(uint16_t mtu, uint32_t pps) {
-  if (downStream) {
-    downStream->updateMTU(mtu, pps);
+  if (nextPipe) {
+    nextPipe->updateMTU(mtu, pps);
   }
 }
 
 void PipeInterface::updateBitrateUp(uint64_t minBps, uint64_t startBps,
                                     uint64_t maxBps) {
-  if (downStream) {
-    downStream->updateBitrateUp(minBps, startBps, maxBps);
+  if (nextPipe) {
+    nextPipe->updateBitrateUp(minBps, startBps, maxBps);
   }
 }

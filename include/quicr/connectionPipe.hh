@@ -23,7 +23,7 @@ public:
   explicit ConnectionPipe(PipeInterface *t);
   bool ready() const override;
   void stop() override;
-  virtual bool start(uint16_t port, std::string server,
+  virtual bool start(uint16_t port, const std::string& server,
                      PipeInterface *upStream) override;
 
 protected:
@@ -53,13 +53,13 @@ class ClientConnectionPipe : public ConnectionPipe {
 public:
   explicit ClientConnectionPipe(PipeInterface *t);
   void setAuthInfo(uint32_t sender, uint64_t t);
-  bool start(uint16_t port, std::string server,
+  bool start(uint16_t port, const std::string& server,
              PipeInterface *upStream) override;
 
   // Overrides from PipelineInterface
   bool send(std::unique_ptr<Packet>) override;
   std::unique_ptr<Packet> recv() override;
-	void timepoint_now(const std::chrono::time_point<std::chrono::steady_clock>& now) override;
+	void runUpdates(const std::chrono::time_point<std::chrono::steady_clock>& now) override;
 
 private:
   static constexpr int syn_timeout_msec = 1000;
@@ -92,7 +92,7 @@ public:
   };
 
   explicit ServerConnectionPipe(PipeInterface *t);
-  bool start(uint16_t port, std::string server,
+  bool start(uint16_t port, const std::string& server,
              PipeInterface *upStream) override;
   // Overrides from PipelineInterface
   bool send(std::unique_ptr<Packet>) override;
