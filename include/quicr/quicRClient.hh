@@ -6,24 +6,6 @@
 //#include <utility> // for pair
 
 #include <sframe/sframe.h> // TODO - rethink this
-
-
-#if 0
-#include "../../src/connectionPipe.hh"
-#include "../../src/crazyBitPipe.hh"
-#include "../../src/encryptPipe.hh"
-#include "../../src/fakeLossPipe.hh"
-#include "../../src/fecPipe.hh"
-#include "../../src/fragmentPipe.hh"
-#include "../../src/pacerPipe.hh"
-#include "../../src/pipeInterface.hh"
-#include "../../src/priorityPipe.hh"
-#include "../../src/retransmitPipe.hh"
-#include "../../src/statsPipe.hh"
-#include "../../src/subscribePipe.hh"
-#include "../../src/udpPipe.hh"
-#endif
-
 #include "packet.hh" // TODO - remove and replace with Buffer
 
 namespace MediaNet {

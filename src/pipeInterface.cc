@@ -18,7 +18,7 @@ PipeInterface::~PipeInterface() {
 bool PipeInterface::start(const uint16_t port, const std::string server,
                           PipeInterface *upStreamLink) {
   assert(downStream);
-  
+
   upStream = upStreamLink;
   if (downStream) {
     return downStream->start(port, server, this);

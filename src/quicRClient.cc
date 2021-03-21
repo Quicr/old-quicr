@@ -1,10 +1,10 @@
 
 #include <cassert>
 
+#include "quicr/quicRClient.hh"
 
 #include "encode.hh"
 
-#include "quicr/quicRClient.hh"
 #include "connectionPipe.hh"
 #include "crazyBitPipe.hh"
 #include "encryptPipe.hh"
@@ -21,15 +21,6 @@
 using namespace MediaNet;
 
 QuicRClient::QuicRClient()
-#if 0
-      udpPipe(), fakeLossPipe(&udpPipe), crazyBitPipe(&fakeLossPipe),
-      connectionPipe(&crazyBitPipe), pacerPipe(&connectionPipe),
-      priorityPipe(&pacerPipe), retransmitPipe(&priorityPipe),
-      fecPipe(&retransmitPipe), subscribePipe(&fecPipe),
-      fragmentPipe(&subscribePipe), encryptPipe(&fragmentPipe),
-      statsPipe(&encryptPipe),
-      firstPipe(&statsPipe)
-#endif
 {
 
   UdpPipe* udpPipe = new UdpPipe();
