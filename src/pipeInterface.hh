@@ -51,9 +51,10 @@ public:
   virtual void updateBitrateUp(uint64_t minBps, uint64_t startBps,
                                uint64_t maxBps);
 
+  virtual ~PipeInterface();
+
 protected:
   explicit PipeInterface(PipeInterface *downStream);
-  virtual ~PipeInterface();
 
   PipeInterface *downStream;
   PipeInterface *upStream;

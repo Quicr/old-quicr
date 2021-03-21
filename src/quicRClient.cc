@@ -1,37 +1,68 @@
 
 #include <cassert>
 
-#include "encode.hh"
-#include "quicr/quicRClient.hh"
 
+#include "encode.hh"
+
+#include "quicr/quicRClient.hh"
 #include "connectionPipe.hh"
 #include "crazyBitPipe.hh"
 #include "encryptPipe.hh"
+#include "fakeLossPipe.hh"
 #include "fecPipe.hh"
 #include "fragmentPipe.hh"
 #include "pacerPipe.hh"
 #include "priorityPipe.hh"
 #include "retransmitPipe.hh"
+#include "statsPipe.hh"
 #include "subscribePipe.hh"
 #include "udpPipe.hh"
 
 using namespace MediaNet;
 
 QuicRClient::QuicRClient()
-    : udpPipe(), fakeLossPipe(&udpPipe), crazyBitPipe(&fakeLossPipe),
+#if 0
+      udpPipe(), fakeLossPipe(&udpPipe), crazyBitPipe(&fakeLossPipe),
       connectionPipe(&crazyBitPipe), pacerPipe(&connectionPipe),
       priorityPipe(&pacerPipe), retransmitPipe(&priorityPipe),
       fecPipe(&retransmitPipe), subscribePipe(&fecPipe),
       fragmentPipe(&subscribePipe), encryptPipe(&fragmentPipe),
       statsPipe(&encryptPipe),
-      firstPipe(&statsPipe) {
+      firstPipe(&statsPipe)
+#endif
+{
+
+  UdpPipe* udpPipe = new UdpPipe();
+  FakeLossPipe* fakeLossPipe = new FakeLossPipe(udpPipe);
+  CrazyBitPipe* crazyBitPipe = new CrazyBitPipe(fakeLossPipe);
+  /*ClientConnectionPipe* */ connectionPipe = new ClientConnectionPipe( crazyBitPipe);// TODO fix
+  /*PacerPipe* */ pacerPipe = new PacerPipe(connectionPipe);// TODO fix
+  PriorityPipe* priorityPipe = new PriorityPipe(pacerPipe);
+  RetransmitPipe* retransmitPipe = new RetransmitPipe(priorityPipe);
+  FecPipe* fecPipe = new FecPipe(retransmitPipe);
+
+  /* SubscribePipe* */ subscribePipe = new SubscribePipe(fecPipe); // TODO fix
+
+  FragmentPipe* fragmentPipe = new FragmentPipe(subscribePipe) ;
+
+  /* EncryptPipe* */ encryptPipe = new EncryptPipe(fragmentPipe); // TODO fix
+
+  StatsPipe* statsPipe = new StatsPipe(encryptPipe);
+  firstPipe = statsPipe ;
 
   // TODO - get rid of all other places were defaults get set for mtu, rtt, pps
   firstPipe->updateMTU(1280, 480);
   firstPipe->updateRTT(20, 50);
 }
 
-QuicRClient::~QuicRClient() { firstPipe->stop(); }
+QuicRClient::~QuicRClient()
+{
+  assert( firstPipe );
+
+  firstPipe->stop();
+
+  delete firstPipe; firstPipe= nullptr;
+}
 
 bool QuicRClient::ready() const { return firstPipe->ready(); }
 
@@ -39,7 +70,8 @@ void QuicRClient::close() { firstPipe->stop(); }
 
 void QuicRClient::setCryptoKey(sframe::MLSContext::EpochID epoch,
                                const sframe::bytes &mls_epoch_secret) {
-  encryptPipe.setCryptoKey(epoch, mls_epoch_secret);
+  assert(encryptPipe);
+  encryptPipe->setCryptoKey(epoch, mls_epoch_secret);
 }
 
 bool QuicRClient::publish(std::unique_ptr<Packet> packet) {
@@ -147,15 +179,15 @@ std::unique_ptr<Packet> QuicRClient::recv() {
 
 bool QuicRClient::open(uint32_t clientID, const std::string relayName,
                        const uint16_t port, uint64_t token) {
-  (void)clientID; // TODO
-  (void)token;    // TODO
-  connectionPipe.setAuthInfo(clientID, token);
+  assert(connectionPipe);
+  connectionPipe->setAuthInfo(clientID, token);
 
   return firstPipe->start(port, relayName, nullptr);
 }
 
 uint64_t QuicRClient::getTargetUpstreamBitrate() {
-  return pacerPipe.getTargetUpstreamBitrate(); // TODO - move to stats
+  assert(pacerPipe);
+  return pacerPipe->getTargetUpstreamBitrate(); // TODO - move to stats
 }
 
 std::unique_ptr<Packet> QuicRClient::createPacket(const ShortName &shortName,
@@ -175,7 +207,8 @@ std::unique_ptr<Packet> QuicRClient::createPacket(const ShortName &shortName,
 }
 
 bool QuicRClient::subscribe(ShortName name) {
-  return subscribePipe.subscribe(name);
+  assert( subscribePipe );
+  return subscribePipe->subscribe(name);
 }
 
 void QuicRClient::setPacketsUp(uint16_t pps, uint16_t mtu) {
