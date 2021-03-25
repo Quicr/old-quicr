@@ -41,7 +41,7 @@ void QuicRClient::close() {
 }
 
 void QuicRClient::setCurrentTime(const std::chrono::time_point<std::chrono::steady_clock> &now) {
-  firstPipe->timepoint_now(now);
+  firstPipe->runUpdates(now);
 }
 
 void QuicRClient::setCryptoKey(sframe::MLSContext::EpochID epoch,
@@ -158,12 +158,11 @@ bool QuicRClient::open(uint32_t clientID, const std::string relayName,
   (void)token;    // TODO
   connectionPipe.setAuthInfo(clientID, token);
 
-
-  auto ret = firstPipe->start(port, relayName, nullptr);
+  bool ret = firstPipe->start(port, relayName, nullptr);
   if (ret) {
-		// kick off timer thread
-		timerThread = std::thread([this]() { this->runTimerThread(); });
-	}
+    // kick off timer thread
+    timerThread = std::thread([this]() { this->runTimerThread(); });
+  }
 
   return ret;
 }
@@ -219,11 +218,11 @@ void QuicRClient::setBitrateUp(uint64_t minBps, uint64_t startBps,
 /// Private implementation
 ///
 void QuicRClient::runTimerThread() {
-	while(!shutDown) {
-		auto now = std::chrono::steady_clock::now();
-		firstPipe->timepoint_now(now);
-		//auto after = std::chrono::steady_clock::now();
-		//std::clog <<"timer-elapsed-count:" << std::chrono::duration_cast<std::chrono::milliseconds>(after-now).count() << std::endl;
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
-	}
+  while(!shutDown) {
+    auto now = std::chrono::steady_clock::now();
+    firstPipe->runUpdates(now);
+    // auto after = std::chrono::steady_clock::now();
+    // std::clog <<"timer-elapsed-count:" << std::chrono::duration_cast<std::chrono::milliseconds>(after-now).count() << std::endl;
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
 }

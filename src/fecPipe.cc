@@ -13,7 +13,7 @@ FecPipe::FecPipe(PipeInterface *t) : PipeInterface(t) {}
 
 bool FecPipe::send(std::unique_ptr<Packet> packet) {
   assert(packet);
-  assert(downStream);
+  assert(nextPipe);
 
   std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
   std::chrono::steady_clock::duration dn = tp.time_since_epoch();
@@ -45,17 +45,17 @@ bool FecPipe::send(std::unique_ptr<Packet> packet) {
     while (sendList.front().first <= nowMs) {
       std::unique_ptr<Packet> fecPacket = std::move(sendList.front().second);
       sendList.pop_front();
-      downStream->send(move(fecPacket));
+      nextPipe->send(move(fecPacket));
     }
   }
 
-  return downStream->send(move(packet));
+  return nextPipe->send(move(packet));
 }
 
 std::unique_ptr<Packet> FecPipe::recv() {
 
-  assert(downStream);
-  return downStream->recv();
+  assert(nextPipe);
+  return nextPipe->recv();
 }
 
 FecPipe::~FecPipe() {

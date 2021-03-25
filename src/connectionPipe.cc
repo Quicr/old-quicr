@@ -1,6 +1,5 @@
 #include <cassert>
 #include <random>
-#include <thread>
 
 #include "quicr/connectionPipe.hh"
 #include "quicr/encode.hh"
@@ -10,7 +9,7 @@ using namespace MediaNet;
 
 ConnectionPipe::ConnectionPipe(PipeInterface *t) : PipeInterface(t) {}
 
-bool ConnectionPipe::start(const uint16_t port, const std::string server,
+bool ConnectionPipe::start(const uint16_t port, const std::string& server,
                            PipeInterface *upStrm) {
   return PipeInterface::start(port, server, upStrm);
 }
@@ -40,7 +39,7 @@ void ConnectionPipe::stop() {
 ClientConnectionPipe::ClientConnectionPipe(PipeInterface *t)
     : ConnectionPipe(t), senderID(0), pathToken(0) {}
 
-bool ClientConnectionPipe::start(uint16_t port, std::string server,
+bool ClientConnectionPipe::start(uint16_t port, const std::string& server,
                                  PipeInterface *upStream) {
   bool ret = ConnectionPipe::start(port, server, upStream);
   if (ret) {
@@ -83,7 +82,7 @@ std::unique_ptr<Packet> ClientConnectionPipe::recv() {
   return packet;
 }
 
-void ClientConnectionPipe::timepoint_now(const std::chrono::time_point<std::chrono::steady_clock>& now) {
+void ClientConnectionPipe::runUpdates(const std::chrono::time_point<std::chrono::steady_clock>& now) {
   // verify if time expired since last sync point
   auto expended = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_sync_point).count();
 	if (expended >= syn_timeout_msec) {
@@ -144,7 +143,7 @@ ServerConnectionPipe::ServerConnectionPipe(PipeInterface *t)
   getRandom = std::bind(randomDist, randomGen);
 }
 
-bool ServerConnectionPipe::start(uint16_t port, std::string server,
+bool ServerConnectionPipe::start(uint16_t port, const std::string& server,
                                  PipeInterface *upStream) {
   bool ret = ConnectionPipe::start(port, server, upStream);
   if (ret) {
