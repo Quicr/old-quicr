@@ -1,19 +1,24 @@
 
 #include <cassert>
 
-#include "quicr/pipeInterface.hh"
+#include "pipeInterface.hh"
 
 using namespace MediaNet;
 
 PipeInterface::PipeInterface(PipeInterface *t)
     : downStream(t), upStream(nullptr) {}
 
-PipeInterface::~PipeInterface() {}
+PipeInterface::~PipeInterface() {
+  if (downStream) {
+    delete downStream;
+    downStream = nullptr;
+  }
+}
 
 bool PipeInterface::start(const uint16_t port, const std::string server,
                           PipeInterface *upStreamLink) {
   assert(downStream);
-  // assert(upStreamLink);
+
   upStream = upStreamLink;
   if (downStream) {
     return downStream->start(port, server, this);

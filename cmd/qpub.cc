@@ -5,10 +5,11 @@
 #include <iostream>
 #include <thread>
 
-#include "quicr/encode.hh"
-#include <quicr/pacerPipe.hh>
+//#include "../src/encode.hh"
+//#include "../src/pacerPipe.hh"
+//#include "../src/udpPipe.hh"
+
 #include <quicr/quicRClient.hh>
-#include <quicr/udpPipe.hh>
 
 using namespace MediaNet;
 

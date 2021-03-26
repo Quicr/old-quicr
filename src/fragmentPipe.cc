@@ -4,8 +4,8 @@
 #include <cassert>
 #include <iostream>
 
-#include "quicr/encode.hh"
-#include "quicr/fragmentPipe.hh"
+#include "encode.hh"
+#include "fragmentPipe.hh"
 #include "quicr/packet.hh"
 
 using namespace MediaNet;

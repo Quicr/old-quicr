@@ -1,6 +1,7 @@
 #pragma once
-#include "quicr/name.hh"
+
 #include "quicr/packet.hh"
+#include "quicr/shortName.hh"
 #include <list>
 #include <map>
 

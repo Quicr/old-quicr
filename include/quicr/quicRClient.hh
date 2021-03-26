@@ -5,25 +5,16 @@
 #include <string>
 //#include <utility> // for pair
 
-#include "connectionPipe.hh"
-#include "crazyBitPipe.hh"
-#include "encryptPipe.hh"
-#include "fakeLossPipe.hh"
-#include "fecPipe.hh"
-#include "fragmentPipe.hh"
-#include "pacerPipe.hh"
-#include "packet.hh"
-#include "pipeInterface.hh"
-#include "priorityPipe.hh"
-#include "retransmitPipe.hh"
-#include "statsPipe.hh"
-#include "subscribePipe.hh"
-#include "udpPipe.hh"
+#include <sframe/sframe.h> // TODO - rethink this
+#include "packet.hh" // TODO - remove and replace with Buffer
 
 namespace MediaNet {
 
-// class UdpPipe;
-// class PacerPipe;
+class PipeInterface;
+class SubscribePipe;
+class EncryptPipe;
+class ClientConnectionPipe;
+class PacerPipe;
 
 class QuicRClient {
 public:
@@ -68,6 +59,7 @@ void setDecryptionKey(uint32_t clientID, std::vector<uint8_t> salt,
   //               uint32_t senderID=0, uint8_t sourceID=0 );
 
 private:
+#if 0
   UdpPipe udpPipe;
   FakeLossPipe fakeLossPipe;
   CrazyBitPipe crazyBitPipe;
@@ -80,7 +72,13 @@ private:
   FragmentPipe fragmentPipe;
   EncryptPipe encryptPipe;
   StatsPipe statsPipe;
-  PipeInterface *firstPipe;
+#endif
+
+  PipeInterface* firstPipe;
+  SubscribePipe* subscribePipe; // TODO remove
+  EncryptPipe* encryptPipe; // TODO remove
+  ClientConnectionPipe* connectionPipe;// TODO remove
+  PacerPipe* pacerPipe; // TODO remove
 
   // uint32_t pubClientID;
   // uint64_t secToken;

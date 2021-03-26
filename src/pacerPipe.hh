@@ -8,8 +8,8 @@
 #include <string>
 #include <thread>
 
-#include "packet.hh"
 #include "pipeInterface.hh"
+#include "quicr/packet.hh"
 #include "rateCtrl.hh"
 
 namespace MediaNet {

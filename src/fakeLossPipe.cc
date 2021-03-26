@@ -3,7 +3,7 @@
 #include <cassert>
 #include <iostream>
 
-#include "quicr/fakeLossPipe.hh"
+#include "fakeLossPipe.hh"
 #include "quicr/packet.hh"
 
 using namespace MediaNet;

@@ -3,7 +3,10 @@
 #include <cassert>
 #include <iostream>
 #include <sys/types.h>
-
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
 #if defined(__linux__) || defined(__APPLE__)
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -12,12 +15,10 @@
 #include <ws2tcpip.h>
 #endif
 
-#include <cstdint>
-#include <string>
-#include <vector>
-#include <memory>
-#include "packetTag.hh"
-#include "name.hh"
+#include "shortName.hh"
+
+#include "../../src/packetTag.hh"
+
 
 namespace MediaNet {
 

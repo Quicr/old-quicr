@@ -6,8 +6,8 @@
 #include <array>
 
 #include "packetTag.hh"
-#include "name.hh"
-#include "packet.hh"
+#include "quicr/packet.hh"
+#include "quicr/shortName.hh"
 
 namespace MediaNet {
 

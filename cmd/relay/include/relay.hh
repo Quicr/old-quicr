@@ -6,9 +6,10 @@
 #include <memory>
 #include <random>
 
+#include "../../../src/encode.hh" // TODO
+
 #include "fib.hh"
 #include "quicr/packet.hh"
-#include "quicr/encode.hh"
 #include "quicr/quicRServer.hh"
 
 class Relay {
