@@ -10,9 +10,10 @@
 
 namespace MediaNet {
 
-class EncryptPipe : public PipeInterface {
+class EncryptPipe : public PipeInterface
+{
 public:
-  explicit EncryptPipe(PipeInterface *t);
+  explicit EncryptPipe(PipeInterface* t);
 
   bool send(std::unique_ptr<Packet> packet) override;
 
@@ -22,12 +23,12 @@ public:
   // initialize sframe context for the given epoch and secret
   // Note: epocha and epoch_secret comes from MLS group context.
   void setCryptoKey(sframe::MLSContext::EpochID epoch,
-                    const sframe::bytes &mls_epoch_secret);
+                    const sframe::bytes& mls_epoch_secret);
 
 private:
-  sframe::bytes protect(const std::unique_ptr<Packet> &packet,
+  sframe::bytes protect(const std::unique_ptr<Packet>& packet,
                         uint16_t payloadSize);
-  sframe::bytes unprotect(const std::unique_ptr<Packet> &packet,
+  sframe::bytes unprotect(const std::unique_ptr<Packet>& packet,
                           uint16_t payloadSize);
 
   sframe::MLSContext::EpochID current_epoch = -1;

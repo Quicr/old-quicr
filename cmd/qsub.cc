@@ -7,7 +7,9 @@
 
 using namespace MediaNet;
 
-int main(int argc, char *argv[]) {
+int
+main(int argc, char* argv[])
+{
   std::string relayName("localhost");
 
   if (argc < 3) {

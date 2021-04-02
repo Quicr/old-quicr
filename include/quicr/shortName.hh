@@ -5,7 +5,8 @@
 
 namespace MediaNet {
 
-class ShortName {
+class ShortName
+{
 public:
   ShortName();
   ShortName(uint64_t resourceID);
@@ -19,10 +20,12 @@ public:
   uint8_t fragmentID;
 
   // experimental api
-  static ShortName fromString(const std::string &name_str);
+  static ShortName fromString(const std::string& name_str);
 };
 
-std::ostream &operator<<(std::ostream &stream, const ShortName &name);
-bool operator==(const ShortName &, const ShortName &);
+std::ostream&
+operator<<(std::ostream& stream, const ShortName& name);
+bool
+operator==(const ShortName&, const ShortName&);
 
 } // namespace MediaNet

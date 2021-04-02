@@ -10,9 +10,13 @@
 
 using namespace MediaNet;
 
-SubscribePipe::SubscribePipe(PipeInterface *t) : PipeInterface(t) {}
+SubscribePipe::SubscribePipe(PipeInterface* t)
+  : PipeInterface(t)
+{}
 
-bool SubscribePipe::subscribe(const ShortName &name) {
+bool
+SubscribePipe::subscribe(const ShortName& name)
+{
 
   subscribeList.emplace(name, true);
 
@@ -20,7 +24,7 @@ bool SubscribePipe::subscribe(const ShortName &name) {
   auto packet = std::make_unique<Packet>();
   packet->reserve(100); // TODO tune
 
-  auto subReq = Subscribe{name};
+  auto subReq = Subscribe{ name };
   auto hdr = Packet::Header(PacketTag::headerData);
   packet << hdr;
   packet << subReq;
@@ -36,22 +40,24 @@ bool SubscribePipe::subscribe(const ShortName &name) {
   return true;
 }
 
-std::unique_ptr<Packet> SubscribePipe::recv() {
+std::unique_ptr<Packet>
+SubscribePipe::recv()
+{
   auto packet = PipeInterface::recv();
 
   if (packet) {
     // std::clog << "Sub recv: fullSize=" << packet->fullSize() << " size=" <<
-    //packet->size() << std::endl;
-    if(nextTag(packet) == PacketTag::shortName) {
-		NamedDataChunk name{};
-		bool ok = (packet >> name);
-		if (!ok) {
-			// assert(0); // TODO - remove and log bad packet
-			return nullptr;
-		}
-		packet->name = name.shortName;
-		packet << name;
-	}
+    // packet->size() << std::endl;
+    if (nextTag(packet) == PacketTag::shortName) {
+      NamedDataChunk name{};
+      bool ok = (packet >> name);
+      if (!ok) {
+        // assert(0); // TODO - remove and log bad packet
+        return nullptr;
+      }
+      packet->name = name.shortName;
+      packet << name;
+    }
   }
 
   return packet;

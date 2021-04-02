@@ -9,10 +9,14 @@
 
 using namespace MediaNet;
 
-Connection::Connection(uint32_t randNum, const MediaNet::IpAddr &addr)
-    : relaySeqNum(randNum), address(addr) {}
+Connection::Connection(uint32_t randNum, const MediaNet::IpAddr& addr)
+  : relaySeqNum(randNum)
+  , address(addr)
+{}
 
-BroadcastRelay::BroadcastRelay(uint16_t port) : qServer() {
+BroadcastRelay::BroadcastRelay(uint16_t port)
+  : qServer()
+{
   qServer.open(port);
   prevAckSeqNum = 0;
   prevRecvTimeUs = 0;
@@ -22,7 +26,9 @@ BroadcastRelay::BroadcastRelay(uint16_t port) : qServer() {
   getRandom = std::bind(randomDist, randomGen);
 }
 
-void BroadcastRelay::process() {
+void
+BroadcastRelay::process()
+{
   std::unique_ptr<Packet> packet = qServer.recv();
 
   if (!packet) {
@@ -51,7 +57,9 @@ void BroadcastRelay::process() {
             << std::endl;
 }
 
-void BroadcastRelay::processRate(std::unique_ptr<MediaNet::Packet> &packet) {
+void
+BroadcastRelay::processRate(std::unique_ptr<MediaNet::Packet>& packet)
+{
   NetRateReq rateReq;
   packet >> rateReq;
   std::clog << std::endl
@@ -59,8 +67,9 @@ void BroadcastRelay::processRate(std::unique_ptr<MediaNet::Packet> &packet) {
             << std::endl;
 }
 
-void BroadcastRelay::processAppMessage(
-    std::unique_ptr<MediaNet::Packet> &packet) {
+void
+BroadcastRelay::processAppMessage(std::unique_ptr<MediaNet::Packet>& packet)
+{
   ClientData seqNumTag{};
   packet >> seqNumTag;
 
@@ -76,13 +85,14 @@ void BroadcastRelay::processAppMessage(
   std::clog << "Bad App message:" << (int)tag << "\n";
 }
 
-void BroadcastRelay::processSub(std::unique_ptr<MediaNet::Packet> &packet,
-                                ClientData &clientSeqNumTag) {
+void
+BroadcastRelay::processSub(std::unique_ptr<MediaNet::Packet>& packet,
+                           ClientData& clientSeqNumTag)
+{
   std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
   std::chrono::steady_clock::duration dn = tp.time_since_epoch();
   uint32_t nowUs =
-      (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(dn)
-          .count();
+    (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(dn).count();
 
   // ack the packet
   auto ack = std::make_unique<Packet>();
@@ -104,20 +114,21 @@ void BroadcastRelay::processSub(std::unique_ptr<MediaNet::Packet> &packet,
   if (conIndex == connectionMap.end()) {
     // new connection
     connectionMap[name] =
-        std::make_unique<Connection>(getRandom(), packet->getSrc());
+      std::make_unique<Connection>(getRandom(), packet->getSrc());
   }
 
-  std::unique_ptr<Connection> &con = connectionMap[name];
+  std::unique_ptr<Connection>& con = connectionMap[name];
   con->lastSyn = std::chrono::steady_clock::now();
 }
 
-void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
-                                ClientData &seqNumTag) {
+void
+BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet>& packet,
+                           ClientData& seqNumTag)
+{
   std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
   std::chrono::steady_clock::duration dn = tp.time_since_epoch();
   uint32_t nowUs =
-      (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(dn)
-          .count();
+    (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(dn).count();
 
   std::clog << ".";
 
@@ -171,7 +182,7 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
   packet << namedDataChunk;
 
   // for each connection, make copy and forward
-  for (auto const &[addr, con] : connectionMap) {
+  for (auto const& [addr, con] : connectionMap) {
     auto relayDataPacket = packet->clone(); // TODO - just clone header stuff
 
     relayDataPacket->setDst(con->address);
@@ -212,7 +223,9 @@ void BroadcastRelay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
 #pragma ide diagnostic ignored "EndlessLoop"
 #pragma ide diagnostic ignored "UnreachableCode"
 
-int main() {
+int
+main()
+{
   auto qRelay = BroadcastRelay(5004);
   while (true) {
     qRelay.process();

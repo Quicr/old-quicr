@@ -10,9 +10,10 @@
 
 namespace MediaNet {
 
-class FecPipe : public PipeInterface {
+class FecPipe : public PipeInterface
+{
 public:
-  explicit FecPipe(PipeInterface *t);
+  explicit FecPipe(PipeInterface* t);
   ~FecPipe() override;
 
   bool send(std::unique_ptr<Packet> packet) override;

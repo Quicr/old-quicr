@@ -10,14 +10,19 @@
 
 using namespace MediaNet;
 
-Relay::Relay(uint16_t port) : qServer(), fib(std::make_unique<MultimapFib>()) {
+Relay::Relay(uint16_t port)
+  : qServer()
+  , fib(std::make_unique<MultimapFib>())
+{
   qServer.open(port);
   std::random_device randDev;
   randomGen.seed(randDev()); // TODO - should use crypto random
   getRandom = std::bind(randomDist, randomGen);
 }
 
-void Relay::process() {
+void
+Relay::process()
+{
   auto packet = qServer.recv();
 
   if (!packet) {
@@ -28,12 +33,12 @@ void Relay::process() {
   auto tag = nextTag(packet);
 
   switch (tag) {
-  case PacketTag::clientData:
-    return processAppMessage(packet);
-  case PacketTag::rate:
-    return processRateRequest(packet);
-  default:
-    std::clog << "unknown tag :" << (int)tag << "\n";
+    case PacketTag::clientData:
+      return processAppMessage(packet);
+    case PacketTag::rate:
+      return processRateRequest(packet);
+    default:
+      std::clog << "unknown tag :" << (int)tag << "\n";
   }
 }
 
@@ -41,7 +46,9 @@ void Relay::process() {
 /// Private Implementation
 ///
 
-void Relay::processAppMessage(std::unique_ptr<MediaNet::Packet> &packet) {
+void
+Relay::processAppMessage(std::unique_ptr<MediaNet::Packet>& packet)
+{
   ClientData seqNumTag{};
   packet >> seqNumTag;
 
@@ -58,13 +65,14 @@ void Relay::processAppMessage(std::unique_ptr<MediaNet::Packet> &packet) {
 }
 
 /// Subscribe Request
-void Relay::processSub(std::unique_ptr<MediaNet::Packet> &packet,
-                       ClientData &clientSeqNumTag) {
+void
+Relay::processSub(std::unique_ptr<MediaNet::Packet>& packet,
+                  ClientData& clientSeqNumTag)
+{
   std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
   std::chrono::steady_clock::duration dn = tp.time_since_epoch();
   uint32_t nowUs =
-      (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(dn)
-          .count();
+    (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(dn).count();
 
   // ack the packet
   auto ackPacket = std::make_unique<Packet>();
@@ -83,16 +91,17 @@ void Relay::processSub(std::unique_ptr<MediaNet::Packet> &packet,
   packet >> name;
   std::clog << "Adding Subscription for: " << name << std::endl;
   fib->addSubscription(name,
-                       SubscriberInfo{name, packet->getSrc(), getRandom()});
+                       SubscriberInfo{ name, packet->getSrc(), getRandom() });
 }
 
-void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
-                       ClientData &clientSeqNumTag) {
+void
+Relay::processPub(std::unique_ptr<MediaNet::Packet>& packet,
+                  ClientData& clientSeqNumTag)
+{
   std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
   std::chrono::steady_clock::duration dn = tp.time_since_epoch();
   uint32_t nowUs =
-      (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(dn)
-          .count();
+    (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(dn).count();
 
   std::clog << ".";
 
@@ -107,9 +116,9 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
   ok &= packet >> namedDataChunk;
   ok &= packet >> encryptedDataBlock;
 
-  assert( fromVarInt( encryptedDataBlock.metaDataLen) == 0 );// TODO
+  assert(fromVarInt(encryptedDataBlock.metaDataLen) == 0); // TODO
 
-  uint16_t payloadSize = fromVarInt( encryptedDataBlock.cipherDataLen );
+  uint16_t payloadSize = fromVarInt(encryptedDataBlock.cipherDataLen);
   if (payloadSize > packet->size()) {
     std::clog << "relay recv bad data size " << payloadSize << " "
               << packet->size() << std::endl;
@@ -144,7 +153,7 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
   prevRecvTimeUs = ackTag.recvTimeUs;
 
   // find the matching subscribers
-  auto subscribers = fib->lookupSubscription( namedDataChunk.shortName );
+  auto subscribers = fib->lookupSubscription(namedDataChunk.shortName);
 
   // std::clog << "Name:" << name << " has:" << subscribers.size() << "
   // subscribers\n";
@@ -152,7 +161,7 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
   packet << encryptedDataBlock;
   packet << namedDataChunk;
 
-  for (auto &subscriber : subscribers) {
+  for (auto& subscriber : subscribers) {
     auto relayDataPacket = packet->clone(); // TODO - just clone header stuff
     relayDataPacket->setDst(subscriber.face);
     RelayData relayData{};
@@ -181,7 +190,9 @@ void Relay::processPub(std::unique_ptr<MediaNet::Packet> &packet,
   }
 }
 
-void Relay::processRateRequest(std::unique_ptr<MediaNet::Packet> &packet) {
+void
+Relay::processRateRequest(std::unique_ptr<MediaNet::Packet>& packet)
+{
   NetRateReq rateReq{};
   packet >> rateReq;
   std::clog << std::endl
@@ -189,7 +200,9 @@ void Relay::processRateRequest(std::unique_ptr<MediaNet::Packet> &packet) {
             << std::endl;
 }
 
-void Relay::stop() {
+void
+Relay::stop()
+{
   assert(0);
   // TODO
 }

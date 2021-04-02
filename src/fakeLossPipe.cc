@@ -8,10 +8,15 @@
 
 using namespace MediaNet;
 
-FakeLossPipe::FakeLossPipe(PipeInterface *t)
-    : PipeInterface(t), upstreamCount(0), downStreamCount(0) {}
+FakeLossPipe::FakeLossPipe(PipeInterface* t)
+  : PipeInterface(t)
+  , upstreamCount(0)
+  , downStreamCount(0)
+{}
 
-bool FakeLossPipe::send(std::unique_ptr<Packet> packet) {
+bool
+FakeLossPipe::send(std::unique_ptr<Packet> packet)
+{
   assert(downStream);
 
   upstreamCount++;
@@ -22,7 +27,9 @@ bool FakeLossPipe::send(std::unique_ptr<Packet> packet) {
   return downStream->send(move(packet));
 }
 
-std::unique_ptr<Packet> FakeLossPipe::recv() {
+std::unique_ptr<Packet>
+FakeLossPipe::recv()
+{
   assert(downStream);
 
   auto packet = downStream->recv();

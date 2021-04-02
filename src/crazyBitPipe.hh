@@ -8,9 +8,10 @@
 
 namespace MediaNet {
 
-class CrazyBitPipe : public PipeInterface {
+class CrazyBitPipe : public PipeInterface
+{
 public:
-  explicit CrazyBitPipe(PipeInterface *t);
+  explicit CrazyBitPipe(PipeInterface* t);
 
   bool send(std::unique_ptr<Packet> packet) override;
 
@@ -18,7 +19,7 @@ public:
   std::unique_ptr<Packet> recv() override;
 
   void updateRTT(uint16_t minRttMs, uint16_t maxRttMs)
-      override; // tells downstream things the current RTT
+    override; // tells downstream things the current RTT
 
 private:
   uint16_t rttMs;

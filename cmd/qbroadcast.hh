@@ -10,24 +10,26 @@
 #include "quicr/packet.hh"
 #include "quicr/quicRServer.hh"
 
-class Connection {
+class Connection
+{
 public:
-  Connection(uint32_t relaySeq, const MediaNet::IpAddr &addr);
+  Connection(uint32_t relaySeq, const MediaNet::IpAddr& addr);
   uint32_t relaySeqNum;
   MediaNet::IpAddr address;
   std::chrono::time_point<std::chrono::steady_clock> lastSyn;
 };
 
-class BroadcastRelay {
+class BroadcastRelay
+{
 public:
   explicit BroadcastRelay(uint16_t port);
   void process();
-  void processAppMessage(std::unique_ptr<MediaNet::Packet> &packet);
-  void processPub(std::unique_ptr<MediaNet::Packet> &packet,
-                  MediaNet::ClientData &clientSeqNumTa);
-  void processSub(std::unique_ptr<MediaNet::Packet> &packet,
-                  MediaNet::ClientData &clientSeqNum);
-  void processRate(std::unique_ptr<MediaNet::Packet> &packet);
+  void processAppMessage(std::unique_ptr<MediaNet::Packet>& packet);
+  void processPub(std::unique_ptr<MediaNet::Packet>& packet,
+                  MediaNet::ClientData& clientSeqNumTa);
+  void processSub(std::unique_ptr<MediaNet::Packet>& packet,
+                  MediaNet::ClientData& clientSeqNum);
+  void processRate(std::unique_ptr<MediaNet::Packet>& packet);
 
 private:
   uint32_t prevAckSeqNum = 0;

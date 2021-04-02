@@ -9,40 +9,43 @@ using namespace MediaNet;
 /// Message Header
 ///
 
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-																		const Packet::Header &hdr) {
-	p << hdr.tag;
-	p << hdr.pathToken;
-	p << PacketTag::header;
-	return p;
+std::unique_ptr<Packet>&
+MediaNet::operator<<(std::unique_ptr<Packet>& p, const Packet::Header& hdr)
+{
+  p << hdr.tag;
+  p << hdr.pathToken;
+  p << PacketTag::header;
+  return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, Packet::Header &hdr) {
-	bool ok = true;
+bool
+MediaNet::operator>>(std::unique_ptr<Packet>& p, Packet::Header& hdr)
+{
+  bool ok = true;
 
-	if (nextTag(p) != PacketTag::header) {
-		std::cerr << "Did not find expected PacketTag::shortName" << std::endl;
-		return false;
-	}
+  if (nextTag(p) != PacketTag::header) {
+    std::cerr << "Did not find expected PacketTag::shortName" << std::endl;
+    return false;
+  }
 
-	PacketTag tag = PacketTag::none;
-	ok &= p >> tag;
-	ok &= p >> hdr.pathToken;
-	ok &= p >> hdr.tag;
+  PacketTag tag = PacketTag::none;
+  ok &= p >> tag;
+  ok &= p >> hdr.pathToken;
+  ok &= p >> hdr.tag;
 
-	if (!ok) {
-		std::cerr << "problem parsing message header" << std::endl;
-	}
+  if (!ok) {
+    std::cerr << "problem parsing message header" << std::endl;
+  }
 
-	return ok;
+  return ok;
 }
-
 
 ///
 /// Shortname
 ///
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const ShortName &msg) {
+std::unique_ptr<Packet>&
+MediaNet::operator<<(std::unique_ptr<Packet>& p, const ShortName& msg)
+{
 
   int startSize = p->size();
 
@@ -61,7 +64,9 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, ShortName &msg) {
+bool
+MediaNet::operator>>(std::unique_ptr<Packet>& p, ShortName& msg)
+{
   if (nextTag(p) != PacketTag::shortName) {
     std::cerr << "Did not find expected PacketTag::shortName" << std::endl;
     return false;
@@ -83,15 +88,18 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, ShortName &msg) {
   return ok;
 }
 
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const ClientData &msg) {
+std::unique_ptr<Packet>&
+MediaNet::operator<<(std::unique_ptr<Packet>& p, const ClientData& msg)
+{
   p << msg.clientSeqNum;
   p << PacketTag::clientData;
 
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, ClientData &msg) {
+bool
+MediaNet::operator>>(std::unique_ptr<Packet>& p, ClientData& msg)
+{
   if (nextTag(p) != PacketTag::clientData) {
     std::cerr << "Did not find expected PacketTag::ClientData" << std::endl;
     return false;
@@ -111,8 +119,9 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, ClientData &msg) {
 
 /********* RelaySeqNum TAG ********/
 
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const RelayData &msg) {
+std::unique_ptr<Packet>&
+MediaNet::operator<<(std::unique_ptr<Packet>& p, const RelayData& msg)
+{
 
   p << msg.relaySendTimeUs;
   p << msg.relaySeqNum;
@@ -122,7 +131,9 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, RelayData &msg) {
+bool
+MediaNet::operator>>(std::unique_ptr<Packet>& p, RelayData& msg)
+{
 
   if (nextTag(p) != PacketTag::relayData) {
     std::cerr << "Did not find expected PacketTag::remoteSeqNum" << std::endl;
@@ -145,8 +156,9 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, RelayData &msg) {
 ///
 /// NetAck
 ///
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const NetAck &msg) {
+std::unique_ptr<Packet>&
+MediaNet::operator<<(std::unique_ptr<Packet>& p, const NetAck& msg)
+{
   p << msg.ecnVec;
   p << msg.ackVec;
   p << msg.clientSeqNum;
@@ -156,7 +168,9 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetAck &msg) {
+bool
+MediaNet::operator>>(std::unique_ptr<Packet>& p, NetAck& msg)
+{
   if (nextTag(p) != PacketTag::ack) {
     std::clog << "Did not find expected PacketTag::ack" << std::endl;
     return false;
@@ -180,15 +194,18 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetAck &msg) {
 ///
 /// NetNack
 ///
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const NetNack &msg) {
+std::unique_ptr<Packet>&
+MediaNet::operator<<(std::unique_ptr<Packet>& p, const NetNack& msg)
+{
   p << msg.relaySeqNum;
   p << PacketTag::nack;
 
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetNack &msg) {
+bool
+MediaNet::operator>>(std::unique_ptr<Packet>& p, NetNack& msg)
+{
   if (nextTag(p) != PacketTag::nack) {
     std::clog << "Did not find expected PacketTag::nack" << std::endl;
     return false;
@@ -209,15 +226,18 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetNack &msg) {
 ///
 /// Subscribe
 ///
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const Subscribe &msg) {
+std::unique_ptr<Packet>&
+MediaNet::operator<<(std::unique_ptr<Packet>& p, const Subscribe& msg)
+{
   p << msg.name;
   p << PacketTag::subscribe;
 
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, Subscribe &msg) {
+bool
+MediaNet::operator>>(std::unique_ptr<Packet>& p, Subscribe& msg)
+{
   if (nextTag(p) != PacketTag::subscribe) {
     std::clog << "Did not find expected PacketTag::subscribe" << std::endl;
     return false;
@@ -237,7 +257,9 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, Subscribe &msg) {
 
 /*************** TAG types *************************/
 
-PacketTag MediaNet::nextTag(std::unique_ptr<Packet> &p) {
+PacketTag
+MediaNet::nextTag(std::unique_ptr<Packet>& p)
+{
   if (p->fullSize() <= 0) {
     return PacketTag::none;
   }
@@ -245,103 +267,108 @@ PacketTag MediaNet::nextTag(std::unique_ptr<Packet> &p) {
   return nextTag(truncTag);
 }
 
-PacketTag MediaNet::nextTag(uint16_t truncTag) {
+PacketTag
+MediaNet::nextTag(uint16_t truncTag)
+{
   PacketTag tag = PacketTag::badTag;
   switch (truncTag) {
-  case packetTagTrunc(PacketTag::none):
-    tag = PacketTag::none;
-    break;
-  case packetTagTrunc(PacketTag::sync):
-    tag = PacketTag::sync;
-    break;
-  case packetTagTrunc(PacketTag::syncAck):
-    tag = PacketTag::syncAck;
-    break;
+    case packetTagTrunc(PacketTag::none):
+      tag = PacketTag::none;
+      break;
+    case packetTagTrunc(PacketTag::sync):
+      tag = PacketTag::sync;
+      break;
+    case packetTagTrunc(PacketTag::syncAck):
+      tag = PacketTag::syncAck;
+      break;
 
-  case packetTagTrunc(PacketTag::reset):
-    tag = PacketTag::reset;
-    break;
-  case packetTagTrunc(PacketTag::resetRetry):
-    tag = PacketTag::resetRetry;
-    break;
-  case packetTagTrunc(PacketTag::resetRedirect):
-    tag = PacketTag::resetRedirect;
-    break;
+    case packetTagTrunc(PacketTag::reset):
+      tag = PacketTag::reset;
+      break;
+    case packetTagTrunc(PacketTag::resetRetry):
+      tag = PacketTag::resetRetry;
+      break;
+    case packetTagTrunc(PacketTag::resetRedirect):
+      tag = PacketTag::resetRedirect;
+      break;
 
-  case packetTagTrunc(PacketTag::subscribe):
-    tag = PacketTag::subscribe;
-    break;
-  case packetTagTrunc(PacketTag::clientData):
-    tag = PacketTag::clientData;
-    break;
-  case packetTagTrunc(PacketTag::nack):
-    tag = PacketTag::nack;
-    break;
-  case packetTagTrunc(PacketTag::rate):
-    tag = PacketTag::rate;
-    break;
-  case packetTagTrunc(PacketTag::ack):
-    tag = PacketTag::ack;
-    break;
-  case packetTagTrunc(PacketTag::relayData):
-    tag = PacketTag::relayData;
-    break;
+    case packetTagTrunc(PacketTag::subscribe):
+      tag = PacketTag::subscribe;
+      break;
+    case packetTagTrunc(PacketTag::clientData):
+      tag = PacketTag::clientData;
+      break;
+    case packetTagTrunc(PacketTag::nack):
+      tag = PacketTag::nack;
+      break;
+    case packetTagTrunc(PacketTag::rate):
+      tag = PacketTag::rate;
+      break;
+    case packetTagTrunc(PacketTag::ack):
+      tag = PacketTag::ack;
+      break;
+    case packetTagTrunc(PacketTag::relayData):
+      tag = PacketTag::relayData;
+      break;
 
-  case packetTagTrunc(PacketTag::shortName):
-    tag = PacketTag::shortName;
-    break;
-  case packetTagTrunc(PacketTag::dataBlock):
-    tag = PacketTag::dataBlock;
-    break;
-  case packetTagTrunc(PacketTag::encDataBlock):
-    tag = PacketTag::encDataBlock;
-    break;
-  case packetTagTrunc(PacketTag::headerData):
-    tag = PacketTag::headerData;
-    break;
-  case packetTagTrunc(PacketTag::headerSyn):
-    tag = PacketTag::headerSyn;
-    break;
-  case packetTagTrunc(PacketTag::headerSynAck):
-    tag = PacketTag::headerSynAck;
-    break;
-  case packetTagTrunc(PacketTag::headerRst):
-    tag = PacketTag::headerRst;
-    break;
-  case packetTagTrunc(PacketTag::headerDataCrazy):
-    tag = PacketTag::headerDataCrazy;
-    break;
-  case packetTagTrunc(PacketTag::headerRstCrazy):
-    tag = PacketTag::headerRstCrazy;
-    break;
-  case packetTagTrunc(PacketTag::headerSynCrazy):
-    tag = PacketTag::headerSynCrazy;
-    break;
-  case packetTagTrunc(PacketTag::headerSynAckCrazy):
-    tag = PacketTag::headerSynAckCrazy;
-    break;
-  case packetTagTrunc(PacketTag::header):
-  	tag = PacketTag::header;
-  	break;
-  case packetTagTrunc(PacketTag::badTag):
-    tag = PacketTag::badTag;
-    break;
-  default:
-    break;
+    case packetTagTrunc(PacketTag::shortName):
+      tag = PacketTag::shortName;
+      break;
+    case packetTagTrunc(PacketTag::dataBlock):
+      tag = PacketTag::dataBlock;
+      break;
+    case packetTagTrunc(PacketTag::encDataBlock):
+      tag = PacketTag::encDataBlock;
+      break;
+    case packetTagTrunc(PacketTag::headerData):
+      tag = PacketTag::headerData;
+      break;
+    case packetTagTrunc(PacketTag::headerSyn):
+      tag = PacketTag::headerSyn;
+      break;
+    case packetTagTrunc(PacketTag::headerSynAck):
+      tag = PacketTag::headerSynAck;
+      break;
+    case packetTagTrunc(PacketTag::headerRst):
+      tag = PacketTag::headerRst;
+      break;
+    case packetTagTrunc(PacketTag::headerDataCrazy):
+      tag = PacketTag::headerDataCrazy;
+      break;
+    case packetTagTrunc(PacketTag::headerRstCrazy):
+      tag = PacketTag::headerRstCrazy;
+      break;
+    case packetTagTrunc(PacketTag::headerSynCrazy):
+      tag = PacketTag::headerSynCrazy;
+      break;
+    case packetTagTrunc(PacketTag::headerSynAckCrazy):
+      tag = PacketTag::headerSynAckCrazy;
+      break;
+    case packetTagTrunc(PacketTag::header):
+      tag = PacketTag::header;
+      break;
+    case packetTagTrunc(PacketTag::badTag):
+      tag = PacketTag::badTag;
+      break;
+    default:
+      break;
   }
 
   return tag;
 }
 
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              PacketTag tag) {
+std::unique_ptr<Packet>&
+MediaNet::operator<<(std::unique_ptr<Packet>& p, PacketTag tag)
+{
   uint16_t t = MediaNet::packetTagTrunc(tag);
   assert(t < 127); // TODO var len encode
   p->push_back((uint8_t)t);
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, PacketTag &tag) {
+bool
+MediaNet::operator>>(std::unique_ptr<Packet>& p, PacketTag& tag)
+{
   if (p->fullSize() == 0) {
     tag = PacketTag::none;
     return false;
@@ -355,8 +382,9 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, PacketTag &tag) {
 
 /******************    atomic types *************************/
 
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              uint64_t val) {
+std::unique_ptr<Packet>&
+MediaNet::operator<<(std::unique_ptr<Packet>& p, uint64_t val)
+{
   // TODO - std::copy version for little endian machines optimization
 
   // buffer on wire is little endian (that is *not* network byte order)
@@ -372,8 +400,9 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   return p;
 }
 
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              uint32_t val) {
+std::unique_ptr<Packet>&
+MediaNet::operator<<(std::unique_ptr<Packet>& p, uint32_t val)
+{
   // buffer on wire is little endian (that is *not* network byte order)
   p->push_back(uint8_t((val >> 0) & 0xFF));
   p->push_back(uint8_t((val >> 8) & 0xFF));
@@ -383,8 +412,9 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   return p;
 }
 
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              uint16_t val) {
+std::unique_ptr<Packet>&
+MediaNet::operator<<(std::unique_ptr<Packet>& p, uint16_t val)
+{
   // buffer on wire is little endian (that is *not* network byte order)
   p->push_back(uint8_t((val >> 0) & 0xFF));
   p->push_back(uint8_t((val >> 8) & 0xFF));
@@ -392,15 +422,17 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   return p;
 }
 
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              uint8_t val) {
+std::unique_ptr<Packet>&
+MediaNet::operator<<(std::unique_ptr<Packet>& p, uint8_t val)
+{
   p->push_back(val);
 
   return p;
 }
 
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const std::string &val) {
+std::unique_ptr<Packet>&
+MediaNet::operator<<(std::unique_ptr<Packet>& p, const std::string& val)
+{
   // 1 byte to store the length of string
   assert(val.size() <= 255);
   auto valVec = std::vector<uint8_t>(val.begin(), val.end());
@@ -409,15 +441,19 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   return p;
 }
 
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const std::vector<uint8_t> &val) {
+std::unique_ptr<Packet>&
+MediaNet::operator<<(std::unique_ptr<Packet>& p,
+                     const std::vector<uint8_t>& val)
+{
   p->push_back(val);
   p->push_back(val.size());
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, uint64_t &val) {
-  uint8_t byte[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+bool
+MediaNet::operator>>(std::unique_ptr<Packet>& p, uint64_t& val)
+{
+  uint8_t byte[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
   bool ok = true;
   ok &= p >> byte[7];
@@ -437,8 +473,10 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, uint64_t &val) {
   return ok;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, uint32_t &val) {
-  uint8_t byte[4] = {0, 0, 0, 0};
+bool
+MediaNet::operator>>(std::unique_ptr<Packet>& p, uint32_t& val)
+{
+  uint8_t byte[4] = { 0, 0, 0, 0 };
 
   bool ok = true;
   ok &= p >> byte[3];
@@ -451,8 +489,10 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, uint32_t &val) {
   return ok;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, uint16_t &val) {
-  uint8_t byte[2] = {0, 0};
+bool
+MediaNet::operator>>(std::unique_ptr<Packet>& p, uint16_t& val)
+{
+  uint8_t byte[2] = { 0, 0 };
 
   bool ok = true;
   ok &= p >> byte[1];
@@ -463,7 +503,9 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, uint16_t &val) {
   return ok;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, uint8_t &val) {
+bool
+MediaNet::operator>>(std::unique_ptr<Packet>& p, uint8_t& val)
+{
   if (p->fullSize() == 0) {
     return false;
   }
@@ -473,7 +515,9 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, uint8_t &val) {
   return true;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, std::string &val) {
+bool
+MediaNet::operator>>(std::unique_ptr<Packet>& p, std::string& val)
+{
   if (p->fullSize() == 0) {
     return false;
   }
@@ -488,8 +532,9 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, std::string &val) {
   return true;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p,
-                          std::vector<uint8_t> &val) {
+bool
+MediaNet::operator>>(std::unique_ptr<Packet>& p, std::vector<uint8_t>& val)
+{
   if (p->fullSize() == 0) {
     return false;
   }
@@ -509,8 +554,9 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p,
 /// Protocol messages
 ///
 
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const NetSyncReq &msg) {
+std::unique_ptr<Packet>&
+MediaNet::operator<<(std::unique_ptr<Packet>& p, const NetSyncReq& msg)
+{
   p << msg.supportedFeaturesVec;
   p << msg.clientTimeMs;
   p << msg.senderId;
@@ -522,7 +568,9 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetSyncReq &msg) {
+bool
+MediaNet::operator>>(std::unique_ptr<Packet>& p, NetSyncReq& msg)
+{
   if (nextTag(p) != PacketTag::sync) {
     std::cerr << "Did not find expected PacketTag::sync" << std::endl;
     return false;
@@ -547,8 +595,9 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetSyncReq &msg) {
 ///
 /// SyncAck
 ///
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const NetSyncAck &msg) {
+std::unique_ptr<Packet>&
+MediaNet::operator<<(std::unique_ptr<Packet>& p, const NetSyncAck& msg)
+{
   // TODO add other fields
   p << msg.useFeaturesVec;
   p << msg.serverTimeMs;
@@ -557,7 +606,9 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetSyncAck &msg) {
+bool
+MediaNet::operator>>(std::unique_ptr<Packet>& p, NetSyncAck& msg)
+{
   if (nextTag(p) != PacketTag::syncAck) {
     std::cerr << "Did not find expected PacketTag::syncAck" << std::endl;
     return false;
@@ -578,15 +629,18 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetSyncAck &msg) {
 ///
 /// NetReset and Types
 ///
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const NetResetRetry &msg) {
+std::unique_ptr<Packet>&
+MediaNet::operator<<(std::unique_ptr<Packet>& p, const NetResetRetry& msg)
+{
 
   p << msg.cookie;
   p << PacketTag::resetRetry;
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetResetRetry &msg) {
+bool
+MediaNet::operator>>(std::unique_ptr<Packet>& p, NetResetRetry& msg)
+{
   if (nextTag(p) != PacketTag::resetRetry) {
     std::cerr << "Did not find expected PacketTag::RstRetry" << std::endl;
     return false;
@@ -603,8 +657,9 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetResetRetry &msg) {
   return ok;
 }
 
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const NetResetRedirect &msg) {
+std::unique_ptr<Packet>&
+MediaNet::operator<<(std::unique_ptr<Packet>& p, const NetResetRedirect& msg)
+{
   p << msg.port;
   p << msg.origin;
   p << msg.cookie;
@@ -612,7 +667,9 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetResetRedirect &msg) {
+bool
+MediaNet::operator>>(std::unique_ptr<Packet>& p, NetResetRedirect& msg)
+{
   if (nextTag(p) != PacketTag::resetRedirect) {
     std::cerr << "Did not find expected PacketTag::RstRedirect" << std::endl;
     return false;
@@ -635,15 +692,18 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetResetRedirect &msg) {
 ///
 /// NetRateReq
 ///
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const NetRateReq &msg) {
+std::unique_ptr<Packet>&
+MediaNet::operator<<(std::unique_ptr<Packet>& p, const NetRateReq& msg)
+{
   p << msg.bitrateKbps;
   p << PacketTag::rate;
 
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRateReq &msg) {
+bool
+MediaNet::operator>>(std::unique_ptr<Packet>& p, NetRateReq& msg)
+{
   if (nextTag(p) != PacketTag::rate) {
     // std::clog << "Did not find expected PacketTag::rate" <<
     // std::endl;
@@ -667,8 +727,9 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, NetRateReq &msg) {
 /// EncryptedDataBlock
 ///
 
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const EncryptedDataBlock &data) {
+std::unique_ptr<Packet>&
+MediaNet::operator<<(std::unique_ptr<Packet>& p, const EncryptedDataBlock& data)
+{
 
   p << data.cipherDataLen;
   p << data.metaDataLen;
@@ -679,8 +740,9 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p,
-                          EncryptedDataBlock &data) {
+bool
+MediaNet::operator>>(std::unique_ptr<Packet>& p, EncryptedDataBlock& data)
+{
 
   if (nextTag(p) != PacketTag::encDataBlock) {
     // std::clog << "Did not find expected PacketTag::encDataBlock" <<
@@ -703,14 +765,13 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p,
   return ok;
 }
 
-
 ///
 /// DataBlock
 ///
 
-
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const DataBlock &data) {
+std::unique_ptr<Packet>&
+MediaNet::operator<<(std::unique_ptr<Packet>& p, const DataBlock& data)
+{
 
   p << data.dataLen;
   p << data.metaDataLen;
@@ -719,8 +780,9 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p,
-                          DataBlock &data) {
+bool
+MediaNet::operator>>(std::unique_ptr<Packet>& p, DataBlock& data)
+{
 
   if (nextTag(p) != PacketTag::dataBlock) {
     // std::clog << "Did not find expected PacketTag::encDataBlock" <<
@@ -742,15 +804,13 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p,
   return ok;
 }
 
-
-
 ///
 /// NamedDataChunk
 ///
 
-
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              const NamedDataChunk &data) {
+std::unique_ptr<Packet>&
+MediaNet::operator<<(std::unique_ptr<Packet>& p, const NamedDataChunk& data)
+{
 
   p << data.lifetime;
   p << data.shortName;
@@ -758,8 +818,9 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p,
-                          NamedDataChunk &data) {
+bool
+MediaNet::operator>>(std::unique_ptr<Packet>& p, NamedDataChunk& data)
+{
 
   bool ok = true;
 
@@ -773,13 +834,13 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p,
   return ok;
 }
 
-
 ///
 /// var-ints
 ///
 
-std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
-                                              uintVar_t v) {
+std::unique_ptr<Packet>&
+MediaNet::operator<<(std::unique_ptr<Packet>& p, uintVar_t v)
+{
   uint64_t val = fromVarInt(v);
 
   assert(val < ((uint64_t)1 << 61));
@@ -815,8 +876,10 @@ std::unique_ptr<Packet> &MediaNet::operator<<(std::unique_ptr<Packet> &p,
   return p;
 }
 
-bool MediaNet::operator>>(std::unique_ptr<Packet> &p, uintVar_t &v) {
-  uint8_t byte[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+bool
+MediaNet::operator>>(std::unique_ptr<Packet>& p, uintVar_t& v)
+{
+  uint8_t byte[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
   bool ok = true;
 
   if (p->fullSize() == 0) {
@@ -868,19 +931,27 @@ bool MediaNet::operator>>(std::unique_ptr<Packet> &p, uintVar_t &v) {
   return ok;
 }
 
-uintVar_t MediaNet::toVarInt(uint64_t v) {
+uintVar_t
+MediaNet::toVarInt(uint64_t v)
+{
   assert(v < ((uint64_t)0x1 << 61));
   return static_cast<uintVar_t>(v);
 }
 
-uint64_t MediaNet::fromVarInt(uintVar_t v) { return static_cast<uint64_t>(v); }
+uint64_t
+MediaNet::fromVarInt(uintVar_t v)
+{
+  return static_cast<uint64_t>(v);
+}
 
-std::ostream &MediaNet::operator<<(std::ostream &stream, Packet &packet) {
+std::ostream&
+MediaNet::operator<<(std::ostream& stream, Packet& packet)
+{
   // TODO need to update this and perhaps change to "toString"
 
   int ptr = (int)packet.fullSize() - 1;
   while (ptr >= 0) {
-    const uint8_t *data = &(packet.fullData());
+    const uint8_t* data = &(packet.fullData());
     MediaNet::PacketTag tag = nextTag(data[ptr--]);
     uint16_t len = ((uint16_t)tag) & 0xFF;
     if (len == 255) {
@@ -894,46 +965,46 @@ std::ostream &MediaNet::operator<<(std::ostream &stream, Packet &packet) {
     ptr -= len;
 
     switch (tag) {
-    case PacketTag::headerData:
-    case PacketTag::headerDataCrazy:
-      stream << " magicData";
-      break;
-    case PacketTag::headerSyn:
-    case PacketTag::headerSynCrazy:
-      stream << " magicSync";
-      break;
-    case PacketTag::headerSynAck:
-    case PacketTag::headerSynAckCrazy:
-      stream << " magicSyncAck";
-      break;
-    case PacketTag::headerRst:
-    case PacketTag::headerRstCrazy:
-      stream << " magicReset";
-      break;
-    case PacketTag::sync:
-      stream << " sync";
-      break;
-    case PacketTag::syncAck:
-      stream << " syncAck";
-      break;
-    case PacketTag::resetRetry:
-      stream << " resetRetry";
-      break;
-    case PacketTag::resetRedirect:
-      stream << " resetRedirect";
-      break;
-    case PacketTag::shortName:
-      stream << " shortName";
-      break;
+      case PacketTag::headerData:
+      case PacketTag::headerDataCrazy:
+        stream << " magicData";
+        break;
+      case PacketTag::headerSyn:
+      case PacketTag::headerSynCrazy:
+        stream << " magicSync";
+        break;
+      case PacketTag::headerSynAck:
+      case PacketTag::headerSynAckCrazy:
+        stream << " magicSyncAck";
+        break;
+      case PacketTag::headerRst:
+      case PacketTag::headerRstCrazy:
+        stream << " magicReset";
+        break;
+      case PacketTag::sync:
+        stream << " sync";
+        break;
+      case PacketTag::syncAck:
+        stream << " syncAck";
+        break;
+      case PacketTag::resetRetry:
+        stream << " resetRetry";
+        break;
+      case PacketTag::resetRedirect:
+        stream << " resetRedirect";
+        break;
+      case PacketTag::shortName:
+        stream << " shortName";
+        break;
 
-    case PacketTag::clientData:
-      stream << " clientData";
-      break;
-    case PacketTag::relayData:
-      stream << " relayData";
-      break;
-    default:
-      stream << " tag:" << (((uint16_t)tag) >> 8) << "(" << len << ")";
+      case PacketTag::clientData:
+        stream << " clientData";
+        break;
+      case PacketTag::relayData:
+        stream << " relayData";
+        break;
+      default:
+        stream << " tag:" << (((uint16_t)tag) >> 8) << "(" << len << ")";
     }
     if (((uint16_t)tag) == 0) {
       ptr = -1;
@@ -942,10 +1013,26 @@ std::ostream &MediaNet::operator<<(std::ostream &stream, Packet &packet) {
   return stream;
 }
 
-size_t Packet::size() const { return buffer.size() - headerSize; }
+size_t
+Packet::size() const
+{
+  return buffer.size() - headerSize;
+}
 
-[[maybe_unused]] uint8_t Packet::getPriority() const { return priority; }
+[[maybe_unused]] uint8_t
+Packet::getPriority() const
+{
+  return priority;
+}
 
-void Packet::setPriority(uint8_t priorityVal ) { Packet::priority = priorityVal; }
+void
+Packet::setPriority(uint8_t priorityVal)
+{
+  Packet::priority = priorityVal;
+}
 
-bool Packet::getFEC() const { return useFEC; }
+bool
+Packet::getFEC() const
+{
+  return useFEC;
+}
