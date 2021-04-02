@@ -11,18 +11,34 @@
 using namespace MediaNet;
 // TODO: Add other elements for pipeline - loss,spinBit, rateCtrl
 QuicRServer::QuicRServer()
-    : udpPipe(), fakeLossPipe(&udpPipe), connectionPipe(&fakeLossPipe),
-      firstPipe(&connectionPipe) {
+  : udpPipe()
+  , fakeLossPipe(&udpPipe)
+  , connectionPipe(&fakeLossPipe)
+  , firstPipe(&connectionPipe)
+{
   firstPipe->updateMTU(1200, 500);
 }
 
-QuicRServer::~QuicRServer() { firstPipe->stop(); }
+QuicRServer::~QuicRServer()
+{
+  firstPipe->stop();
+}
 
-bool QuicRServer::ready() const { return firstPipe->ready(); }
+bool
+QuicRServer::ready() const
+{
+  return firstPipe->ready();
+}
 
-void QuicRServer::close() { firstPipe->stop(); }
+void
+QuicRServer::close()
+{
+  firstPipe->stop();
+}
 
-std::unique_ptr<Packet> QuicRServer::recv() {
+std::unique_ptr<Packet>
+QuicRServer::recv()
+{
 
   auto packet = std::unique_ptr<Packet>(nullptr);
 
@@ -44,16 +60,21 @@ std::unique_ptr<Packet> QuicRServer::recv() {
     bad = false;
   }
 
-  // std::clog << "QuicR Server received packet size=" << packet->size() << std::endl;
+  // std::clog << "QuicR Server received packet size=" << packet->size() <<
+  // std::endl;
   return packet;
 }
 
-bool QuicRServer::open(const uint16_t port) {
+bool
+QuicRServer::open(const uint16_t port)
+{
   // TODO: add a start() overload for server flows
   return firstPipe->start(port, "", nullptr);
 }
 
-bool QuicRServer::send(std::unique_ptr<Packet> packet) {
+bool
+QuicRServer::send(std::unique_ptr<Packet> packet)
+{
   // TODO: using UdpPipe directly. Revis this
   return udpPipe.send(std::move(packet));
 }

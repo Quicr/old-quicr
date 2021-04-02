@@ -10,9 +10,10 @@
 
 namespace MediaNet {
 
-class RetransmitPipe : public PipeInterface {
+class RetransmitPipe : public PipeInterface
+{
 public:
-  explicit RetransmitPipe(PipeInterface *t);
+  explicit RetransmitPipe(PipeInterface* t);
 
   bool send(std::unique_ptr<Packet> packet) override;
 
@@ -22,8 +23,8 @@ public:
   void ack(ShortName name) override;
 
   void updateRTT(
-      uint16_t minRttMs,
-      uint16_t maxRttMs) override; // tells downstream things the current RTT
+    uint16_t minRttMs,
+    uint16_t maxRttMs) override; // tells downstream things the current RTT
 
 private:
   std::mutex rtxListMutex;

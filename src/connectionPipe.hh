@@ -16,8 +16,10 @@
 namespace MediaNet {
 
 using WaitHandler = std::function<void()>;
-struct Timer {
-  static void wait(int msec, WaitHandler &&callback) {
+struct Timer
+{
+  static void wait(int msec, WaitHandler&& callback)
+  {
     std::thread([=]() {
       auto wait_time = std::chrono::milliseconds(msec);
       std::this_thread::sleep_for(wait_time);
@@ -29,13 +31,15 @@ struct Timer {
 ///
 /// ConnectionPipe
 ///
-class ConnectionPipe : public PipeInterface {
+class ConnectionPipe : public PipeInterface
+{
 public:
-  explicit ConnectionPipe(PipeInterface *t);
+  explicit ConnectionPipe(PipeInterface* t);
   bool ready() const override;
   void stop() override;
-  virtual bool start(uint16_t port, std::string server,
-                     PipeInterface *upStream) override;
+  virtual bool start(uint16_t port,
+                     std::string server,
+                     PipeInterface* upStream) override;
 
 protected:
   //             +------> Start
@@ -49,9 +53,12 @@ protected:
   //             +------ Connected
   //
 
-  struct Start {};
-  struct ConnectionPending {};
-  struct Connected {};
+  struct Start
+  {};
+  struct ConnectionPending
+  {};
+  struct Connected
+  {};
   using State = std::variant<Start, ConnectionPending, Connected>;
 
   State state = Start{};
@@ -60,12 +67,14 @@ protected:
 ///
 /// ClientConnectionPipe
 ///
-class ClientConnectionPipe : public ConnectionPipe {
+class ClientConnectionPipe : public ConnectionPipe
+{
 public:
-  explicit ClientConnectionPipe(PipeInterface *t);
+  explicit ClientConnectionPipe(PipeInterface* t);
   void setAuthInfo(uint32_t sender, uint64_t t);
-  bool start(uint16_t port, std::string server,
-             PipeInterface *upStream) override;
+  bool start(uint16_t port,
+             std::string server,
+             PipeInterface* upStream) override;
 
   // Overrides from PipelineInterface
   bool send(std::unique_ptr<Packet>) override;
@@ -90,11 +99,13 @@ private:
 ///
 
 // TODO: Add client connection status loop
-class ServerConnectionPipe : public ConnectionPipe {
+class ServerConnectionPipe : public ConnectionPipe
+{
   using timepoint = std::chrono::time_point<std::chrono::steady_clock>;
 
 public:
-  class Connection {
+  class Connection
+  {
   public:
     Connection(uint32_t relaySeq, uint64_t cookie_in);
     uint32_t relaySeqNum;
@@ -102,17 +113,18 @@ public:
     timepoint lastSyn;
   };
 
-  explicit ServerConnectionPipe(PipeInterface *t);
-  bool start(uint16_t port, std::string server,
-             PipeInterface *upStream) override;
+  explicit ServerConnectionPipe(PipeInterface* t);
+  bool start(uint16_t port,
+             std::string server,
+             PipeInterface* upStream) override;
   // Overrides from PipelineInterface
   bool send(std::unique_ptr<Packet>) override;
   std::unique_ptr<Packet> recv() override;
 
 private:
-  void processSyn(std::unique_ptr<MediaNet::Packet> &packet);
-  void processRst(std::unique_ptr<MediaNet::Packet> &packet);
-  void sendSyncAck(const MediaNet::IpAddr &to, uint32_t authSecret);
+  void processSyn(std::unique_ptr<MediaNet::Packet>& packet);
+  void processRst(std::unique_ptr<MediaNet::Packet>& packet);
+  void sendSyncAck(const MediaNet::IpAddr& to, uint32_t authSecret);
 
   // TODO: need to timeout on the entries in this map to
   // avoid DOS attacks

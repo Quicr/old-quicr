@@ -14,7 +14,8 @@ namespace MediaNet {
 
 // class UdpPipe;
 
-class QuicRServer {
+class QuicRServer
+{
 public:
   QuicRServer();
   virtual ~QuicRServer();
@@ -30,7 +31,7 @@ private:
   UdpPipe udpPipe;
   FakeLossPipe fakeLossPipe;
   ServerConnectionPipe connectionPipe;
-  PipeInterface *firstPipe;
+  PipeInterface* firstPipe;
 };
 
 } // namespace MediaNet

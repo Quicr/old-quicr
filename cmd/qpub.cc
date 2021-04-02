@@ -13,7 +13,9 @@
 
 using namespace MediaNet;
 
-int main(int argc, char *argv[]) {
+int
+main(int argc, char* argv[])
+{
   std::string relayName("localhost");
 
   if (argc < 3) {
@@ -51,7 +53,7 @@ int main(int argc, char *argv[]) {
   do {
     const int packetGapUs = 1000000 / packetsPerSecond;
     auto sendTime =
-        startTimePoint + std::chrono::microseconds(packetGapUs * packetCount++);
+      startTimePoint + std::chrono::microseconds(packetGapUs * packetCount++);
     std::this_thread::sleep_until(sendTime);
 
     uint64_t bitRate = qClient.getTargetUpstreamBitrate(); // in bps
@@ -84,7 +86,7 @@ int main(int argc, char *argv[]) {
     assert(bytesPerPacket - transportHeaderBytes >= 1);
     packet->resize(bytesPerPacket - transportHeaderBytes);
 
-    uint8_t *buffer = &(packet->data());
+    uint8_t* buffer = &(packet->data());
     *buffer++ = 1;
 
     packet->setFEC(false);

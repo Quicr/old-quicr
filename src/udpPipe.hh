@@ -19,19 +19,21 @@
 
 namespace MediaNet {
 
-class UdpPipe : public PipeInterface {
+class UdpPipe : public PipeInterface
+{
 public:
   UdpPipe();
   ~UdpPipe() override;
 
-  bool start(uint16_t serverPort, std::string serverName,
-             PipeInterface *upStream) override;
+  bool start(uint16_t serverPort,
+             std::string serverName,
+             PipeInterface* upStream) override;
   [[nodiscard]] bool ready() const override;
   void stop() override;
 
   bool send(std::unique_ptr<Packet>) override;
-  std::unique_ptr<Packet>
-  recv() override; // non blocking, return nullptr if no buffer
+  std::unique_ptr<Packet> recv()
+    override; // non blocking, return nullptr if no buffer
 
 private:
   std::mutex socketMutex;

@@ -10,7 +10,9 @@
 
 using namespace MediaNet;
 
-int main(int argc, char *argv[]) {
+int
+main(int argc, char* argv[])
+{
   std::string relayName("localhost");
 
   if (argc != 2) {
@@ -39,7 +41,7 @@ int main(int argc, char *argv[]) {
   qClient.setPacketsUp(500, 240);
 
   const int packetSizeByes =
-      100; // TODO FIX (maxSpeedUpBps / packetsUpPerSecond) / 8;
+    100; // TODO FIX (maxSpeedUpBps / packetsUpPerSecond) / 8;
   assert(packetSizeByes < 32768);
 
   int packetCount = 0;
@@ -55,7 +57,7 @@ int main(int argc, char *argv[]) {
 
     const int packetGapUs = 1000000 / packetsUpPerSecond;
     auto sendTime =
-        startTimePoint + std::chrono::microseconds(packetGapUs * packetCount);
+      startTimePoint + std::chrono::microseconds(packetGapUs * packetCount);
     std::this_thread::sleep_until(sendTime);
 
     name.mediaTime = packetCount;
@@ -80,9 +82,9 @@ int main(int argc, char *argv[]) {
 
     auto now = std::chrono::steady_clock::now();
     uint32_t durationMs =
-        (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(
-            now - startTimePoint)
-            .count();
+      (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(
+        now - startTimePoint)
+        .count();
     if (durationMs > timeToSendUpSeconds * 1000) {
       break;
     }

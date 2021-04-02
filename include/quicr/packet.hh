@@ -1,11 +1,11 @@
 #pragma once
 
 #include <cassert>
-#include <iostream>
-#include <sys/types.h>
 #include <cstdint>
+#include <iostream>
 #include <memory>
 #include <string>
+#include <sys/types.h>
 #include <vector>
 #if defined(__linux__) || defined(__APPLE__)
 #include <netinet/in.h>
@@ -19,7 +19,6 @@
 
 #include "../../src/packetTag.hh"
 
-
 namespace MediaNet {
 
 class QuicRClient;
@@ -28,17 +27,20 @@ class SubscribePipe;
 class FragmentPipe;
 class EncryptPipe; // Needed to manipulate buffer directly
 
-struct IpAddr {
+struct IpAddr
+{
   struct sockaddr_in addr;
   socklen_t addrLen;
 
-  static std::string toString(const IpAddr &);
-  bool operator<(const IpAddr &rhs) const;
+  static std::string toString(const IpAddr&);
+  bool operator<(const IpAddr& rhs) const;
 };
 
-static constexpr int QUICR_HEADER_SIZE_BYTES = 6; // (1) magic + (4) pathToken + (1) tag
+static constexpr int QUICR_HEADER_SIZE_BYTES =
+  6; // (1) magic + (4) pathToken + (1) tag
 
-class Packet {
+class Packet
+{
   // friend std::ostream &operator<<(std::ostream &os, const Packet &dt);
   // friend MediaNet::PacketTag MediaNet::nextTag(std::unique_ptr<Packet> &p);
 
@@ -52,22 +54,22 @@ class Packet {
   friend EncryptPipe;
 
 public:
-	struct Header {
-		PacketTag tag;
-		uint32_t pathToken;
+  struct Header
+  {
+    PacketTag tag;
+    uint32_t pathToken;
 
-		Header(){}
-		explicit Header(PacketTag tag);
-		Header(PacketTag tag, uint32_t token);
-	};
+    Header() {}
+    explicit Header(PacketTag tag);
+    Header(PacketTag tag, uint32_t token);
+  };
 
   Packet();
-  void copy(const Packet &p);
+  void copy(const Packet& p);
   [[nodiscard]] std::unique_ptr<Packet> clone() const;
 
-  uint8_t &data() { return buffer.at(headerSize); }
-  uint8_t &fullData() { return buffer.at(0); }
-
+  uint8_t& data() { return buffer.at(headerSize); }
+  uint8_t& fullData() { return buffer.at(0); }
 
   [[nodiscard]] size_t size() const;
   [[nodiscard]] size_t fullSize() const { return buffer.size(); }
@@ -85,22 +87,24 @@ public:
   uint32_t getPathToken() const;
   void setPathToken(uint32_t token);
 
-  [[nodiscard]] const IpAddr &getSrc() const;
-  [[maybe_unused]] void setSrc(const IpAddr &src);
-  [[maybe_unused]] [[nodiscard]] const IpAddr &getDst() const;
-  void setDst(const IpAddr &dst);
+  [[nodiscard]] const IpAddr& getSrc() const;
+  [[maybe_unused]] void setSrc(const IpAddr& src);
+  [[maybe_unused]] [[nodiscard]] const IpAddr& getDst() const;
+  void setDst(const IpAddr& dst);
 
   [[nodiscard]] ShortName shortName() const { return name; };
 
   void setFragID(uint8_t fragmentID, bool lastFrag);
 
-  void push_back(const std::vector<uint8_t> &data) {
+  void push_back(const std::vector<uint8_t>& data)
+  {
     buffer.insert(buffer.end(), data.begin(), data.end());
   }
   void push_back(uint8_t t) { buffer.push_back(t); };
   void pop_back() { buffer.pop_back(); };
   uint8_t back() { return buffer.back(); };
-  std::vector<uint8_t> back(uint16_t len) {
+  std::vector<uint8_t> back(uint16_t len)
+  {
     assert(len <= buffer.size());
     auto vec = std::vector<uint8_t>(len);
     auto detla = buffer.size() - len;
@@ -131,6 +135,7 @@ private:
   MediaNet::IpAddr dst;
 };
 
-bool operator<(const MediaNet::ShortName &a, const MediaNet::ShortName &b);
+bool
+operator<(const MediaNet::ShortName& a, const MediaNet::ShortName& b);
 
 } // namespace MediaNet

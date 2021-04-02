@@ -9,10 +9,16 @@
 
 using namespace MediaNet;
 
-RetransmitPipe::RetransmitPipe(PipeInterface *t)
-    : PipeInterface(t), maxActTime(0), minRtt(100), bigRtt(200) {}
+RetransmitPipe::RetransmitPipe(PipeInterface* t)
+  : PipeInterface(t)
+  , maxActTime(0)
+  , minRtt(100)
+  , bigRtt(200)
+{}
 
-bool RetransmitPipe::send(std::unique_ptr<Packet> packet) {
+bool
+RetransmitPipe::send(std::unique_ptr<Packet> packet)
+{
   assert(downStream);
 
   // for reliably packets, cache them and resend if no ack received
@@ -22,7 +28,7 @@ bool RetransmitPipe::send(std::unique_ptr<Packet> packet) {
     packet->setReliable(false);
 
     auto p = std::pair<MediaNet::ShortName, std::unique_ptr<Packet>>(
-        packet->shortName(), move(clone));
+      packet->shortName(), move(clone));
 
     std::lock_guard<std::mutex> lock(rtxListMutex);
     auto ret = rtxList.insert(move(p));
@@ -36,13 +42,17 @@ bool RetransmitPipe::send(std::unique_ptr<Packet> packet) {
   return downStream->send(move(packet));
 }
 
-std::unique_ptr<Packet> RetransmitPipe::recv() {
+std::unique_ptr<Packet>
+RetransmitPipe::recv()
+{
   assert(downStream);
 
   return downStream->recv();
 }
 
-void RetransmitPipe::ack(ShortName name) {
+void
+RetransmitPipe::ack(ShortName name)
+{
   PipeInterface::ack(name);
   std::lock_guard<std::mutex> lock(rtxListMutex);
 
@@ -77,7 +87,9 @@ void RetransmitPipe::ack(ShortName name) {
   }
 }
 
-void RetransmitPipe::updateRTT(uint16_t minRttMs, uint16_t bigRttMs) {
+void
+RetransmitPipe::updateRTT(uint16_t minRttMs, uint16_t bigRttMs)
+{
   PipeInterface::updateRTT(minRttMs, bigRttMs);
 
   bigRtt = bigRttMs;

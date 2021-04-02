@@ -11,9 +11,10 @@
 
 namespace MediaNet {
 
-class PriorityPipe : public PipeInterface {
+class PriorityPipe : public PipeInterface
+{
 public:
-  explicit PriorityPipe(PipeInterface *t);
+  explicit PriorityPipe(PipeInterface* t);
 
   bool send(std::unique_ptr<Packet> packet) override;
   std::unique_ptr<Packet> recv() override;

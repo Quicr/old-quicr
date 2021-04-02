@@ -4,22 +4,26 @@ namespace MediaNet {
 
 enum struct PacketTag : uint32_t;
 
-constexpr uint32_t packetTagGen(uint16_t val,  int len,
-                                    bool mandToUnderstand) {
+constexpr uint32_t
+packetTagGen(uint16_t val, int len, bool mandToUnderstand)
+{
   (void)len;
   uint32_t ret = val;
   ret <<= 8;
-  ret += (mandToUnderstand?1:0);
+  ret += (mandToUnderstand ? 1 : 0);
   return ret;
 }
 
-constexpr uint16_t packetTagTrunc(MediaNet::PacketTag tag) {
+constexpr uint16_t
+packetTagTrunc(MediaNet::PacketTag tag)
+{
   auto t = (uint32_t)tag;
   t >>= 8;
   return (uint16_t)t;
 }
 
-enum struct PacketTag : uint32_t {
+enum struct PacketTag : uint32_t
+{
   /*
    * If you add a tag, remember to to add MediaNet::nextTag decoder
    * A length of 255 in packerTagGen means variable length data
@@ -43,9 +47,9 @@ enum struct PacketTag : uint32_t {
   shortName = packetTagGen(12, -1, true),
   dataBlock = packetTagGen(13, -1, true),
   encDataBlock = packetTagGen(14, -1, true),
-	header = packetTagGen(15, 0, true), // tag for the header itself
-	
-	// This block of headerMagic values selected to multiplex with STUN/DTLS/RTP
+  header = packetTagGen(15, 0, true), // tag for the header itself
+
+  // This block of headerMagic values selected to multiplex with STUN/DTLS/RTP
   headerData = packetTagGen(80, 0, true),
   headerDataCrazy = packetTagGen(81, 0, true),
   headerSyn = packetTagGen(82, 0, true),
@@ -55,7 +59,8 @@ enum struct PacketTag : uint32_t {
   headerRst = packetTagGen(86, 0, true),
   headerRstCrazy = packetTagGen(87, 0, true),
 
-  badTag = packetTagGen(16383, 0,
+  badTag = packetTagGen(16383,
+                        0,
                         true), // must not have any tag values greater than this
 };
 
