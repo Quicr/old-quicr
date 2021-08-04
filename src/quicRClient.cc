@@ -112,7 +112,6 @@ QuicRClient::recv()
 
   bool bad = true;
   while (bad) {
-
     packet = firstPipe->recv();
 
     if (!packet) {
@@ -120,22 +119,22 @@ QuicRClient::recv()
     }
 
     if (packet->fullSize() <= 0) {
-      std::clog << "quicr recv very bad size = " << packet->fullSize()
-                << std::endl;
+      //std::clog << "quicr recv very bad size = " << packet->fullSize()
+      //          << std::endl;
       continue;
     }
 
     if (packet->size() == 0) {
-      // std::clog << "quicr recv very zero buffer size, tag = " <<
-      // ((uint16_t)(nextTag(packet)) >> 8) << std::endl;
+      //std::clog << "quicr recv very zero buffer size, tag = " <<
+      //((uint16_t)(nextTag(packet)) >> 8) << std::endl;
       return packet;
     }
 
     if (nextTag(packet) == PacketTag::header) {
-      // Packet::Header header;
-      // packet >> header;
-      // std::clog << "quicr empty message, header tag: " <<
-      // ((uint16_t)(header.tag) >> 8) << std::endl;
+      //Packet::Header header;
+      //packet >> header;
+      //std::clog << "quicr empty message, header tag: " <<
+      //((uint16_t)(header.tag) >> 8) << std::endl;
       continue;
     }
 
@@ -186,7 +185,7 @@ QuicRClient::recv()
     bad = false;
   }
 
-  // std::clog << "QuicR received packet size=" << packet->size() << std::endl;
+  //std::clog << "QuicR received packet size=" << packet->size() << std::endl;
   return packet;
 }
 
