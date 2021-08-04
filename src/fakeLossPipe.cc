@@ -14,25 +14,19 @@ FakeLossPipe::FakeLossPipe(PipeInterface* t)
   , downStreamCount(0)
 {}
 
-bool
-FakeLossPipe::send(std::unique_ptr<Packet> packet)
-{
-  assert(downStream);
-
+bool FakeLossPipe::send(std::unique_ptr<Packet> packet) {
+  assert(nextPipe);
   upstreamCount++;
   if (upstreamCount % 11 == 5) {
     // return true; // TODO remove
   }
 
-  return downStream->send(move(packet));
+  return nextPipe->send(move(packet));
 }
 
-std::unique_ptr<Packet>
-FakeLossPipe::recv()
-{
-  assert(downStream);
-
-  auto packet = downStream->recv();
+std::unique_ptr<Packet> FakeLossPipe::recv() {
+  assert(nextPipe);
+  auto packet = nextPipe->recv();
 
   if (packet) {
     downStreamCount++;

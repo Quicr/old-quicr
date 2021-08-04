@@ -155,8 +155,7 @@ Relay::processPub(std::unique_ptr<MediaNet::Packet>& packet,
   // find the matching subscribers
   auto subscribers = fib->lookupSubscription(namedDataChunk.shortName);
 
-  // std::clog << "Name:" << name << " has:" << subscribers.size() << "
-  // subscribers\n";
+  std::clog << "Name:" << namedDataChunk.shortName << " has:" << subscribers.size() << "subscribers\n";
 
   packet << encryptedDataBlock;
   packet << namedDataChunk;
@@ -170,7 +169,7 @@ Relay::processPub(std::unique_ptr<MediaNet::Packet>& packet,
 
     relayDataPacket << relayData;
 
-    // std::clog << "Relay send: " << relayDataPacket->size() << std::endl;
+    std::clog << "Relay send: " << relayDataPacket->size() << std::endl;
 
     bool simLoss = false;
 

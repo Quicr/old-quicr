@@ -28,8 +28,8 @@ EncryptPipe::send(std::unique_ptr<Packet> packet)
 {
 
   // TODO: figure out right AAD bits
-  assert(downStream);
-  // return downStream->send(std::move(packet));
+  assert(nextPipe);
+  // return nextPipe->send(std::move(packet));
 
   ClientData clientData;
   NamedDataChunk namedDataChunk;
@@ -68,7 +68,7 @@ EncryptPipe::send(std::unique_ptr<Packet> packet)
   // std::cout << "Full Encrypted Packet with header: "<< packet->size() << "
   // bytes\n";
 
-  return downStream->send(move(packet));
+  return nextPipe->send(move(packet));
 }
 
 std::unique_ptr<Packet>
@@ -77,10 +77,10 @@ EncryptPipe::recv()
 
   // TODO check packet integrity and decrypt
 
-  assert(downStream);
-  // return downStream->recv();
+  assert(nextPipe);
+  // return nextPipe->recv();
 
-  auto packet = downStream->recv();
+  auto packet = nextPipe->recv();
   if (packet) {
     auto tag = nextTag(packet);
     if (tag == PacketTag::shortName) {

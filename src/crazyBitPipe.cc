@@ -40,15 +40,13 @@ CrazyBitPipe::send(std::unique_ptr<Packet> packet)
     packet->fullData() |= 0x01; // set the spin bit
   }
 
-  assert(downStream);
-  return downStream->send(move(packet));
+  assert(nextPipe);
+  return nextPipe->send(move(packet));
 }
 
-std::unique_ptr<Packet>
-CrazyBitPipe::recv()
-{
-  assert(downStream);
-  std::unique_ptr<Packet> packet = downStream->recv();
+std::unique_ptr<Packet> CrazyBitPipe::recv() {
+  assert(nextPipe);
+  std::unique_ptr<Packet> packet = nextPipe->recv();
   if (!packet) {
     return packet;
   }

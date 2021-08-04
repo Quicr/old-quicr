@@ -1,6 +1,5 @@
 #include <cassert>
 #include <random>
-#include <thread>
 
 #include "connectionPipe.hh"
 #include "encode.hh"
@@ -12,11 +11,8 @@ ConnectionPipe::ConnectionPipe(PipeInterface* t)
   : PipeInterface(t)
 {}
 
-bool
-ConnectionPipe::start(const uint16_t port,
-                      const std::string server,
-                      PipeInterface* upStrm)
-{
+bool ConnectionPipe::start(const uint16_t port, const std::string& server,
+                           PipeInterface *upStrm) {
   return PipeInterface::start(port, server, upStrm);
 }
 
@@ -46,21 +42,14 @@ ConnectionPipe::stop()
 /// ClientConnectionPipe
 ///
 
-ClientConnectionPipe::ClientConnectionPipe(PipeInterface* t)
-  : ConnectionPipe(t)
-  , senderID(0)
-  , pathToken(0)
-{}
+ClientConnectionPipe::ClientConnectionPipe(PipeInterface *t)
+    : ConnectionPipe(t), senderID(0), pathToken(0) {}
 
-bool
-ClientConnectionPipe::start(uint16_t port,
-                            std::string server,
-                            PipeInterface* upStream)
-{
+bool ClientConnectionPipe::start(uint16_t port, const std::string& server,
+                                 PipeInterface *upStream) {
   bool ret = ConnectionPipe::start(port, server, upStream);
   if (ret) {
     sendSync();
-    runSyncLoop();
   }
   return ret;
 }
@@ -87,11 +76,6 @@ ClientConnectionPipe::recv()
     NetSyncAck syncAck{};
     packet >> syncAck;
 
-    // kickoff periodic sync flow
-    if (!syncLoopRunning) {
-      runSyncLoop();
-      syncLoopRunning = true;
-    }
     state = Connected{};
     // don't need to report syncAck up in the chain
     return nullptr;
@@ -108,9 +92,24 @@ ClientConnectionPipe::recv()
   return packet;
 }
 
-void
-ClientConnectionPipe::setAuthInfo(uint32_t sender, uint64_t token_in)
-{
+void ClientConnectionPipe::runUpdates(const std::chrono::time_point<std::chrono::steady_clock>& now) {
+  // verify if time expired since last sync point
+  auto expended = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_sync_point).count();
+	if (expended >= syn_timeout_msec) {
+		if (std::holds_alternative<ConnectionPending>(state)) {
+			if (syncs_awaiting_response >= max_connection_retry_cnt) {
+				stop();
+				return;
+			}
+			syncs_awaiting_response++;
+			return;
+		}
+		// trigger new sync point
+		sendSync();
+	}
+}
+
+void ClientConnectionPipe::setAuthInfo(uint32_t sender, uint64_t token_in) {
   senderID = sender;
   assert(senderID > 0);
   pathToken = token_in;
@@ -124,11 +123,11 @@ ClientConnectionPipe::sendSync()
   auto header = Packet::Header{ PacketTag::headerSyn, pathToken };
   packet << header;
   NetSyncReq synReq{};
-  const auto now = std::chrono::system_clock::now();
+  const auto now = std::chrono::steady_clock::now();
+	last_sync_point = now;
   const auto duration = now.time_since_epoch();
   synReq.clientTimeMs =
-    std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-  ;
+      std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
   synReq.senderId = senderID;
   synReq.supportedFeaturesVec = 1;
   synReq.cookie = cookie;
@@ -138,29 +137,6 @@ ClientConnectionPipe::sendSync()
   // std::clog <<"sync Packet: " << packet->to_hex() << std::endl;
   send(move(packet));
   state = ConnectionPending{};
-}
-
-void
-ClientConnectionPipe::runSyncLoop()
-{
-  if (!syncLoopRunning) {
-    syncLoopRunning = true;
-  }
-
-  auto resync_callback = [=]() {
-    // check status and send a resync event
-    if (std::holds_alternative<ConnectionPending>(state)) {
-      if (syncs_awaiting_response >= max_connection_retry_cnt) {
-        stop();
-        return;
-      }
-      syncs_awaiting_response++;
-    }
-    runSyncLoop();
-  };
-
-  sendSync();
-  Timer::wait(syn_timeout_msec, std::move(resync_callback));
 }
 
 ///
@@ -182,11 +158,8 @@ ServerConnectionPipe::ServerConnectionPipe(PipeInterface* t)
   getRandom = std::bind(randomDist, randomGen);
 }
 
-bool
-ServerConnectionPipe::start(uint16_t port,
-                            std::string server,
-                            PipeInterface* upStream)
-{
+bool ServerConnectionPipe::start(uint16_t port, const std::string& server,
+                                 PipeInterface *upStream) {
   bool ret = ConnectionPipe::start(port, server, upStream);
   if (ret) {
     state = Connected{};

@@ -33,7 +33,7 @@ SubscribePipe::subscribe(const ShortName& name)
   packet->setFEC(true);
   packet->setReliable(true);
 
-  downStream->send(move(packet));
+  nextPipe->send(move(packet));
 
   // TODO thread to re-send subscribe list every second
 

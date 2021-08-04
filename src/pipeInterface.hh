@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <string>
+#include <chrono>
 
 #include "quicr/packet.hh"
 
@@ -26,9 +27,8 @@ public:
     bad // must be last
   };
 
-  virtual bool start(uint16_t port,
-                     std::string server,
-                     PipeInterface* upStream);
+  virtual bool start(uint16_t port, const std::string& server,
+                     PipeInterface *upStream);
   [[nodiscard]] virtual bool ready() const;
   virtual void stop();
 
@@ -55,13 +55,15 @@ public:
                                uint64_t startBps,
                                uint64_t maxBps);
 
-  virtual ~PipeInterface();
+  virtual void
+  runUpdates(const std::chrono::time_point<std::chrono::steady_clock>& now);
+	virtual ~PipeInterface();
 
 protected:
-  explicit PipeInterface(PipeInterface* downStream);
+  explicit PipeInterface(PipeInterface *downStream);
 
-  PipeInterface* downStream;
-  PipeInterface* upStream;
+  PipeInterface *nextPipe;
+  PipeInterface *prevPipe;
 };
 
 } // namespace MediaNet

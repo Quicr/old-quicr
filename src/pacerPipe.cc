@@ -1,6 +1,5 @@
 
 #include <cassert>
-#include <thread>
 
 #include "encode.hh"
 #include "pacerPipe.hh"
@@ -8,17 +7,10 @@
 
 using namespace MediaNet;
 
-PacerPipe::PacerPipe(PipeInterface* t)
-  : PipeInterface(t)
-  , rateCtrl(this)
-  , shutDown(false)
-  , oldPhase(-1)
-  , mtu(1200)
-  , targetPpsUp(500)
-  , useConstantPacketRate(true)
-  , nextSeqNum(1)
-{
-  assert(downStream);
+PacerPipe::PacerPipe(PipeInterface *t)
+    : PipeInterface(t), rateCtrl(this), shutDown(false), oldPhase(-1),
+      mtu(1200), targetPpsUp(500), useConstantPacketRate(true), nextSeqNum(1) {
+  assert(nextPipe);
 }
 
 PacerPipe::~PacerPipe()
@@ -33,15 +25,12 @@ PacerPipe::~PacerPipe()
   }
 }
 
-bool
-PacerPipe::start(const uint16_t port,
-                 const std::string server,
-                 PipeInterface* upStreamLink)
-{
+bool PacerPipe::start(const uint16_t port, const std::string& server,
+                      PipeInterface *upStreamLink) {
   // assert( upStreamLink );
-  upStream = upStreamLink;
+  prevPipe = upStreamLink;
 
-  bool ok = downStream->start(port, server, this);
+  bool ok = nextPipe->start(port, server, this);
   if (!ok) {
     return false;
   }
@@ -52,12 +41,10 @@ PacerPipe::start(const uint16_t port,
   return true;
 }
 
-void
-PacerPipe::stop()
-{
-  assert(downStream);
+void PacerPipe::stop() {
+  assert(nextPipe);
   shutDown = true;
-  downStream->stop();
+  nextPipe->stop();
 }
 
 bool
@@ -66,8 +53,8 @@ PacerPipe::ready() const
   if (shutDown) {
     return false;
   }
-  assert(downStream);
-  return downStream->ready();
+  assert(nextPipe);
+  return nextPipe->ready();
 }
 
 bool
@@ -93,7 +80,7 @@ PacerPipe::sendRateCommand()
   packet << rateReq;
 
   // std::clog << "Send Rate Req" << std::endl;
-  downStream->send(move(packet));
+  nextPipe->send(move(packet));
 }
 
 void
@@ -112,7 +99,7 @@ PacerPipe::runNetSend()
       sendRateCommand();
     }
 
-    std::unique_ptr<Packet> packet = upStream->toDownstream();
+    std::unique_ptr<Packet> packet = prevPipe->toDownstream();
 
     if (!packet) {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -138,7 +125,7 @@ PacerPipe::runNetSend()
     rateCtrl.sendPacket(
       (seqTag.clientSeqNum), nowUs, bits, packet->shortName());
 
-    downStream->send(move(packet));
+    nextPipe->send(move(packet));
     // std::clog << ">";
     packetsSentThisPhase++;
 
@@ -169,7 +156,7 @@ void
 PacerPipe::runNetRecv()
 {
   while (!shutDown) {
-    std::unique_ptr<Packet> packet = downStream->recv();
+    std::unique_ptr<Packet> packet = nextPipe->recv();
     if (!packet) {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
       continue;
@@ -211,7 +198,7 @@ PacerPipe::runNetRecv()
                           congested);
     }
 
-    upStream->fromDownstream(move(packet));
+    prevPipe->fromDownstream(move(packet));
 
     // std::clog << "<";
   }

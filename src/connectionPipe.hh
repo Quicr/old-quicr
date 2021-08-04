@@ -7,26 +7,12 @@
 #include <optional>
 #include <random>
 #include <string>
-#include <thread>
 #include <variant>
 
 #include "pipeInterface.hh"
 #include "quicr/packet.hh"
 
 namespace MediaNet {
-
-using WaitHandler = std::function<void()>;
-struct Timer
-{
-  static void wait(int msec, WaitHandler&& callback)
-  {
-    std::thread([=]() {
-      auto wait_time = std::chrono::milliseconds(msec);
-      std::this_thread::sleep_for(wait_time);
-      callback();
-    }).detach();
-  }
-};
 
 ///
 /// ConnectionPipe
@@ -37,10 +23,8 @@ public:
   explicit ConnectionPipe(PipeInterface* t);
   bool ready() const override;
   void stop() override;
-  virtual bool start(uint16_t port,
-                     std::string server,
-                     PipeInterface* upStream) override;
-
+  virtual bool start(uint16_t port, const std::string& server,
+                     PipeInterface *upStream) override;
 protected:
   //             +------> Start
   //             |          |
@@ -72,26 +56,24 @@ class ClientConnectionPipe : public ConnectionPipe
 public:
   explicit ClientConnectionPipe(PipeInterface* t);
   void setAuthInfo(uint32_t sender, uint64_t t);
-  bool start(uint16_t port,
-             std::string server,
-             PipeInterface* upStream) override;
-
+  bool start(uint16_t port, const std::string& server,
+             PipeInterface *upStream) override;
   // Overrides from PipelineInterface
   bool send(std::unique_ptr<Packet>) override;
   std::unique_ptr<Packet> recv() override;
+	void runUpdates(const std::chrono::time_point<std::chrono::steady_clock>& now) override;
 
 private:
   static constexpr int syn_timeout_msec = 1000;
   static constexpr int max_connection_retry_cnt = 5;
 
-  void runSyncLoop();
   void sendSync();
 
   uint8_t syncs_awaiting_response = 0;
   uint32_t senderID;
   uint32_t pathToken = 0;
   uint64_t cookie = 0;
-  bool syncLoopRunning = false;
+	std::chrono::time_point<std::chrono::steady_clock> last_sync_point;
 };
 
 ///
@@ -113,10 +95,9 @@ public:
     timepoint lastSyn;
   };
 
-  explicit ServerConnectionPipe(PipeInterface* t);
-  bool start(uint16_t port,
-             std::string server,
-             PipeInterface* upStream) override;
+  explicit ServerConnectionPipe(PipeInterface *t);
+  bool start(uint16_t port, const std::string& server,
+             PipeInterface *upStream) override;
   // Overrides from PipelineInterface
   bool send(std::unique_ptr<Packet>) override;
   std::unique_ptr<Packet> recv() override;

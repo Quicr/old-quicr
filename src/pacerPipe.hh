@@ -20,9 +20,9 @@ public:
   explicit PacerPipe(PipeInterface* t);
   ~PacerPipe() override;
 
-  bool start(uint16_t port,
-             std::string server,
-             PipeInterface* upStream) override;
+  bool start(uint16_t port, const std::string& server,
+             PipeInterface *upStream) override;
+
   [[nodiscard]] bool ready() const override;
   void stop() override;
 

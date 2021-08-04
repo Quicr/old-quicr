@@ -63,10 +63,13 @@ QuicRClient::ready() const
   return firstPipe->ready();
 }
 
-void
-QuicRClient::close()
-{
-  firstPipe->stop();
+void QuicRClient::close() {
+	shutDown = true;
+	firstPipe->stop();
+}
+
+void QuicRClient::setCurrentTime(const std::chrono::time_point<std::chrono::steady_clock> &now) {
+  firstPipe->runUpdates(now);
 }
 
 void
@@ -109,7 +112,6 @@ QuicRClient::recv()
 
   bool bad = true;
   while (bad) {
-
     packet = firstPipe->recv();
 
     if (!packet) {
@@ -117,22 +119,22 @@ QuicRClient::recv()
     }
 
     if (packet->fullSize() <= 0) {
-      std::clog << "quicr recv very bad size = " << packet->fullSize()
-                << std::endl;
+      //std::clog << "quicr recv very bad size = " << packet->fullSize()
+      //          << std::endl;
       continue;
     }
 
     if (packet->size() == 0) {
-      // std::clog << "quicr recv very zero buffer size, tag = " <<
-      // ((uint16_t)(nextTag(packet)) >> 8) << std::endl;
+      //std::clog << "quicr recv very zero buffer size, tag = " <<
+      //((uint16_t)(nextTag(packet)) >> 8) << std::endl;
       return packet;
     }
 
     if (nextTag(packet) == PacketTag::header) {
-      // Packet::Header header;
-      // packet >> header;
-      // std::clog << "quicr empty message, header tag: " <<
-      // ((uint16_t)(header.tag) >> 8) << std::endl;
+      //Packet::Header header;
+      //packet >> header;
+      //std::clog << "quicr empty message, header tag: " <<
+      //((uint16_t)(header.tag) >> 8) << std::endl;
       continue;
     }
 
@@ -183,7 +185,7 @@ QuicRClient::recv()
     bad = false;
   }
 
-  // std::clog << "QuicR received packet size=" << packet->size() << std::endl;
+  //std::clog << "QuicR received packet size=" << packet->size() << std::endl;
   return packet;
 }
 
@@ -196,7 +198,13 @@ QuicRClient::open(uint32_t clientID,
   assert(connectionPipe);
   connectionPipe->setAuthInfo(clientID, token);
 
-  return firstPipe->start(port, relayName, nullptr);
+  bool ret = firstPipe->start(port, relayName, nullptr);
+  if (ret) {
+    // kick off timer thread
+    timerThread = std::thread([this]() { this->runTimerThread(); });
+  }
+
+  return ret;
 }
 
 uint64_t
@@ -256,4 +264,17 @@ QuicRClient::setBitrateUp(uint64_t minBps, uint64_t startBps, uint64_t maxBps)
 {
   assert(firstPipe);
   firstPipe->updateBitrateUp(minBps, startBps, maxBps);
+}
+
+///
+/// Private implementation
+///
+void QuicRClient::runTimerThread() {
+  while(!shutDown) {
+    auto now = std::chrono::steady_clock::now();
+    firstPipe->runUpdates(now);
+    // auto after = std::chrono::steady_clock::now();
+    // std::clog <<"timer-elapsed-count:" << std::chrono::duration_cast<std::chrono::milliseconds>(after-now).count() << std::endl;
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
 }

@@ -13,11 +13,8 @@ PriorityPipe::PriorityPipe(PipeInterface* t)
   , mtu(1200)
 {}
 
-bool
-PriorityPipe::send(std::unique_ptr<Packet> packet)
-{
-  assert(downStream);
-
+bool PriorityPipe::send(std::unique_ptr<Packet> packet) {
+  assert(nextPipe);
   uint8_t priority = packet->getPriority();
   if (priority > maxPriority) {
     priority = maxPriority;

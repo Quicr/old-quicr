@@ -50,8 +50,8 @@ main(int argc, char* argv[])
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
       continue;
     }
-    // std::clog << "bufSz=" << packet->size() << std::endl;
-    numRecv++;
+    // std::clog << "QuicR received buff size=" << packet->size() << std::endl;
+		numRecv++;
   } while (numRecv < 100 * 1000);
 
   return 0;

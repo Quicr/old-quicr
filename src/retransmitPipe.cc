@@ -16,11 +16,8 @@ RetransmitPipe::RetransmitPipe(PipeInterface* t)
   , bigRtt(200)
 {}
 
-bool
-RetransmitPipe::send(std::unique_ptr<Packet> packet)
-{
-  assert(downStream);
-
+bool RetransmitPipe::send(std::unique_ptr<Packet> packet) {
+  assert(nextPipe);
   // for reliably packets, cache them and resend if no ack received
   if (packet->isReliable()) {
     auto clone = packet->clone();
@@ -39,15 +36,12 @@ RetransmitPipe::send(std::unique_ptr<Packet> packet)
     }
   }
 
-  return downStream->send(move(packet));
+  return nextPipe->send(move(packet));
 }
 
-std::unique_ptr<Packet>
-RetransmitPipe::recv()
-{
-  assert(downStream);
-
-  return downStream->recv();
+std::unique_ptr<Packet> RetransmitPipe::recv() {
+  assert(nextPipe);
+  return nextPipe->recv();
 }
 
 void
@@ -79,7 +73,7 @@ RetransmitPipe::ack(ShortName name)
 
     if ((*it).first.mediaTime < maxActTime - (bigRtt - minRtt)) {
       // resend this one
-      downStream->send(move((*it).second));
+      nextPipe->send(move((*it).second));
       it = rtxList.erase(it);
     } else {
       it++;
