@@ -8,15 +8,16 @@
 #include <string>
 #include <thread>
 
-#include "packet.hh"
 #include "pipeInterface.hh"
+#include "quicr/packet.hh"
 #include "rateCtrl.hh"
 
 namespace MediaNet {
 
-class PacerPipe : public PipeInterface {
+class PacerPipe : public PipeInterface
+{
 public:
-  explicit PacerPipe(PipeInterface *t);
+  explicit PacerPipe(PipeInterface* t);
   ~PacerPipe() override;
 
   bool start(uint16_t port, const std::string& server,
@@ -31,7 +32,8 @@ public:
   uint64_t getTargetUpstreamBitrate(); // in bps
 
   void updateMTU(uint16_t mtu, uint32_t pps) override;
-  void updateBitrateUp(uint64_t minBps, uint64_t startBps,
+  void updateBitrateUp(uint64_t minBps,
+                       uint64_t startBps,
                        uint64_t maxBps) override;
   void updateRTT(uint16_t minRttMs, uint16_t bigRttMs) override;
 

@@ -3,14 +3,15 @@
 #include <cstdint>
 #include <memory>
 
-#include "packet.hh"
 #include "pipeInterface.hh"
+#include "quicr/packet.hh"
 
 namespace MediaNet {
 
-class FakeLossPipe : public PipeInterface {
+class FakeLossPipe : public PipeInterface
+{
 public:
-  explicit FakeLossPipe(PipeInterface *t);
+  explicit FakeLossPipe(PipeInterface* t);
 
   bool send(std::unique_ptr<Packet> packet) override;
 

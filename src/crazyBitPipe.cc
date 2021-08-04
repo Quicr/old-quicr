@@ -4,26 +4,30 @@
 #include <chrono>
 #include <iostream>
 
-#include "quicr/crazyBitPipe.hh"
+#include "crazyBitPipe.hh"
 #include "quicr/packet.hh"
 
 using namespace MediaNet;
 
-CrazyBitPipe::CrazyBitPipe(PipeInterface *t)
-    : PipeInterface(t), rttMs(100), spinBitVal(false), lastSpinTimeMs(0) {
+CrazyBitPipe::CrazyBitPipe(PipeInterface* t)
+  : PipeInterface(t)
+  , rttMs(100)
+  , spinBitVal(false)
+  , lastSpinTimeMs(0)
+{
   std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
   std::chrono::steady_clock::duration dn = tp.time_since_epoch();
   lastSpinTimeMs =
-      (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(dn)
-          .count();
+    (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(dn).count();
 }
 
-bool CrazyBitPipe::send(std::unique_ptr<Packet> packet) {
+bool
+CrazyBitPipe::send(std::unique_ptr<Packet> packet)
+{
   std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
   std::chrono::steady_clock::duration dn = tp.time_since_epoch();
   uint32_t nowMs =
-      (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(dn)
-          .count();
+    (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(dn).count();
 
   if (nowMs > lastSpinTimeMs + rttMs) {
     spinBitVal = !spinBitVal;
@@ -54,7 +58,9 @@ std::unique_ptr<Packet> CrazyBitPipe::recv() {
   return packet;
 }
 
-void CrazyBitPipe::updateRTT(uint16_t minRttMs, uint16_t maxRttMs) {
+void
+CrazyBitPipe::updateRTT(uint16_t minRttMs, uint16_t maxRttMs)
+{
   PipeInterface::updateRTT(minRttMs, maxRttMs);
 
   rttMs = minRttMs;

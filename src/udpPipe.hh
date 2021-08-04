@@ -14,12 +14,13 @@
 #include <cstdint>
 #include <string>
 
-#include "packet.hh"
 #include "pipeInterface.hh"
+#include "quicr/packet.hh"
 
 namespace MediaNet {
 
-class UdpPipe : public PipeInterface {
+class UdpPipe : public PipeInterface
+{
 public:
   UdpPipe();
   ~UdpPipe() override;
@@ -30,8 +31,8 @@ public:
   void stop() override;
 
   bool send(std::unique_ptr<Packet>) override;
-  std::unique_ptr<Packet>
-  recv() override; // non blocking, return nullptr if no buffer
+  std::unique_ptr<Packet> recv()
+    override; // non blocking, return nullptr if no buffer
 
 private:
   std::mutex socketMutex;

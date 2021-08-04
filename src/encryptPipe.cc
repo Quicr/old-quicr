@@ -1,8 +1,8 @@
 
 
-#include "quicr/encryptPipe.hh"
+#include "encryptPipe.hh"
+#include "encode.hh"
 #include "quicr/packet.hh"
-#include "quicr/encode.hh"
 #include <cassert>
 #include <iostream>
 
@@ -12,14 +12,20 @@ using namespace MediaNet;
 static const auto FIXED_CIPHER_SUITE = sframe::CipherSuite::AES_GCM_128_SHA256;
 static const size_t SFRAME_EPOCH_BITS = 8;
 
-template <typename T> sframe::bytes static to_bytes(const T &range) {
+template<typename T>
+sframe::bytes static to_bytes(const T& range)
+{
   return sframe::bytes(range.begin(), range.end());
 }
 
-EncryptPipe::EncryptPipe(PipeInterface *t)
-    : PipeInterface(t), mls_context(FIXED_CIPHER_SUITE, SFRAME_EPOCH_BITS) {}
+EncryptPipe::EncryptPipe(PipeInterface* t)
+  : PipeInterface(t)
+  , mls_context(FIXED_CIPHER_SUITE, SFRAME_EPOCH_BITS)
+{}
 
-bool EncryptPipe::send(std::unique_ptr<Packet> packet) {
+bool
+EncryptPipe::send(std::unique_ptr<Packet> packet)
+{
 
   // TODO: figure out right AAD bits
   assert(nextPipe);
@@ -33,27 +39,27 @@ bool EncryptPipe::send(std::unique_ptr<Packet> packet) {
   assert(nextTag(packet) == PacketTag::clientData);
   ok &= packet >> clientData;
   ok &= packet >> namedDataChunk;
-  assert( ok );
+  assert(ok);
   assert(nextTag(packet) == PacketTag::dataBlock);
   ok &= packet >> dataBlock;
-  assert( ok );
+  assert(ok);
 
-  assert( fromVarInt( dataBlock.metaDataLen ) == 0 );
-  uint16_t payloadSize = fromVarInt( dataBlock.dataLen );
+  assert(fromVarInt(dataBlock.metaDataLen) == 0);
+  uint16_t payloadSize = fromVarInt(dataBlock.dataLen);
 
   auto encrypted = protect(packet, payloadSize);
   // std::cout << "Payload Original Size/Encrypted Size:" << payloadSize << "/"
   // << encrypted.size() << "\n";
 
   // re-insert encrypted portion
-  uint8_t *dst = &(packet->data());
-  packet->resize( encrypted.size() );
+  uint8_t* dst = &(packet->data());
+  packet->resize(encrypted.size());
   std::copy(encrypted.begin(), encrypted.end(), dst);
 
   EncryptedDataBlock encryptedDataBlock;
   encryptedDataBlock.metaDataLen = dataBlock.metaDataLen;
-  encryptedDataBlock.cipherDataLen = toVarInt( encrypted.size() );
-  encryptedDataBlock.authTagLen = 0 ;
+  encryptedDataBlock.cipherDataLen = toVarInt(encrypted.size());
+  encryptedDataBlock.authTagLen = 0;
 
   packet << encryptedDataBlock;
   packet << namedDataChunk;
@@ -65,7 +71,9 @@ bool EncryptPipe::send(std::unique_ptr<Packet> packet) {
   return nextPipe->send(move(packet));
 }
 
-std::unique_ptr<Packet> EncryptPipe::recv() {
+std::unique_ptr<Packet>
+EncryptPipe::recv()
+{
 
   // TODO check packet integrity and decrypt
 
@@ -85,25 +93,25 @@ std::unique_ptr<Packet> EncryptPipe::recv() {
       ok &= packet >> namedDataChunk;
       ok &= packet >> encryptedDataBlock;
 
-      if ( !ok ) {
+      if (!ok) {
         // todo should log bad packet
         return std::unique_ptr<Packet>(nullptr);
       }
 
-      assert( fromVarInt( encryptedDataBlock.metaDataLen ) == 0 ); // TODO
-      uint16_t payloadSize = fromVarInt( encryptedDataBlock.cipherDataLen );
-      assert(payloadSize>0);
+      assert(fromVarInt(encryptedDataBlock.metaDataLen) == 0); // TODO
+      uint16_t payloadSize = fromVarInt(encryptedDataBlock.cipherDataLen);
+      assert(payloadSize > 0);
       packet->headerSize = QUICR_HEADER_SIZE_BYTES; // TODO make it constant
       auto decrypted = unprotect(packet, payloadSize);
 
       // TODO - how does decrypt auth error get hangled
 
-      packet->resize( decrypted.size() );
+      packet->resize(decrypted.size());
       std::copy(decrypted.begin(), decrypted.end(), &packet->data());
 
       DataBlock dataBlock;
       dataBlock.metaDataLen = encryptedDataBlock.metaDataLen;
-      dataBlock.dataLen = toVarInt( decrypted.size() );
+      dataBlock.dataLen = toVarInt(decrypted.size());
 
       packet << dataBlock;
       packet << namedDataChunk;
@@ -114,29 +122,35 @@ std::unique_ptr<Packet> EncryptPipe::recv() {
   return packet;
 }
 
-void EncryptPipe::setCryptoKey(sframe::MLSContext::EpochID epoch,
-                               const sframe::bytes &mls_epoch_secret) {
+void
+EncryptPipe::setCryptoKey(sframe::MLSContext::EpochID epoch,
+                          const sframe::bytes& mls_epoch_secret)
+{
   current_epoch = epoch;
   mls_context.add_epoch(epoch, std::move(mls_epoch_secret));
   std::cout << "SetCryptoKey : epoch:" << current_epoch << "\n";
 }
 
-sframe::bytes EncryptPipe::protect(const std::unique_ptr<Packet> &packet,
-                                   uint16_t payloadSize) {
+sframe::bytes
+EncryptPipe::protect(const std::unique_ptr<Packet>& packet,
+                     uint16_t payloadSize)
+{
   assert(current_epoch >= 0);
 
   gsl::span<const uint8_t> buffer_ref = packet->buffer;
   // encrypt from header onwards
   auto plaintext = buffer_ref.subspan(packet->headerSize, payloadSize);
   auto ct_out = sframe::bytes(plaintext.size() + sframe::max_overhead);
-  auto ct = mls_context.protect(current_epoch, packet->name.senderID, ct_out,
-                                plaintext);
+  auto ct = mls_context.protect(
+    current_epoch, packet->name.senderID, ct_out, plaintext);
   // TODO see if we can reuse ct_out
   return to_bytes(ct);
 }
 
-sframe::bytes EncryptPipe::unprotect(const std::unique_ptr<Packet> &packet,
-                                     uint16_t payloadSize) {
+sframe::bytes
+EncryptPipe::unprotect(const std::unique_ptr<Packet>& packet,
+                       uint16_t payloadSize)
+{
 
   gsl::span<uint8_t> buffer_ref = packet->buffer;
   // start decryption from data (excluding header)

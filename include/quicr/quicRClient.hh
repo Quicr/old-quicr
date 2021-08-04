@@ -3,33 +3,28 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <thread>
 //#include <utility> // for pair
 
-#include "connectionPipe.hh"
-#include "crazyBitPipe.hh"
-#include "encryptPipe.hh"
-#include "fakeLossPipe.hh"
-#include "fecPipe.hh"
-#include "fragmentPipe.hh"
-#include "pacerPipe.hh"
-#include "packet.hh"
-#include "pipeInterface.hh"
-#include "priorityPipe.hh"
-#include "retransmitPipe.hh"
-#include "statsPipe.hh"
-#include "subscribePipe.hh"
-#include "udpPipe.hh"
+#include "packet.hh"       // TODO - remove and replace with Buffer
+#include <sframe/sframe.h> // TODO - rethink this
 
 namespace MediaNet {
 
-// class UdpPipe;
-// class PacerPipe;
+class PipeInterface;
+class SubscribePipe;
+class EncryptPipe;
+class ClientConnectionPipe;
+class PacerPipe;
 
-class QuicRClient {
+class QuicRClient
+{
 public:
   QuicRClient();
   virtual ~QuicRClient();
-  virtual bool open(uint32_t clientID, std::string relayName, uint16_t port,
+  virtual bool open(uint32_t clientID,
+                    std::string relayName,
+                    uint16_t port,
                     uint64_t token);
   virtual bool ready() const;
   virtual void close();
@@ -38,7 +33,7 @@ public:
 	// Initialize sframe context with the base secret provided by MLS key
   // exchange Note: This is hard coded secret until we bring in MLS
   void setCryptoKey(sframe::MLSContext::EpochID epoch,
-                    const sframe::bytes &mls_epoch_secret);
+                    const sframe::bytes& mls_epoch_secret);
 
   void setBitrateUp(uint64_t minBps, uint64_t startBps, uint64_t maxBps);
   void setRttEstimate(uint32_t minRttMs, uint32_t bigRttMs = 0);
@@ -51,7 +46,7 @@ void setDecryptionKey(uint32_t clientID, std::vector<uint8_t> salt,
                   std::vector<uint8_t> key);
 */
 
-  virtual std::unique_ptr<Packet> createPacket(const ShortName &name,
+  virtual std::unique_ptr<Packet> createPacket(const ShortName& name,
                                                int reservedPayloadSize);
   virtual bool publish(std::unique_ptr<Packet>);
 
@@ -69,15 +64,14 @@ void setDecryptionKey(uint32_t clientID, std::vector<uint8_t> salt,
   //               uint32_t senderID=0, uint8_t sourceID=0 );
 
 private:
-
 	// timer thread
 	// TODO: if app can provide its own timepoint, this
 	// thread shouldn't be run
 	void runTimerThread();
 	std::thread timerThread;
 
-
-	UdpPipe udpPipe;
+#if 0
+  UdpPipe udpPipe;
   FakeLossPipe fakeLossPipe;
   CrazyBitPipe crazyBitPipe;
   ClientConnectionPipe connectionPipe;
@@ -89,7 +83,13 @@ private:
   FragmentPipe fragmentPipe;
   EncryptPipe encryptPipe;
   StatsPipe statsPipe;
-  PipeInterface *firstPipe;
+#endif
+
+  PipeInterface* firstPipe;
+  SubscribePipe* subscribePipe;         // TODO remove
+  EncryptPipe* encryptPipe;             // TODO remove
+  ClientConnectionPipe* connectionPipe; // TODO remove
+  PacerPipe* pacerPipe;                 // TODO remove
 
   // uint32_t pubClientID;
   // uint64_t secToken;

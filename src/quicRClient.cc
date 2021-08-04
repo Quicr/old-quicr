@@ -1,39 +1,67 @@
 
 #include <cassert>
 
-#include "quicr/encode.hh"
 #include "quicr/quicRClient.hh"
 
-#include "quicr/connectionPipe.hh"
-#include "quicr/crazyBitPipe.hh"
-#include "quicr/encryptPipe.hh"
-#include "quicr/fecPipe.hh"
-#include "quicr/fragmentPipe.hh"
-#include "quicr/pacerPipe.hh"
-#include "quicr/priorityPipe.hh"
-#include "quicr/retransmitPipe.hh"
-#include "quicr/subscribePipe.hh"
-#include "quicr/udpPipe.hh"
+#include "encode.hh"
+
+#include "connectionPipe.hh"
+#include "crazyBitPipe.hh"
+#include "encryptPipe.hh"
+#include "fakeLossPipe.hh"
+#include "fecPipe.hh"
+#include "fragmentPipe.hh"
+#include "pacerPipe.hh"
+#include "priorityPipe.hh"
+#include "retransmitPipe.hh"
+#include "statsPipe.hh"
+#include "subscribePipe.hh"
+#include "udpPipe.hh"
 
 using namespace MediaNet;
 
 QuicRClient::QuicRClient()
-    : udpPipe(), fakeLossPipe(&udpPipe), crazyBitPipe(&fakeLossPipe),
-      connectionPipe(&crazyBitPipe), pacerPipe(&connectionPipe),
-      priorityPipe(&pacerPipe), retransmitPipe(&priorityPipe),
-      fecPipe(&retransmitPipe), subscribePipe(&fecPipe),
-      fragmentPipe(&subscribePipe), encryptPipe(&fragmentPipe),
-      statsPipe(&encryptPipe),
-      firstPipe(&statsPipe) {
+{
+
+  UdpPipe* udpPipe = new UdpPipe();
+  FakeLossPipe* fakeLossPipe = new FakeLossPipe(udpPipe);
+  CrazyBitPipe* crazyBitPipe = new CrazyBitPipe(fakeLossPipe);
+  /*ClientConnectionPipe* */ connectionPipe =
+    new ClientConnectionPipe(crazyBitPipe);                  // TODO fix
+  /*PacerPipe* */ pacerPipe = new PacerPipe(connectionPipe); // TODO fix
+  PriorityPipe* priorityPipe = new PriorityPipe(pacerPipe);
+  RetransmitPipe* retransmitPipe = new RetransmitPipe(priorityPipe);
+  FecPipe* fecPipe = new FecPipe(retransmitPipe);
+
+  /* SubscribePipe* */ subscribePipe = new SubscribePipe(fecPipe); // TODO fix
+
+  FragmentPipe* fragmentPipe = new FragmentPipe(subscribePipe);
+
+  /* EncryptPipe* */ encryptPipe = new EncryptPipe(fragmentPipe); // TODO fix
+
+  StatsPipe* statsPipe = new StatsPipe(encryptPipe);
+  firstPipe = statsPipe;
 
   // TODO - get rid of all other places were defaults get set for mtu, rtt, pps
   firstPipe->updateMTU(1280, 480);
   firstPipe->updateRTT(20, 50);
 }
 
-QuicRClient::~QuicRClient() { firstPipe->stop(); }
+QuicRClient::~QuicRClient()
+{
+  assert(firstPipe);
 
-bool QuicRClient::ready() const { return firstPipe->ready(); }
+  firstPipe->stop();
+
+  delete firstPipe;
+  firstPipe = nullptr;
+}
+
+bool
+QuicRClient::ready() const
+{
+  return firstPipe->ready();
+}
 
 void QuicRClient::close() {
 	shutDown = true;
@@ -44,17 +72,22 @@ void QuicRClient::setCurrentTime(const std::chrono::time_point<std::chrono::stea
   firstPipe->runUpdates(now);
 }
 
-void QuicRClient::setCryptoKey(sframe::MLSContext::EpochID epoch,
-                               const sframe::bytes &mls_epoch_secret) {
-  encryptPipe.setCryptoKey(epoch, mls_epoch_secret);
+void
+QuicRClient::setCryptoKey(sframe::MLSContext::EpochID epoch,
+                          const sframe::bytes& mls_epoch_secret)
+{
+  assert(encryptPipe);
+  encryptPipe->setCryptoKey(epoch, mls_epoch_secret);
 }
 
-bool QuicRClient::publish(std::unique_ptr<Packet> packet) {
+bool
+QuicRClient::publish(std::unique_ptr<Packet> packet)
+{
   size_t payloadSize = packet->size();
   assert(payloadSize < 63 * 1200);
 
   ClientData clientData;
-  clientData.clientSeqNum=0;
+  clientData.clientSeqNum = 0;
 
   NamedDataChunk namedDataChunk;
   namedDataChunk.shortName = packet->shortName();
@@ -71,7 +104,9 @@ bool QuicRClient::publish(std::unique_ptr<Packet> packet) {
   return firstPipe->send(move(packet));
 }
 
-std::unique_ptr<Packet> QuicRClient::recv() {
+std::unique_ptr<Packet>
+QuicRClient::recv()
+{
 
   auto packet = std::unique_ptr<Packet>(nullptr);
 
@@ -85,27 +120,30 @@ std::unique_ptr<Packet> QuicRClient::recv() {
     }
 
     if (packet->fullSize() <= 0) {
-    	std::clog << "quicr recv very bad size = " << packet->fullSize() << std::endl;
-    	continue;
+      std::clog << "quicr recv very bad size = " << packet->fullSize()
+                << std::endl;
+      continue;
     }
 
-		if (packet->size() == 0) {
-			//std::clog << "quicr recv very zero buffer size, tag = " << ((uint16_t)(nextTag(packet)) >> 8) << std::endl;
-			return packet;
-		}
+    if (packet->size() == 0) {
+      // std::clog << "quicr recv very zero buffer size, tag = " <<
+      // ((uint16_t)(nextTag(packet)) >> 8) << std::endl;
+      return packet;
+    }
 
     if (nextTag(packet) == PacketTag::header) {
-    	// Packet::Header header;
-    	// packet >> header;
-      //std::clog << "quicr empty message, header tag: " << ((uint16_t)(header.tag) >> 8) << std::endl;
+      // Packet::Header header;
+      // packet >> header;
+      // std::clog << "quicr empty message, header tag: " <<
+      // ((uint16_t)(header.tag) >> 8) << std::endl;
       continue;
     }
 
     // implies NamedDataChunk
     if (nextTag(packet) != PacketTag::shortName) {
       // TODO log bad data
-      std::clog << "quicr recv bad tag: " << (((uint16_t)(nextTag(packet))) >> 8)
-                << std::endl;
+      std::clog << "quicr recv bad tag: "
+                << (((uint16_t)(nextTag(packet))) >> 8) << std::endl;
       continue;
     }
 
@@ -125,19 +163,19 @@ std::unique_ptr<Packet> QuicRClient::recv() {
 
     if (!ok) {
       // TODO log bad data
-      std::clog << "quicr recv bad relay data ="  << std::endl;
+      std::clog << "quicr recv bad relay data =" << std::endl;
       continue;
     }
 
-    assert( dataBlock.metaDataLen == toVarInt(0) ); // TODO implement
+    assert(dataBlock.metaDataLen == toVarInt(0)); // TODO implement
 
     // TODO - set packet lifetime
 
     packet->name = namedDataChunk.shortName;
 
-    size_t payloadSize = fromVarInt( dataBlock.dataLen );
+    size_t payloadSize = fromVarInt(dataBlock.dataLen);
 
-    if ( payloadSize > packet->size()) {
+    if (payloadSize > packet->size()) {
       std::clog << "quicr recv bad data size " << payloadSize << " "
                 << packet->size() << std::endl;
       continue;
@@ -148,15 +186,18 @@ std::unique_ptr<Packet> QuicRClient::recv() {
     bad = false;
   }
 
-  //std::clog << "QuicR received packet size=" << packet->size() << std::endl;
+  // std::clog << "QuicR received packet size=" << packet->size() << std::endl;
   return packet;
 }
 
-bool QuicRClient::open(uint32_t clientID, const std::string relayName,
-                       const uint16_t port, uint64_t token) {
-  (void)clientID; // TODO
-  (void)token;    // TODO
-  connectionPipe.setAuthInfo(clientID, token);
+bool
+QuicRClient::open(uint32_t clientID,
+                  const std::string relayName,
+                  const uint16_t port,
+                  uint64_t token)
+{
+  assert(connectionPipe);
+  connectionPipe->setAuthInfo(clientID, token);
 
   bool ret = firstPipe->start(port, relayName, nullptr);
   if (ret) {
@@ -167,18 +208,22 @@ bool QuicRClient::open(uint32_t clientID, const std::string relayName,
   return ret;
 }
 
-uint64_t QuicRClient::getTargetUpstreamBitrate() {
-  return pacerPipe.getTargetUpstreamBitrate(); // TODO - move to stats
+uint64_t
+QuicRClient::getTargetUpstreamBitrate()
+{
+  assert(pacerPipe);
+  return pacerPipe->getTargetUpstreamBitrate(); // TODO - move to stats
 }
 
-std::unique_ptr<Packet> QuicRClient::createPacket(const ShortName &shortName,
-                                                  int reservedPayloadSize) {
+std::unique_ptr<Packet>
+QuicRClient::createPacket(const ShortName& shortName, int reservedPayloadSize)
+{
   auto packet = std::make_unique<Packet>();
   assert(packet);
   packet->name = shortName;
   packet->reserve(reservedPayloadSize + 20); // TODO - tune the 20
 
-	auto hdr = Packet::Header(PacketTag::headerData);
+  auto hdr = Packet::Header(PacketTag::headerData);
   packet << hdr;
   packet->headerSize = (int)(packet->buffer.size());
 
@@ -187,18 +232,25 @@ std::unique_ptr<Packet> QuicRClient::createPacket(const ShortName &shortName,
   return packet;
 }
 
-bool QuicRClient::subscribe(ShortName name) {
-  return subscribePipe.subscribe(name);
+bool
+QuicRClient::subscribe(ShortName name)
+{
+  assert(subscribePipe);
+  return subscribePipe->subscribe(name);
 }
 
-void QuicRClient::setPacketsUp(uint16_t pps, uint16_t mtu) {
+void
+QuicRClient::setPacketsUp(uint16_t pps, uint16_t mtu)
+{
   assert(firstPipe);
   assert(pps >= 10);
   assert(mtu >= 56);
   firstPipe->updateMTU(mtu, pps);
 }
 
-void QuicRClient::setRttEstimate(uint32_t minRttMs, uint32_t bigRttMs) {
+void
+QuicRClient::setRttEstimate(uint32_t minRttMs, uint32_t bigRttMs)
+{
   assert(firstPipe);
   if (bigRttMs == 0) {
     bigRttMs = minRttMs * 3 / 2;
@@ -208,8 +260,9 @@ void QuicRClient::setRttEstimate(uint32_t minRttMs, uint32_t bigRttMs) {
   firstPipe->updateRTT(minRttMs, bigRttMs);
 }
 
-void QuicRClient::setBitrateUp(uint64_t minBps, uint64_t startBps,
-                               uint64_t maxBps) {
+void
+QuicRClient::setBitrateUp(uint64_t minBps, uint64_t startBps, uint64_t maxBps)
+{
   assert(firstPipe);
   firstPipe->updateBitrateUp(minBps, startBps, maxBps);
 }

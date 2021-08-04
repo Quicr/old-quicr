@@ -4,14 +4,15 @@
 #include <map>
 #include <memory>
 
-#include "packet.hh"
 #include "pipeInterface.hh"
+#include "quicr/packet.hh"
 
 namespace MediaNet {
 
-class StatsPipe : public PipeInterface {
+class StatsPipe : public PipeInterface
+{
 public:
-  explicit StatsPipe(PipeInterface *t);
+  explicit StatsPipe(PipeInterface* t);
 
   void updateStat(StatName stat,
                   uint64_t value) override; // tells upstream things the stat

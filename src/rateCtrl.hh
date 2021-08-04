@@ -3,14 +3,15 @@
 #include <chrono>
 #include <cstdint>
 
-#include "packet.hh"
 #include "pipeInterface.hh"
+#include "quicr/packet.hh"
 
 using namespace MediaNet;
 
 namespace MediaNet {
 
-enum struct HistoryStatus : uint8_t {
+enum struct HistoryStatus : uint8_t
+{
   // this is bit vector were bits indicate set, received, congested, lost
   none = 0,
   sent = 1,
@@ -20,7 +21,8 @@ enum struct HistoryStatus : uint8_t {
   lost = 0x10 + 1    // no ACK in time
 };
 
-struct PacketUpstreamStatus {
+struct PacketUpstreamStatus
+{
   uint32_t seqNum;
   uint16_t sizeBits;
 
@@ -35,7 +37,8 @@ struct PacketUpstreamStatus {
   MediaNet::ShortName shortName;
 };
 
-struct PacketDownstreamStatus {
+struct PacketDownstreamStatus
+{
   uint32_t remoteSeqNum;
   uint16_t sizeBits;
 
@@ -47,14 +50,18 @@ struct PacketDownstreamStatus {
   HistoryStatus status;
 };
 
-class Filter {
+class Filter
+{
 public:
-  Filter(int64_t initialValue, int64_t gainUp1024s, int64_t gainDown1024s,
+  Filter(int64_t initialValue,
+         int64_t gainUp1024s,
+         int64_t gainDown1024s,
          bool initOnFirstValue = false);
   void add(int64_t v);
   void update(){};
   void reset() { initOnFirst = true; };
-  void override(int64_t v) {
+  void override(int64_t v)
+  {
     value = v;
     initOnFirst = false;
   };
@@ -67,17 +74,26 @@ private:
   bool initOnFirst;
 };
 
-class RateCtrl {
+class RateCtrl
+{
 public:
-  explicit RateCtrl(PipeInterface *pacerPipeRef);
+  explicit RateCtrl(PipeInterface* pacerPipeRef);
 
-  void sendPacket(uint32_t seqNum, uint32_t sendTimeUs, uint16_t sizeBits,
+  void sendPacket(uint32_t seqNum,
+                  uint32_t sendTimeUs,
+                  uint16_t sizeBits,
                   ShortName shortName);
 
-  void recvPacket(uint32_t relaySeqNum, uint32_t remoteSendTimeUs,
-                  uint32_t localRecvTimeUs, uint16_t sizeBits, bool congested);
-  void recvAck(uint32_t seqNum, uint32_t remoteAckTimeUs,
-               uint32_t localRecvAckTimeUs, bool congested, bool haveAck);
+  void recvPacket(uint32_t relaySeqNum,
+                  uint32_t remoteSendTimeUs,
+                  uint32_t localRecvTimeUs,
+                  uint16_t sizeBits,
+                  bool congested);
+  void recvAck(uint32_t seqNum,
+               uint32_t remoteAckTimeUs,
+               uint32_t localRecvAckTimeUs,
+               bool congested,
+               bool haveAck);
 
   [[nodiscard]] uint32_t getPhase() const;
 
@@ -89,7 +105,7 @@ public:
   void overrideBitrateUp(uint64_t minBps, uint64_t startBps, uint64_t maxBps);
 
 private:
-  PipeInterface *pacerPipe;
+  PipeInterface* pacerPipe;
 
   uint32_t upHistorySeqOffset;
   std::vector<PacketUpstreamStatus> upstreamHistory;

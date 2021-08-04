@@ -6,12 +6,14 @@
 #include <memory>
 #include <random>
 
+#include "../../../src/encode.hh" // TODO
+
 #include "fib.hh"
 #include "quicr/packet.hh"
-#include "quicr/encode.hh"
 #include "quicr/quicRServer.hh"
 
-class Relay {
+class Relay
+{
 
 public:
   explicit Relay(uint16_t port);
@@ -19,12 +21,12 @@ public:
   void stop();
 
 private:
-  void processAppMessage(std::unique_ptr<MediaNet::Packet> &packet);
-  void processRateRequest(std::unique_ptr<MediaNet::Packet> &packet);
-  void processSub(std::unique_ptr<MediaNet::Packet> &packet,
-                  MediaNet::ClientData &clientSeqNum);
-  void processPub(std::unique_ptr<MediaNet::Packet> &packet,
-                  MediaNet::ClientData &clientSeqNum);
+  void processAppMessage(std::unique_ptr<MediaNet::Packet>& packet);
+  void processRateRequest(std::unique_ptr<MediaNet::Packet>& packet);
+  void processSub(std::unique_ptr<MediaNet::Packet>& packet,
+                  MediaNet::ClientData& clientSeqNum);
+  void processPub(std::unique_ptr<MediaNet::Packet>& packet,
+                  MediaNet::ClientData& clientSeqNum);
 
   uint32_t prevAckSeqNum = 0;
   uint32_t prevRecvTimeUs = 0;

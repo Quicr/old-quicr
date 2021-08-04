@@ -3,16 +3,18 @@
 #include <cassert>
 #include <iostream>
 
+#include "priorityPipe.hh"
 #include "quicr/packet.hh"
-#include "quicr/priorityPipe.hh"
 
 using namespace MediaNet;
 
-PriorityPipe::PriorityPipe(PipeInterface *t) : PipeInterface(t), mtu(1200) {}
+PriorityPipe::PriorityPipe(PipeInterface* t)
+  : PipeInterface(t)
+  , mtu(1200)
+{}
 
 bool PriorityPipe::send(std::unique_ptr<Packet> packet) {
   assert(nextPipe);
-
   uint8_t priority = packet->getPriority();
   if (priority > maxPriority) {
     priority = maxPriority;
@@ -26,14 +28,16 @@ bool PriorityPipe::send(std::unique_ptr<Packet> packet) {
     // TODO - check Q not too deep
     if (sendQarray[priority].size() > 1000) {
       sendQarray[priority]
-          .pop(); // this is wrong, should kill oldest data - TODO
+        .pop(); // this is wrong, should kill oldest data - TODO
     }
   }
 
   return true;
 }
 
-std::unique_ptr<Packet> PriorityPipe::toDownstream() {
+std::unique_ptr<Packet>
+PriorityPipe::toDownstream()
+{
   std::lock_guard<std::mutex> lock(sendQMutex);
 
   std::unique_ptr<Packet> packet = std::unique_ptr<Packet>(nullptr);
@@ -54,7 +58,9 @@ std::unique_ptr<Packet> PriorityPipe::toDownstream() {
   return packet;
 }
 
-std::unique_ptr<Packet> PriorityPipe::recv() {
+std::unique_ptr<Packet>
+PriorityPipe::recv()
+{
   std::unique_ptr<Packet> ret = std::unique_ptr<Packet>(nullptr);
 
   std::lock_guard<std::mutex> lock(recvQMutex);
@@ -68,7 +74,9 @@ std::unique_ptr<Packet> PriorityPipe::recv() {
   return ret;
 }
 
-bool PriorityPipe::fromDownstream(std::unique_ptr<Packet> packet) {
+bool
+PriorityPipe::fromDownstream(std::unique_ptr<Packet> packet)
+{
 
   std::lock_guard<std::mutex> lock(recvQMutex);
   recvQ.push(move(packet));
@@ -78,7 +86,9 @@ bool PriorityPipe::fromDownstream(std::unique_ptr<Packet> packet) {
   return true;
 }
 
-void PriorityPipe::updateMTU(uint16_t val, uint32_t pps) {
+void
+PriorityPipe::updateMTU(uint16_t val, uint32_t pps)
+{
   mtu = val;
 
   PipeInterface::updateMTU(val, pps);

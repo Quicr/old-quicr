@@ -4,7 +4,7 @@
 #include <iomanip>
 #include <iostream>
 
-#include "quicr/rateCtrl.hh"
+#include "rateCtrl.hh"
 
 using namespace MediaNet;
 
@@ -13,17 +13,24 @@ using namespace MediaNet;
 #undef max
 #endif
 
-RateCtrl::RateCtrl(PipeInterface *pacerPipeRef)
-    : pacerPipe(pacerPipeRef), upHistorySeqOffset(0), downHistorySeqOffset(0),
-      phaseCycleCount(0), filterMinRTT(10 * 1000, 102, 1024, true),
-      filterBigRTT(50 * 1000, 1024, 10, true),
-      filterLowerBoundSkew(0, 1024, 1, true),
-      filterUpperBoundSkew(0, 1, 1024, true),
-      filterJitterUp(1, 1024, 102, true), filterJitterDown(1, 1024, 102, true),
-      filterLossRatePerMillionUp(0, 102, 102),
-      filterLossRatePerMillionDown(0, 102, 102),
-      filterBitrateUp(1e6, 1024, 0, true), limitBitrateMinUp(0),
-      limitBitrateMaxUp(100e9), filterBitrateDown(1e6, 1024, 0, true) {
+RateCtrl::RateCtrl(PipeInterface* pacerPipeRef)
+  : pacerPipe(pacerPipeRef)
+  , upHistorySeqOffset(0)
+  , downHistorySeqOffset(0)
+  , phaseCycleCount(0)
+  , filterMinRTT(10 * 1000, 102, 1024, true)
+  , filterBigRTT(50 * 1000, 1024, 10, true)
+  , filterLowerBoundSkew(0, 1024, 1, true)
+  , filterUpperBoundSkew(0, 1, 1024, true)
+  , filterJitterUp(1, 1024, 102, true)
+  , filterJitterDown(1, 1024, 102, true)
+  , filterLossRatePerMillionUp(0, 102, 102)
+  , filterLossRatePerMillionDown(0, 102, 102)
+  , filterBitrateUp(1e6, 1024, 0, true)
+  , limitBitrateMinUp(0)
+  , limitBitrateMaxUp(100e9)
+  , filterBitrateDown(1e6, 1024, 0, true)
+{
   upstreamHistory.clear();
   upstreamHistory.reserve(5000); // TODO limit length of history
 
@@ -33,8 +40,12 @@ RateCtrl::RateCtrl(PipeInterface *pacerPipeRef)
   startNewCycle();
 }
 
-void RateCtrl::sendPacket(uint32_t seqNum, uint32_t sendTimeUs,
-                          uint16_t sizeBits, ShortName shortName) {
+void
+RateCtrl::sendPacket(uint32_t seqNum,
+                     uint32_t sendTimeUs,
+                     uint16_t sizeBits,
+                     ShortName shortName)
+{
   updatePhase();
 
   assert(sizeBits > 0);
@@ -49,7 +60,7 @@ void RateCtrl::sendPacket(uint32_t seqNum, uint32_t sendTimeUs,
 
     upstreamHistory.resize(seqNum - upHistorySeqOffset + 1);
   }
-  PacketUpstreamStatus &rec = upstreamHistory.at(seqNum - upHistorySeqOffset);
+  PacketUpstreamStatus& rec = upstreamHistory.at(seqNum - upHistorySeqOffset);
 
   rec.seqNum = seqNum;
   rec.sizeBits = sizeBits;
@@ -64,9 +75,13 @@ void RateCtrl::sendPacket(uint32_t seqNum, uint32_t sendTimeUs,
   rec.shortName = shortName;
 }
 
-void RateCtrl::recvAck(uint32_t seqNum, uint32_t remoteAckTimeUs,
-                       uint32_t localRecvAckTimeUs, bool congested,
-                       bool haveAck) {
+void
+RateCtrl::recvAck(uint32_t seqNum,
+                  uint32_t remoteAckTimeUs,
+                  uint32_t localRecvAckTimeUs,
+                  bool congested,
+                  bool haveAck)
+{
   updatePhase();
 
   if (seqNum < upHistorySeqOffset) {
@@ -82,7 +97,7 @@ void RateCtrl::recvAck(uint32_t seqNum, uint32_t remoteAckTimeUs,
             // session
   }
 
-  PacketUpstreamStatus &rec = upstreamHistory.at(seqNum - upHistorySeqOffset);
+  PacketUpstreamStatus& rec = upstreamHistory.at(seqNum - upHistorySeqOffset);
 
   if (rec.seqNum != seqNum) {
     // TODO - figure out how this happens
@@ -101,14 +116,15 @@ void RateCtrl::recvAck(uint32_t seqNum, uint32_t remoteAckTimeUs,
   } else {
     if (rec.status == HistoryStatus::sent) {
       rec.status =
-          (congested) ? HistoryStatus::congested : HistoryStatus::received;
+        (congested) ? HistoryStatus::congested : HistoryStatus::received;
       rec.remoteReceiveTimeUs = remoteAckTimeUs;
       rec.localAckTimeUs = 0;
     }
   }
 }
 
-uint64_t RateCtrl::bwUpTarget() const // in bits per second
+uint64_t
+RateCtrl::bwUpTarget() const // in bits per second
 {
   assert(numPhasePerCycle >= 3);
 
@@ -133,7 +149,8 @@ uint64_t RateCtrl::bwUpTarget() const // in bits per second
   return target;
 }
 
-uint64_t RateCtrl::bwDownTarget() const // in bits per second
+uint64_t
+RateCtrl::bwDownTarget() const // in bits per second
 {
   assert(numPhasePerCycle >= 4);
 
@@ -149,12 +166,14 @@ uint64_t RateCtrl::bwDownTarget() const // in bits per second
   return downstreamBitrateTarget;
 }
 
-void RateCtrl::updatePhase() {
+void
+RateCtrl::updatePhase()
+{
   auto timePointNow = std::chrono::steady_clock::now();
   uint32_t cycleTimeUs =
-      (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(
-          timePointNow - cycleStartTime)
-          .count();
+    (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(
+      timePointNow - cycleStartTime)
+      .count();
 
   uint32_t newPhase = cycleTimeUs / phaseTimeUs;
   uint32_t oldPhase = phaseCycleCount % numPhasePerCycle;
@@ -169,9 +188,15 @@ void RateCtrl::updatePhase() {
   }
 }
 
-void RateCtrl::startNewPhase() { calcPhaseAll(); }
+void
+RateCtrl::startNewPhase()
+{
+  calcPhaseAll();
+}
 
-void RateCtrl::startNewCycle() {
+void
+RateCtrl::startNewCycle()
+{
 
 #if 0
   int64_t  estRTTUs = filterMinRTT.estimate();
@@ -235,9 +260,13 @@ void RateCtrl::startNewCycle() {
   filterJitterUp.reset();
 }
 
-void RateCtrl::recvPacket(uint32_t relaySeqNum, uint32_t remoteSendTimeUs,
-                          uint32_t localRecvTimeUs, uint16_t sizeBits,
-                          bool congested) {
+void
+RateCtrl::recvPacket(uint32_t relaySeqNum,
+                     uint32_t remoteSendTimeUs,
+                     uint32_t localRecvTimeUs,
+                     uint16_t sizeBits,
+                     bool congested)
+{
   updatePhase();
 
 #if 0
@@ -251,8 +280,8 @@ void RateCtrl::recvPacket(uint32_t relaySeqNum, uint32_t remoteSendTimeUs,
   // TODO - need to auth this as attacker could cause bad shift and loose data
 
   uint32_t absSeqDiff = (relaySeqNum > downHistorySeqOffset)
-                            ? (relaySeqNum - downHistorySeqOffset)
-                            : (downHistorySeqOffset - relaySeqNum);
+                          ? (relaySeqNum - downHistorySeqOffset)
+                          : (downHistorySeqOffset - relaySeqNum);
   if (absSeqDiff > 5000) {
     // std::clog << "reset relay seq number history" << std::endl;
     downHistorySeqOffset = relaySeqNum;
@@ -277,8 +306,8 @@ void RateCtrl::recvPacket(uint32_t relaySeqNum, uint32_t remoteSendTimeUs,
 
   // TODO - shrink history buffer if too large
 
-  PacketDownstreamStatus &rec =
-      downstreamHistory.at(relaySeqNum - downHistorySeqOffset);
+  PacketDownstreamStatus& rec =
+    downstreamHistory.at(relaySeqNum - downHistorySeqOffset);
 
   rec.remoteSeqNum = relaySeqNum;
   rec.sizeBits = sizeBits;
@@ -293,16 +322,25 @@ void RateCtrl::recvPacket(uint32_t relaySeqNum, uint32_t remoteSendTimeUs,
   // TODO - think about how to send NACK
 }
 
-uint32_t RateCtrl::getPhase() const {
+uint32_t
+RateCtrl::getPhase() const
+{
   return (phaseCycleCount % numPhasePerCycle);
 }
 
-Filter::Filter(int64_t initialValue, int64_t gainUp1024s, int64_t gainDown1024s,
+Filter::Filter(int64_t initialValue,
+               int64_t gainUp1024s,
+               int64_t gainDown1024s,
                bool initOnFirstValue)
-    : value(initialValue), gainUp(gainUp1024s), gainDown(gainDown1024s),
-      initOnFirst(initOnFirstValue) {}
+  : value(initialValue)
+  , gainUp(gainUp1024s)
+  , gainDown(gainDown1024s)
+  , initOnFirst(initOnFirstValue)
+{}
 
-void Filter::add(int64_t v) {
+void
+Filter::add(int64_t v)
+{
   if (initOnFirst) {
     initOnFirst = false;
     value = v;
@@ -315,9 +353,15 @@ void Filter::add(int64_t v) {
   }
 }
 
-int64_t Filter::estimate() const { return value; }
+int64_t
+Filter::estimate() const
+{
+  return value;
+}
 
-void RateCtrl::calcPhaseAll() {
+void
+RateCtrl::calcPhaseAll()
+{
   uint64_t bigRttUs = filterBigRTT.estimate();
 
   uint32_t phasesBack = (bigRttUs / phaseTimeUs) + 1;
@@ -409,7 +453,9 @@ void RateCtrl::calcPhaseAll() {
   filterBitrateDown.update();
 }
 
-void RateCtrl::calcPhaseMinRTT(int start, int end) {
+void
+RateCtrl::calcPhaseMinRTT(int start, int end)
+{
   bool noneFound = true;
   int64_t minRttUs;
   for (int i = start; i < end; i++) {
@@ -435,7 +481,9 @@ void RateCtrl::calcPhaseMinRTT(int start, int end) {
   }
 }
 
-void RateCtrl::calcPhaseClockSkew(int start, int end) {
+void
+RateCtrl::calcPhaseClockSkew(int start, int end)
+{
   bool noneFound = true;
   int64_t maxLowerBoundUs;
   int64_t minUpperBoundUs;
@@ -452,11 +500,11 @@ void RateCtrl::calcPhaseClockSkew(int start, int end) {
 #endif
 
       int64_t upperBoundUs =
-          (int64_t)upstreamHistory.at(i).remoteReceiveTimeUs -
-          (int64_t)upstreamHistory.at(i).localSendTimeUs;
+        (int64_t)upstreamHistory.at(i).remoteReceiveTimeUs -
+        (int64_t)upstreamHistory.at(i).localSendTimeUs;
       int64_t lowerBoundUs =
-          (int64_t)upstreamHistory.at(i).remoteReceiveTimeUs -
-          (int64_t)upstreamHistory.at(i).localAckTimeUs;
+        (int64_t)upstreamHistory.at(i).remoteReceiveTimeUs -
+        (int64_t)upstreamHistory.at(i).localAckTimeUs;
 
       if (noneFound) {
         noneFound = false;
@@ -484,7 +532,9 @@ void RateCtrl::calcPhaseClockSkew(int start, int end) {
   }
 }
 
-void RateCtrl::calcPhaseJitterUp(int start, int end) {
+void
+RateCtrl::calcPhaseJitterUp(int start, int end)
+{
   int64_t skewUpperUs = filterUpperBoundSkew.estimate();
 
   bool noneFound = true;
@@ -494,7 +544,7 @@ void RateCtrl::calcPhaseJitterUp(int start, int end) {
 
       int64_t sentTimeUs = (int64_t)upstreamHistory.at(i).localSendTimeUs;
       int64_t recvTimeUs =
-          (int64_t)upstreamHistory.at(i).remoteReceiveTimeUs - skewUpperUs;
+        (int64_t)upstreamHistory.at(i).remoteReceiveTimeUs - skewUpperUs;
 
       int64_t jitterUs = recvTimeUs - sentTimeUs;
       // std::clog << "jitter=" << jitterUs/1000 << " ms" << std::endl;
@@ -519,7 +569,9 @@ void RateCtrl::calcPhaseJitterUp(int start, int end) {
   }
 }
 
-void RateCtrl::calcPhaseJitterDown(int start, int end) {
+void
+RateCtrl::calcPhaseJitterDown(int start, int end)
+{
   int64_t skewLowerUs = filterLowerBoundSkew.estimate();
 
   bool noneFound = true;
@@ -528,7 +580,7 @@ void RateCtrl::calcPhaseJitterDown(int start, int end) {
     if (downstreamHistory.at(i).status == HistoryStatus::received) {
 
       int64_t sentTimeUs =
-          (int64_t)downstreamHistory.at(i).remoteSendTimeUs - skewLowerUs;
+        (int64_t)downstreamHistory.at(i).remoteSendTimeUs - skewLowerUs;
       int64_t recvTimeUs = (int64_t)downstreamHistory.at(i).localReceiveTimeUs;
 
       int64_t jitterDownUs = recvTimeUs - sentTimeUs;
@@ -555,7 +607,9 @@ void RateCtrl::calcPhaseJitterDown(int start, int end) {
   }
 }
 
-void RateCtrl::calcPhaseBigRTT(int start, int end) {
+void
+RateCtrl::calcPhaseBigRTT(int start, int end)
+{
   std::vector<int64_t> rttList;
   rttList.reserve(end - start);
 
@@ -572,8 +626,8 @@ void RateCtrl::calcPhaseBigRTT(int start, int end) {
     std::sort(rttList.begin(), rttList.end());
     // TODO - there are way faster algorithm than sort of all of this every time
 
-    int index = (rttList.size() - 1) * 98 /
-                100; // TODO - most 98 percentile constant out
+    int index =
+      (rttList.size() - 1) * 98 / 100; // TODO - most 98 percentile constant out
     int32_t bigRttUs = rttList.at(index);
 
     filterBigRTT.add(bigRttUs);
@@ -585,7 +639,9 @@ void RateCtrl::calcPhaseBigRTT(int start, int end) {
   }
 }
 
-void RateCtrl::calcPhaseLossRateUp(int start, int end) {
+void
+RateCtrl::calcPhaseLossRateUp(int start, int end)
+{
 
   for (int i = start; i < end; i++) {
     if (upstreamHistory.at(i).status == HistoryStatus::sent) {
@@ -618,7 +674,9 @@ void RateCtrl::calcPhaseLossRateUp(int start, int end) {
   }
 }
 
-void RateCtrl::calcPhaseLossRateDown(int start, int end) {
+void
+RateCtrl::calcPhaseLossRateDown(int start, int end)
+{
 
   for (int i = start; i < end; i++) {
     if ((downstreamHistory.at(i).status != HistoryStatus::received) &&
@@ -652,7 +710,9 @@ void RateCtrl::calcPhaseLossRateDown(int start, int end) {
   }
 }
 
-void RateCtrl::calcPhaseBitrateUp(int start, int end) {
+void
+RateCtrl::calcPhaseBitrateUp(int start, int end)
+{
 
   for (int i = start; i < end; i++) {
     if (upstreamHistory.at(i).status == HistoryStatus::sent) {
@@ -693,7 +753,9 @@ void RateCtrl::calcPhaseBitrateUp(int start, int end) {
   }
 }
 
-void RateCtrl::calcPhaseBitrateDown(int start, int end) {
+void
+RateCtrl::calcPhaseBitrateDown(int start, int end)
+{
 
   for (int i = start; i < end; i++) {
     if ((downstreamHistory.at(i).status != HistoryStatus::received) &&
@@ -720,7 +782,9 @@ void RateCtrl::calcPhaseBitrateDown(int start, int end) {
   }
 }
 
-void RateCtrl::cycleUpdateUpstreamTarget() {
+void
+RateCtrl::cycleUpdateUpstreamTarget()
+{
 
   int64_t prevTargetUp = upstreamBitrateTarget;
   int64_t bitrateUp = filterBitrateUp.estimate();
@@ -734,11 +798,13 @@ void RateCtrl::cycleUpdateUpstreamTarget() {
 
     // move to max bitrate that worked
     upstreamBitrateTarget =
-        std::min(bitrateUp, prevTargetUp * 3 / 2); // TODO - mirror in download
+      std::min(bitrateUp, prevTargetUp * 3 / 2); // TODO - mirror in download
   }
 }
 
-void RateCtrl::cycleUpdateDownstreamTarget() {
+void
+RateCtrl::cycleUpdateDownstreamTarget()
+{
 
   int64_t prevTargetDown = downstreamBitrateTarget;
   int64_t bitrateDown = filterBitrateDown.estimate();
@@ -755,18 +821,23 @@ void RateCtrl::cycleUpdateDownstreamTarget() {
   }
 }
 
-void RateCtrl::overrideMtu(uint16_t mtu, uint32_t pps) {
+void
+RateCtrl::overrideMtu(uint16_t mtu, uint32_t pps)
+{
   (void)mtu;
   (void)pps;
 }
 
-void RateCtrl::overrideRTT(uint16_t minRttMs, uint16_t bigRttMs) {
+void
+RateCtrl::overrideRTT(uint16_t minRttMs, uint16_t bigRttMs)
+{
   filterMinRTT.override(minRttMs * 1000);
   filterBigRTT.override(bigRttMs * 1000);
 }
 
-void RateCtrl::overrideBitrateUp(uint64_t minBps, uint64_t startBps,
-                                 uint64_t maxBps) {
+void
+RateCtrl::overrideBitrateUp(uint64_t minBps, uint64_t startBps, uint64_t maxBps)
+{
 
   filterBitrateUp.override(startBps);
   upstreamBitrateTarget = startBps;

@@ -4,17 +4,18 @@
 #include <memory>
 #include <string>
 
-#include "connectionPipe.hh"
-#include "fakeLossPipe.hh"
+#include "../../src/connectionPipe.hh"
+#include "../../src/fakeLossPipe.hh"
+#include "../../src/pipeInterface.hh"
+#include "../../src/udpPipe.hh"
 #include "packet.hh"
-#include "pipeInterface.hh"
-#include "udpPipe.hh"
 
 namespace MediaNet {
 
 // class UdpPipe;
 
-class QuicRServer {
+class QuicRServer
+{
 public:
   QuicRServer();
   virtual ~QuicRServer();
@@ -30,7 +31,7 @@ private:
   UdpPipe udpPipe;
   FakeLossPipe fakeLossPipe;
   ServerConnectionPipe connectionPipe;
-  PipeInterface *firstPipe;
+  PipeInterface* firstPipe;
 };
 
 } // namespace MediaNet

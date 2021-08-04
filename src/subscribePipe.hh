@@ -1,19 +1,20 @@
 #pragma once
 
 #include <cstdint>
-#include <memory>
 #include <map>
+#include <memory>
 
-#include "packet.hh"
 #include "pipeInterface.hh"
+#include "quicr/packet.hh"
 
 namespace MediaNet {
 
-class SubscribePipe : public PipeInterface {
+class SubscribePipe : public PipeInterface
+{
 public:
-  explicit SubscribePipe(PipeInterface *t);
+  explicit SubscribePipe(PipeInterface* t);
 
-  bool subscribe(const ShortName &name);
+  bool subscribe(const ShortName& name);
   std::unique_ptr<Packet> recv() override;
 
 private:

@@ -2,26 +2,45 @@
 #include <algorithm>
 #include <cassert>
 
-#include "quicr/name.hh"
+#include "quicr/shortName.hh"
 
 using namespace MediaNet;
 
 ShortName::ShortName()
-    : resourceID(0), senderID(0), sourceID(0), mediaTime(0), fragmentID(0) {}
+  : resourceID(0)
+  , senderID(0)
+  , sourceID(0)
+  , mediaTime(0)
+  , fragmentID(0)
+{}
 
 ShortName::ShortName(uint64_t rid)
-    : resourceID(rid), senderID(0), sourceID(0), mediaTime(0), fragmentID(0) {}
+  : resourceID(rid)
+  , senderID(0)
+  , sourceID(0)
+  , mediaTime(0)
+  , fragmentID(0)
+{}
 
 ShortName::ShortName(uint64_t rid, uint32_t sender)
-    : resourceID(rid), senderID(sender), sourceID(0), mediaTime(0),
-      fragmentID(0) {}
+  : resourceID(rid)
+  , senderID(sender)
+  , sourceID(0)
+  , mediaTime(0)
+  , fragmentID(0)
+{}
 
 ShortName::ShortName(uint64_t rid, uint32_t sender, uint8_t source)
-    : resourceID(rid), senderID(sender), sourceID(source), mediaTime(0),
-      fragmentID(0) {}
+  : resourceID(rid)
+  , senderID(sender)
+  , sourceID(source)
+  , mediaTime(0)
+  , fragmentID(0)
+{}
 
-std::ostream &MediaNet::operator<<(std::ostream &stream,
-                                   const ShortName &name) {
+std::ostream&
+MediaNet::operator<<(std::ostream& stream, const ShortName& name)
+{
 
   stream << "qr:./r" << name.resourceID << "/c" << name.senderID << "/s"
          << (uint16_t)name.sourceID << "/" << name.mediaTime;
@@ -37,7 +56,9 @@ std::ostream &MediaNet::operator<<(std::ostream &stream,
   return stream;
 }
 
-bool MediaNet::operator==(const ShortName &l, const ShortName &r) {
+bool
+MediaNet::operator==(const ShortName& l, const ShortName& r)
+{
   return (l.resourceID == r.resourceID && l.fragmentID == r.fragmentID &&
           l.mediaTime == r.mediaTime && l.sourceID == r.sourceID &&
           l.senderID == r.senderID);
@@ -45,13 +66,15 @@ bool MediaNet::operator==(const ShortName &l, const ShortName &r) {
 
 // Note: no parsing of fragment and mediaTime is supported
 // since they are calculated via code.
-ShortName ShortName::fromString(const std::string &name_str) {
+ShortName
+ShortName::fromString(const std::string& name_str)
+{
   assert(!name_str.empty());
 
   ShortName name;
   const std::string proto = "qr://";
   auto it =
-      std::search(name_str.begin(), name_str.end(), proto.begin(), proto.end());
+    std::search(name_str.begin(), name_str.end(), proto.begin(), proto.end());
   assert(it != name_str.end());
 
   // move to end for qr://

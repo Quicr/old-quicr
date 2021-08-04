@@ -2,12 +2,14 @@
 #include <iostream>
 #include <thread>
 
-#include "quicr/encode.hh"
+//#include "../src/encode.hh"
 #include <quicr/quicRClient.hh>
 
 using namespace MediaNet;
 
-int main(int argc, char *argv[]) {
+int
+main(int argc, char* argv[])
+{
   std::string relayName("localhost");
 
   if (argc < 3) {
@@ -45,6 +47,7 @@ int main(int argc, char *argv[]) {
   do {
     auto packet = qClient.recv();
     if (!packet) {
+    	std::clog << "no data\n";
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
       continue;
     }

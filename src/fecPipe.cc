@@ -4,22 +4,25 @@
 #include <chrono>
 #include <iostream>
 
-#include "quicr/fecPipe.hh"
+#include "fecPipe.hh"
 #include "quicr/packet.hh"
 
 using namespace MediaNet;
 
-FecPipe::FecPipe(PipeInterface *t) : PipeInterface(t) {}
+FecPipe::FecPipe(PipeInterface* t)
+  : PipeInterface(t)
+{}
 
-bool FecPipe::send(std::unique_ptr<Packet> packet) {
+bool
+FecPipe::send(std::unique_ptr<Packet> packet)
+{
   assert(packet);
   assert(nextPipe);
 
   std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
   std::chrono::steady_clock::duration dn = tp.time_since_epoch();
   uint32_t nowMs =
-      (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(dn)
-          .count();
+    (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(dn).count();
 
   if (packet->getFEC()) {
     // TODO for packets with FEC enabled, save them and send them again in 10 ms
@@ -52,13 +55,16 @@ bool FecPipe::send(std::unique_ptr<Packet> packet) {
   return nextPipe->send(move(packet));
 }
 
-std::unique_ptr<Packet> FecPipe::recv() {
+std::unique_ptr<Packet>
+FecPipe::recv()
+{
 
   assert(nextPipe);
   return nextPipe->recv();
 }
 
-FecPipe::~FecPipe() {
+FecPipe::~FecPipe()
+{
   while (!sendList.empty()) {
     std::unique_ptr<Packet> fecPacket = std::move(sendList.front().second);
     sendList.pop_front();

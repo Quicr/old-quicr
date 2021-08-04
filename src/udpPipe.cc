@@ -21,13 +21,19 @@
 #endif
 
 #include "quicr/packet.hh"
-#include "quicr/udpPipe.hh"
+#include "udpPipe.hh"
 
 using namespace MediaNet;
 
-UdpPipe::UdpPipe() : PipeInterface(nullptr), serverAddr() { fd = 0; }
+UdpPipe::UdpPipe()
+  : PipeInterface(nullptr)
+  , serverAddr()
+{
+  fd = 0;
+}
 
-UdpPipe::~UdpPipe() {
+UdpPipe::~UdpPipe()
+{
   if (fd > 0) {
     std::lock_guard<std::mutex> lock(socketMutex);
 #if defined(_WIN32)
@@ -39,9 +45,15 @@ UdpPipe::~UdpPipe() {
   }
 }
 
-bool UdpPipe::ready() const { return (fd > 0); }
+bool
+UdpPipe::ready() const
+{
+  return (fd > 0);
+}
 
-void UdpPipe::stop() {
+void
+UdpPipe::stop()
+{
   if (fd > 0) {
     std::lock_guard<std::mutex> lock(socketMutex);
 #if defined(_WIN32)
@@ -53,7 +65,9 @@ void UdpPipe::stop() {
   }
 }
 
-bool UdpPipe::send(std::unique_ptr<Packet> packet) {
+bool
+UdpPipe::send(std::unique_ptr<Packet> packet)
+{
   // std::lock_guard<std::mutex> lock(socketMutex);
 
   if (fd == 0) {
@@ -74,9 +88,12 @@ bool UdpPipe::send(std::unique_ptr<Packet> packet) {
   }
   // std::clog << "Send to " << addr.toString() << std::endl;
 
-  int numSent =
-      sendto(fd, (const char *)&(packet->fullData()), (int)(packet->fullSize()),
-             0 /*flags*/, (struct sockaddr *)&(addr.addr), addr.addrLen);
+  int numSent = sendto(fd,
+                       (const char*)&(packet->fullData()),
+                       (int)(packet->fullSize()),
+                       0 /*flags*/,
+                       (struct sockaddr*)&(addr.addr),
+                       addr.addrLen);
   if (numSent < 0) {
 #if defined(_WIN32)
     int error = WSAGetLastError();
@@ -102,7 +119,9 @@ bool UdpPipe::send(std::unique_ptr<Packet> packet) {
   return true;
 }
 
-std::unique_ptr<Packet> UdpPipe::recv() {
+std::unique_ptr<Packet>
+UdpPipe::recv()
+{
   std::lock_guard<std::mutex> lock(socketMutex);
 
   if (fd == 0) {
@@ -118,26 +137,29 @@ std::unique_ptr<Packet> UdpPipe::recv() {
   memset(&remoteAddr.addr, 0, sizeof(remoteAddr.addr));
   remoteAddr.addrLen = sizeof(remoteAddr.addr);
 
-  int rLen = recvfrom(fd, (char *)&(packet->fullData()),
-                      (int)packet->fullSize(), 0 /*flags*/,
-                      (struct sockaddr *)&remoteAddr.addr, &remoteAddr.addrLen);
+  int rLen = recvfrom(fd,
+                      (char*)&(packet->fullData()),
+                      (int)packet->fullSize(),
+                      0 /*flags*/,
+                      (struct sockaddr*)&remoteAddr.addr,
+                      &remoteAddr.addrLen);
   if (rLen < 0) {
 #if defined(_WIN32)
     int error = WSAGetLastError();
     switch (error) {
-    case WSAEINTR:
-    case WSAETIMEDOUT:
-      return std::unique_ptr<Packet>(nullptr);
+      case WSAEINTR:
+      case WSAETIMEDOUT:
+        return std::unique_ptr<Packet>(nullptr);
 
-    case WSAECONNRESET:
-      // TODO - probably indicates relay not running
-      return std::unique_ptr<Packet>(nullptr);
+      case WSAECONNRESET:
+        // TODO - probably indicates relay not running
+        return std::unique_ptr<Packet>(nullptr);
 
-    default:
-      std::cerr << "reading from UDP socket got error: " << WSAGetLastError()
-                << std::endl;
-      assert(0);
-      break;
+      default:
+        std::cerr << "reading from UDP socket got error: " << WSAGetLastError()
+                  << std::endl;
+        assert(0);
+        break;
     }
 #else
     int e = errno;
@@ -186,11 +208,12 @@ bool UdpPipe::start(const uint16_t serverPort, const std::string& serverName,
   }
 
   // make socket non blocking IO
-  struct timeval timeOut {};
+  struct timeval timeOut
+  {};
   timeOut.tv_sec = 0;
   timeOut.tv_usec = 2000; // TODO 2 ms
-  auto err = setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeOut,
-                        sizeof(timeOut));
+  auto err = setsockopt(
+    fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeOut, sizeof(timeOut));
   if (err) {
     assert(0); // TODO
   }
@@ -200,21 +223,20 @@ bool UdpPipe::start(const uint16_t serverPort, const std::string& serverName,
 
     // set for re-use
     int one = 1;
-    err = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const char *)&one,
-                     sizeof(one));
+    err =
+      setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&one, sizeof(one));
     if (err != 0) {
       assert(0); // TODO
     }
 
     // set up address and bind
-    memset((char *)&serverAddr.addr, 0, sizeof(serverAddr.addr));
+    memset((char*)&serverAddr.addr, 0, sizeof(serverAddr.addr));
     serverAddr.addrLen = sizeof(serverAddr.addr);
     serverAddr.addr.sin_port = htons(serverPort);
     serverAddr.addr.sin_family = AF_INET;
     serverAddr.addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    err =
-        bind(fd, (struct sockaddr *)&serverAddr.addr, sizeof(serverAddr.addr));
+    err = bind(fd, (struct sockaddr*)&serverAddr.addr, sizeof(serverAddr.addr));
     if (err < 0) {
       assert(0); // TODO
     }
@@ -224,11 +246,12 @@ bool UdpPipe::start(const uint16_t serverPort, const std::string& serverName,
   } else {
     // ================= set up client  ======================
 
-    struct sockaddr_in clientAddr {};
+    struct sockaddr_in clientAddr
+    {};
     clientAddr.sin_family = AF_INET;
     clientAddr.sin_addr.s_addr = htonl(INADDR_ANY);
     clientAddr.sin_port = 0;
-    err = bind(fd, (struct sockaddr *)&clientAddr, sizeof(clientAddr));
+    err = bind(fd, (struct sockaddr*)&clientAddr, sizeof(clientAddr));
     if (err) {
       assert(0);
     }

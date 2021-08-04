@@ -4,13 +4,15 @@
 #include <string>
 #include <chrono>
 
-#include "packet.hh"
+#include "quicr/packet.hh"
 
 namespace MediaNet {
 
-class PipeInterface {
+class PipeInterface
+{
 public:
-  enum struct StatName : uint16_t {
+  enum struct StatName : uint16_t
+  {
     none = 0, // must be first
     mtu,
     minRTTms,
@@ -49,15 +51,16 @@ public:
 
   virtual void updateMTU(uint16_t mtu, uint32_t pps);
 
-  virtual void updateBitrateUp(uint64_t minBps, uint64_t startBps,
+  virtual void updateBitrateUp(uint64_t minBps,
+                               uint64_t startBps,
                                uint64_t maxBps);
 
   virtual void
   runUpdates(const std::chrono::time_point<std::chrono::steady_clock>& now);
+	virtual ~PipeInterface();
 
 protected:
   explicit PipeInterface(PipeInterface *downStream);
-  virtual ~PipeInterface();
 
   PipeInterface *nextPipe;
   PipeInterface *prevPipe;

@@ -1,14 +1,20 @@
 
 #include <cassert>
 
-#include "quicr/pipeInterface.hh"
+#include "pipeInterface.hh"
 
 using namespace MediaNet;
 
 PipeInterface::PipeInterface(PipeInterface *nxtPipe)
     : nextPipe(nxtPipe), prevPipe(nullptr) {}
 
-PipeInterface::~PipeInterface() {}
+PipeInterface::~PipeInterface()
+{
+  if (nextPipe) {
+    delete nextPipe;
+    nextPipe = nullptr;
+  }
+}
 
 bool PipeInterface::start(const uint16_t port, const std::string& server,
                           PipeInterface *upStreamLink) {
@@ -76,7 +82,9 @@ void PipeInterface::updateRTT(uint16_t minRtMs, uint16_t bigRtMs) {
   }
 }
 
-std::unique_ptr<Packet> PipeInterface::toDownstream() {
+std::unique_ptr<Packet>
+PipeInterface::toDownstream()
+{
   return std::unique_ptr<Packet>(nullptr);
 }
 

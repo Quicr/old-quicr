@@ -5,14 +5,15 @@
 #include <memory>
 #include <mutex>
 
-#include "packet.hh"
 #include "pipeInterface.hh"
+#include "quicr/packet.hh"
 
 namespace MediaNet {
 
-class FragmentPipe : public PipeInterface {
+class FragmentPipe : public PipeInterface
+{
 public:
-  explicit FragmentPipe(PipeInterface *t);
+  explicit FragmentPipe(PipeInterface* t);
 
   bool send(std::unique_ptr<Packet> packet) override;
 
