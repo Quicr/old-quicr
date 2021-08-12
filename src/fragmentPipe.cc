@@ -42,6 +42,7 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
 
   ClientData clientData;
   NamedDataChunk namedDataChunk;
+  DataBlock datablock;
   EncryptedDataBlock encryptedDataBlock;
 
   bool ok = true;
@@ -49,12 +50,22 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
   ok &= packet >> clientData;
   ok &= packet >> namedDataChunk;
   assert(ok);
-  assert(nextTag(packet) == PacketTag::encDataBlock);
-  ok &= packet >> encryptedDataBlock;
-  assert(ok);
+  bool encrypt = true;
+  if(nextTag(packet) == PacketTag::encDataBlock) {
+		ok &= packet >> encryptedDataBlock;
+		assert(ok);
+		assert(fromVarInt(encryptedDataBlock.metaDataLen) == 0); // TODO
+	} else if (nextTag(packet) == PacketTag::dataBlock) {
+		ok &= packet >> datablock;
+		assert(ok);
+		assert(fromVarInt(datablock.metaDataLen) == 0); // TODO
+		encrypt = false;
+	} else {
+  	assert("incorrect next tag");
+  }
+
 
   assert(namedDataChunk.shortName.fragmentID == 0);
-  assert(fromVarInt(encryptedDataBlock.metaDataLen) == 0); // TODO
 
   uint16_t dataSize = mtu - extraHeaderSizeBytes;
   if (dataSize < minPacketPayload) {
@@ -79,9 +90,14 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
 
     fragPacket->setFragID(frag, (numLeft == 0));
     namedDataChunk.shortName = packet->shortName();
-    encryptedDataBlock.cipherDataLen = toVarInt(numUse);
+    if (encrypt) {
+			encryptedDataBlock.cipherDataLen = toVarInt(numUse);
+			fragPacket << encryptedDataBlock;
+		} else {
+			datablock.dataLen = toVarInt(numUse);
+			fragPacket << datablock;
+		}
 
-    fragPacket << encryptedDataBlock;
     fragPacket << namedDataChunk;
     fragPacket << clientData;
 
@@ -123,25 +139,39 @@ FragmentPipe::recv()
     while (nextTag(packet) == PacketTag::shortName) {
       NamedDataChunk namedDataChunk;
       EncryptedDataBlock encryptedDataBlock;
+      DataBlock datablock;
+
       bool ok = true;
+      bool encrypted = true;
       ok &= packet >> namedDataChunk;
-      ok &= packet >> encryptedDataBlock;
+      if (nextTag(packet) == PacketTag::encDataBlock) {
+				ok &= packet >> encryptedDataBlock;
+			} else if (nextTag(packet) == PacketTag::dataBlock) {
+				ok &= packet >> datablock;
+				encrypted = false;
+			}
+
       if (!ok) {
         //  TODO log bad packet
         return std::unique_ptr<Packet>(nullptr);
       }
+
       if (namedDataChunk.shortName.fragmentID == 0) {
         // packet wasn't fragmented
         // TODO (1): add explicit marking instead of checking fragmentID?
         // TODO (2): hide the pop and push back tag semantics behind an api
         // std::clog << "frag recv: unfragmented:" << namedDataChunk.shortName
         // << std::endl;
-        packet << encryptedDataBlock;
+        if (encrypted) {
+					packet << encryptedDataBlock;
+				} else {
+					packet << datablock;
+				}
         packet << namedDataChunk;
         return packet;
       }
 
-      uint16_t payloadSize = fromVarInt(encryptedDataBlock.cipherDataLen);
+      uint16_t payloadSize = (encrypted) ? fromVarInt(encryptedDataBlock.cipherDataLen) : fromVarInt(datablock.dataLen);
       assert(packet->size() >= payloadSize); // TODO - change log error
       packet->resize(packet->size() - payloadSize);
 
@@ -201,14 +231,18 @@ FragmentPipe::recv()
 
           NamedDataChunk namedDataChunk;
           EncryptedDataBlock encryptedDataBlock;
-
+					DataBlock datablock;
           fragPacket >> namedDataChunk;
-          fragPacket >> encryptedDataBlock;
+          if (encrypted) {
+          	fragPacket >> encryptedDataBlock;
+          } else {
+          	fragPacket >> datablock;
+          }
 
           // std::clog << "(HAVEALL)Adding fragment Name: " <<
           // namedDataChunk.shortName << std::endl;
 
-          uint32_t dataSize = fromVarInt(encryptedDataBlock.cipherDataLen);
+          uint32_t dataSize = (encrypted) ? fromVarInt(encryptedDataBlock.cipherDataLen) : fromVarInt(datablock.dataLen);
 
           assert(fragPacket->size() > 0);
           assert(dataSize > 0);
@@ -237,9 +271,14 @@ FragmentPipe::recv()
         assert(result);
         namedDataChunk.shortName.fragmentID = 0;
 
-        encryptedDataBlock.cipherDataLen = toVarInt(result->size());
+        if (encrypted) {
+					encryptedDataBlock.cipherDataLen = toVarInt(result->size());
+					result << encryptedDataBlock;
+				} else {
+					datablock.dataLen = toVarInt(result->size());
+					result << datablock;
+				}
 
-        result << encryptedDataBlock;
         result << namedDataChunk;
 
         result->name = namedDataChunk.shortName;

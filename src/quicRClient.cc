@@ -20,7 +20,7 @@
 
 using namespace MediaNet;
 
-QuicRClient::QuicRClient()
+QuicRClient::QuicRClient(bool encrypt)
 {
 
   UdpPipe* udpPipe = new UdpPipe();
@@ -37,9 +37,14 @@ QuicRClient::QuicRClient()
 
   FragmentPipe* fragmentPipe = new FragmentPipe(subscribePipe);
 
-  /* EncryptPipe* */ encryptPipe = new EncryptPipe(fragmentPipe); // TODO fix
+  StatsPipe* statsPipe = nullptr;
+  if (encrypt) {
+		/* EncryptPipe* */ encryptPipe = new EncryptPipe(fragmentPipe); // TODO fix
+		statsPipe = new StatsPipe(encryptPipe);
+	} else {
+		statsPipe = new StatsPipe(fragmentPipe);
+	}
 
-  StatsPipe* statsPipe = new StatsPipe(encryptPipe);
   firstPipe = statsPipe;
 
   // TODO - get rid of all other places were defaults get set for mtu, rtt, pps
@@ -76,8 +81,8 @@ void
 QuicRClient::setCryptoKey(sframe::MLSContext::EpochID epoch,
                           const sframe::bytes& mls_epoch_secret)
 {
-  assert(encryptPipe);
-  encryptPipe->setCryptoKey(epoch, mls_epoch_secret);
+  if (encryptPipe)
+  	encryptPipe->setCryptoKey(epoch, mls_epoch_secret);
 }
 
 bool

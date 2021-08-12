@@ -103,22 +103,27 @@ Relay::processPub(std::unique_ptr<MediaNet::Packet>& packet,
   uint32_t nowUs =
     (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(dn).count();
 
-  std::clog << ".";
+  std::clog << ". ";
 
   // save the name for publish
   ClientData clientData;
   NamedDataChunk namedDataChunk;
   EncryptedDataBlock encryptedDataBlock;
-
+	DataBlock dataBlock;
   bool ok = true;
-
+  bool encrypted = true;
   ok &= packet >> clientData;
   ok &= packet >> namedDataChunk;
-  ok &= packet >> encryptedDataBlock;
+  if (nextTag(packet) == PacketTag::encDataBlock) {
+		ok &= packet >> encryptedDataBlock;
+	} else {
+		ok &= packet >> dataBlock;
+		encrypted = false;
+	}
 
-  assert(fromVarInt(encryptedDataBlock.metaDataLen) == 0); // TODO
+  assert(fromVarInt(dataBlock.metaDataLen) == 0); // TODO
 
-  uint16_t payloadSize = fromVarInt(encryptedDataBlock.cipherDataLen);
+  uint16_t payloadSize = (encrypted) ? fromVarInt(encryptedDataBlock.cipherDataLen) : fromVarInt(dataBlock.dataLen);
   if (payloadSize > packet->size()) {
     std::clog << "relay recv bad data size " << payloadSize << " "
               << packet->size() << std::endl;
@@ -155,9 +160,13 @@ Relay::processPub(std::unique_ptr<MediaNet::Packet>& packet,
   // find the matching subscribers
   auto subscribers = fib->lookupSubscription(namedDataChunk.shortName);
 
-  std::clog << "Name:" << namedDataChunk.shortName << " has:" << subscribers.size() << "subscribers\n";
+  std::clog << "Name:" << namedDataChunk.shortName << " has:" << subscribers.size() << " subscribers\n";
 
-  packet << encryptedDataBlock;
+  if (encrypted) {
+		packet << encryptedDataBlock;
+	} else {
+		packet << dataBlock;
+	}
   packet << namedDataChunk;
 
   for (auto& subscriber : subscribers) {
@@ -168,8 +177,6 @@ Relay::processPub(std::unique_ptr<MediaNet::Packet>& packet,
     relayData.relaySendTimeUs = nowUs;
 
     relayDataPacket << relayData;
-
-    std::clog << "Relay send: " << relayDataPacket->size() << std::endl;
 
     bool simLoss = false;
 

@@ -231,7 +231,6 @@ MediaNet::operator<<(std::unique_ptr<Packet>& p, const Subscribe& msg)
 {
   p << msg.name;
   p << PacketTag::subscribe;
-
   return p;
 }
 

@@ -20,7 +20,7 @@ class PacerPipe;
 class QuicRClient
 {
 public:
-  QuicRClient();
+  QuicRClient(bool encrypted=true);
   virtual ~QuicRClient();
   virtual bool open(uint32_t clientID,
                     std::string relayName,
