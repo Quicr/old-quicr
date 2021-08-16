@@ -35,8 +35,8 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
   const int minPacketPayload = 56;     // TODO move
 
   if (packet->fullSize() + extraHeaderSizeBytes <= mtu) {
-    // std::clog << "no fragment as size=" << packet->fullSize() << " mtu=" <<
-    // mtu << std::endl;
+    std::clog << "\t [no fragment as size=" << packet->fullSize() << " mtu=" <<
+    mtu << std::endl;
     return nextPipe->send(move(packet));
   }
 
@@ -67,7 +67,9 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
 
   assert(namedDataChunk.shortName.fragmentID == 0);
 
-  uint16_t dataSize = mtu - extraHeaderSizeBytes;
+	std::cerr << "\t [Fragment:Send: encrypt: " << encrypt << std::endl;
+
+	uint16_t dataSize = mtu - extraHeaderSizeBytes;
   if (dataSize < minPacketPayload) {
     dataSize = minPacketPayload;
   }
@@ -102,8 +104,8 @@ bool FragmentPipe::send(std::unique_ptr<Packet> packet) {
     fragPacket << clientData;
 
     // std::clog << "Send Frag: " << *fragPacket << std::endl;
-    // std::clog << frag << ": Frag Send:" << fragPacket->shortName() <<
-    // std::endl;
+    std::clog << frag << "\t [Frag Send:" << fragPacket->shortName() <<
+    std::endl;
 
     ok &= nextPipe->send(move(fragPacket));
 
@@ -156,12 +158,13 @@ FragmentPipe::recv()
         return std::unique_ptr<Packet>(nullptr);
       }
 
+      std::cerr << "\t [Fragment:Recv: encrypt?" << encrypted << std::endl;
       if (namedDataChunk.shortName.fragmentID == 0) {
         // packet wasn't fragmented
         // TODO (1): add explicit marking instead of checking fragmentID?
         // TODO (2): hide the pop and push back tag semantics behind an api
-        // std::clog << "frag recv: unfragmented:" << namedDataChunk.shortName
-        // << std::endl;
+        std::clog << "\t [frag recv: unfragmented:" << namedDataChunk.shortName
+        << std::endl;
         if (encrypted) {
 					packet << encryptedDataBlock;
 				} else {
@@ -179,13 +182,13 @@ FragmentPipe::recv()
       packetCopy->name = namedDataChunk.shortName;
       // TODO - set lifetime in packetCopy
 
-      // std::clog << "Frag Recv:" << namedDataChunk.shortName << " size=" <<
-      // packet->size() << std::endl; *packet << std::endl;
+      std::cerr << "\t [Frag Recv:" << namedDataChunk.shortName << " size=" <<
+      packet->size() << std::endl;
 
       {
         std::lock_guard<std::mutex> lock(fragListMutex);
-        // std::clog << "fragList: added:" << namedDataChunk.shortName <<
-        // std::endl;
+        std::cerr << "\t [fragList: added:" << namedDataChunk.shortName <<
+        std::endl;
         fragList.emplace(namedDataChunk.shortName, move(packetCopy));
       }
 
@@ -197,17 +200,19 @@ FragmentPipe::recv()
       int numFrag = 0;
       while (haveAll) {
         frag++;
-        std::clog << "processing frag: " << frag << std::endl;
+        std::cerr << "\t [recv: processing frag: " << frag << std::endl;
         ShortName fragName = namedDataChunk.shortName;
         fragName.fragmentID = frag * 2;
         if (fragList.find(fragName) != fragList.end()) {
           // exists but is not the last fragment
+          std::cerr << "\t [recv: not last frag: " << frag << std::endl;
           continue;
         }
         fragName.fragmentID = frag * 2 + 1;
         if (fragList.find(fragName) != fragList.end()) {
           // exists and is the last element
           numFrag = frag;
+					std::cerr << "\t [recv: last frag: numFrags:" << numFrag << std::endl;
           break;
         }
         haveAll = false;
@@ -215,8 +220,8 @@ FragmentPipe::recv()
 
       if (haveAll) {
         // form the new packet from all fragments and return
-        // std::clog << "HAVE ALL for: " << namedDataChunk.shortName <<
-        // std::endl;
+        std::cerr << "\t [HAVE ALL for: " << namedDataChunk.shortName <<
+        std::endl;
         ShortName fragName = namedDataChunk.shortName;
 
         auto result = std::unique_ptr<Packet>(nullptr);

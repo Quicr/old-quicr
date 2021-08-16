@@ -121,7 +121,7 @@ Relay::processPub(std::unique_ptr<MediaNet::Packet>& packet,
 		encrypted = false;
 	}
 
-  assert(fromVarInt(dataBlock.metaDataLen) == 0); // TODO
+  //assert(fromVarInt(dataBlock.metaDataLen) == 0); // TODO
 
   uint16_t payloadSize = (encrypted) ? fromVarInt(encryptedDataBlock.cipherDataLen) : fromVarInt(dataBlock.dataLen);
   if (payloadSize > packet->size()) {
@@ -160,9 +160,10 @@ Relay::processPub(std::unique_ptr<MediaNet::Packet>& packet,
   // find the matching subscribers
   auto subscribers = fib->lookupSubscription(namedDataChunk.shortName);
 
-  std::clog << "Name:" << namedDataChunk.shortName << " has:" << subscribers.size() << " subscribers\n";
+  std::clog << "Name:" << namedDataChunk.shortName << " has: " << subscribers.size() << " subscribers\n";
+	std::clog << "Encrypted ?" << encrypted << ", payloadSize: " << payloadSize << std::endl;
 
-  if (encrypted) {
+	if (encrypted) {
 		packet << encryptedDataBlock;
 	} else {
 		packet << dataBlock;

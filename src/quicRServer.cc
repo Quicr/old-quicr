@@ -16,7 +16,7 @@ QuicRServer::QuicRServer()
   , connectionPipe(&fakeLossPipe)
   , firstPipe(&connectionPipe)
 {
-  firstPipe->updateMTU(1200, 500);
+  firstPipe->updateMTU(1280, 500);
 }
 
 QuicRServer::~QuicRServer()
