@@ -24,6 +24,8 @@ public:
 
   void updateMTU(uint16_t mtu, uint32_t pps) override;
 
+  std::unique_ptr<Packet> processRxPacket(std::unique_ptr<Packet> packet);
+
 private:
   uint16_t mtu;
 
