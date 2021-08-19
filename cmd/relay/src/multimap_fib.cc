@@ -9,10 +9,9 @@ void
 MultimapFib::addSubscription(const MediaNet::ShortName& name,
                              SubscriberInfo subscriberInfo)
 {
-	if(fibStore.count((name))) {
-		fibStore.erase(name);
-	}
-
+  if (fibStore.count((name))) {
+    fibStore.erase(name);
+  }
   fibStore.insert(std::make_pair(name, subscriberInfo));
   std::clog << name << " has " << fibStore.count(name) << " subscription \n";
 }
