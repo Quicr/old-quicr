@@ -5,6 +5,8 @@
 #include "quicr/packet.hh"
 #include <cassert>
 #include <iostream>
+#include <iomanip>
+#include <sstream>
 
 using namespace MediaNet;
 
@@ -16,6 +18,18 @@ template<typename T>
 sframe::bytes static to_bytes(const T& range)
 {
   return sframe::bytes(range.begin(), range.end());
+}
+
+std::string
+stringify(const sframe::input_bytes data)
+{
+	std::stringstream hex(std::ios_base::out);
+	hex.flags(std::ios::hex);
+	for (const auto &byte : data)
+	{
+		hex << std::setw(2) << std::setfill('0') << int(byte);
+	}
+	return hex.str();
 }
 
 EncryptPipe::EncryptPipe(PipeInterface* t)
@@ -156,7 +170,9 @@ EncryptPipe::unprotect(const std::unique_ptr<Packet>& packet,
   // start decryption from data (excluding header)
   auto ciphertext = buffer_ref.subspan(packet->headerSize, payloadSize);
   auto pt_out = sframe::bytes(ciphertext.size());
-  auto pt = mls_context.unprotect(pt_out, ciphertext);
+	auto res = stringify(ciphertext);
+	std::clog << "unprotect(" << ciphertext.size() << "):" << res << std::endl;
+	auto pt = mls_context.unprotect(pt_out, ciphertext);
   // TODO see if we can reuse pt_out
   return to_bytes(pt);
 }

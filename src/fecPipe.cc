@@ -45,7 +45,7 @@ FecPipe::send(std::unique_ptr<Packet> packet)
   }
 
   if (!sendList.empty()) {
-    while (sendList.front().first <= nowMs) {
+    while (!sendList.empty() && sendList.front().first <= nowMs) {
       std::unique_ptr<Packet> fecPacket = std::move(sendList.front().second);
       sendList.pop_front();
       nextPipe->send(move(fecPacket));

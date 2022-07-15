@@ -26,12 +26,15 @@ main(int argc, char* argv[])
   if (argc == 2) {
     relayName = std::string(argv[1]);
   }
+	bool encrypt = false;
 
   auto shortName = ShortName::fromString(argv[2]);
 
   std::cout << "Subscribing to ->" << shortName << std::endl;
   QuicRClient qClient;
-  qClient.setCryptoKey(1, sframe::bytes(8, uint8_t(1)));
+  if (encrypt) {
+		qClient.setCryptoKey(1, sframe::bytes(8, uint8_t(1)));
+	}
   qClient.open(1, relayName, 5004, 1);
 
   while (!qClient.ready()) {
@@ -50,7 +53,7 @@ main(int argc, char* argv[])
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
       continue;
     }
-    // std::clog << "QuicR received buff size=" << packet->size() << std::endl;
+    std::clog << "QuicR received buff size=" << packet->size() << std::endl;
 		numRecv++;
   } while (numRecv < 100 * 1000);
 

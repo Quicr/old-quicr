@@ -109,7 +109,7 @@ Relay::processPub(std::unique_ptr<MediaNet::Packet>& packet,
   ClientData clientData;
   NamedDataChunk namedDataChunk;
   EncryptedDataBlock encryptedDataBlock;
-  DataBlock dataBlock;
+	DataBlock dataBlock;
   bool ok = true;
   bool encrypted = true;
   ok &= packet >> clientData;
@@ -120,8 +120,6 @@ Relay::processPub(std::unique_ptr<MediaNet::Packet>& packet,
     ok &= packet >> dataBlock;
     encrypted = false;
   }
-
-  assert(fromVarInt(dataBlock.metaDataLen) == 0); // TODO
 
   uint16_t payloadSize = (encrypted)
                            ? fromVarInt(encryptedDataBlock.cipherDataLen)
